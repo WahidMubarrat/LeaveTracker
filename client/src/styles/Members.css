@@ -1,0 +1,134 @@
+.members-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.members-header {
+  margin-bottom: 2rem;
+}
+
+.members-header h1 {
+  color: #333;
+  margin: 0 0 0.5rem 0;
+  font-size: 2rem;
+}
+
+.members-subtitle {
+  color: #666;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.members-loading,
+.members-error,
+.members-empty {
+  text-align: center;
+  padding: 3rem;
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.members-error {
+  color: #c33;
+  background: #fee;
+  border-radius: 8px;
+}
+
+.members-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.member-card {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.member-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.member-image-wrapper {
+  margin-bottom: 1rem;
+}
+
+.member-image {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #667eea;
+}
+
+.member-image-placeholder {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  font-weight: 600;
+  margin: 0 auto;
+  border: 3px solid #667eea;
+}
+
+.member-info {
+  margin-top: 1rem;
+}
+
+.member-name {
+  color: #333;
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.member-email {
+  color: #666;
+  margin: 0 0 1rem 0;
+  font-size: 0.875rem;
+}
+
+.member-role-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.member-role-badge.employee {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.member-role-badge.hod {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.member-role-badge.hoa {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
+@media (max-width: 768px) {
+  .members-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .members-grid {
+    grid-template-columns: 1fr;
+  }
+}
