@@ -44,6 +44,10 @@ const Profile = () => {
                   <p>{user.email}</p>
                 </div>
                 <div className="profile-info-item">
+                  <label>Designation</label>
+                  <p>{user.designation}</p>
+                </div>
+                <div className="profile-info-item">
                   <label>Role</label>
                   <p>{user.role}</p>
                 </div>

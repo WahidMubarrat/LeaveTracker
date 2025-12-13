@@ -6,11 +6,11 @@ const Department = require("../models/Department");
 // Register new user
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role, departmentId, profilePic } = req.body;
+    const { name, email, password, designation, role, departmentId, profilePic } = req.body;
 
     // Validate required fields
-    if (!name || !email || !password || !departmentId) {
-      return res.status(400).json({ message: "Please provide all required fields (name, email, password, department)" });
+    if (!name || !email || !password || !designation || !departmentId) {
+      return res.status(400).json({ message: "Please provide all required fields (name, email, password, designation, department)" });
     }
 
     // Validate email format
@@ -51,6 +51,7 @@ exports.register = async (req, res) => {
       name,
       email,
       password: hashedPassword,
+      designation,
       role: role || "Employee",
       department: departmentId,
       profilePic: profilePic || null,
@@ -59,9 +60,13 @@ exports.register = async (req, res) => {
     await user.save();
 
     // Add user to department's employees array
-    await Department.findByIdAndUpdate(departmentId, {
-      $push: { employees: user._id },
-    });
+    const updatedDepartment = await Department.findByIdAndUpdate(
+      departmentId,
+      { $push: { employees: user._id } },
+      { new: true }
+    );
+    
+    console.log(`User ${user.name} added to department ${updatedDepartment.name}. Total employees: ${updatedDepartment.employees.length}`);
 
     // Generate JWT token
     const token = jwt.sign(
@@ -77,6 +82,7 @@ exports.register = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        designation: user.designation,
         role: user.role,
         department: user.department,
         leaveQuota: user.leaveQuota,
@@ -130,6 +136,7 @@ exports.login = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        designation: user.designation,
         role: user.role,
         department: user.department,
         leaveQuota: user.leaveQuota,
@@ -158,6 +165,7 @@ exports.getProfile = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        designation: user.designation,
         role: user.role,
         department: user.department,
         leaveQuota: user.leaveQuota,

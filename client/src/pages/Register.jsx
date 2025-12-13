@@ -10,6 +10,7 @@ const Register = () => {
     email: '',
     password: '',
     confirmPassword: '',
+    designation: '',
     departmentId: '',
     profilePic: '',
   });
@@ -100,6 +101,7 @@ const Register = () => {
       name: formData.name,
       email: formData.email,
       password: formData.password,
+      designation: formData.designation,
       departmentId: formData.departmentId,
       profilePic: formData.profilePic || null,
       role: 'Employee',
@@ -146,6 +148,19 @@ const Register = () => {
               onChange={handleChange}
               required
               placeholder="Enter your email"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="designation">Designation *</label>
+            <input
+              type="text"
+              id="designation"
+              name="designation"
+              value={formData.designation}
+              onChange={handleChange}
+              required
+              placeholder="e.g., Assistant Professor, Lecturer"
             />
           </div>
 
