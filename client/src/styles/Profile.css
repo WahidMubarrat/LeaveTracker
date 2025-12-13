@@ -1,0 +1,203 @@
+.profile-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.profile-header {
+  margin-bottom: 2rem;
+}
+
+.profile-header h1 {
+  color: #333;
+  margin: 0 0 0.5rem 0;
+  font-size: 2rem;
+}
+
+.profile-subtitle {
+  color: #666;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.profile-content {
+  display: grid;
+  gap: 2rem;
+}
+
+.profile-card {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.profile-image-section {
+  text-align: center;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 2rem;
+}
+
+.profile-image {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #667eea;
+  margin-bottom: 1rem;
+}
+
+.profile-image-placeholder {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  font-weight: 600;
+  margin: 0 auto 1rem;
+  border: 4px solid #667eea;
+}
+
+.profile-card h2 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+  font-size: 1.75rem;
+}
+
+.profile-role-badge {
+  display: inline-block;
+  background: #667eea;
+  color: white;
+  padding: 0.5rem 1.5rem;
+  border-radius: 20px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.profile-info-section h3 {
+  color: #333;
+  margin: 0 0 1.5rem 0;
+  font-size: 1.25rem;
+}
+
+.profile-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.profile-info-item {
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.profile-info-item label {
+  display: block;
+  color: #666;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.profile-info-item p {
+  margin: 0;
+  color: #333;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.profile-id {
+  font-family: monospace;
+  font-size: 0.875rem !important;
+}
+
+.quota-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.quota-card {
+  padding: 1.5rem;
+  border-radius: 10px;
+  background: #f8f9fa;
+}
+
+.quota-card.annual {
+  border-left: 4px solid #667eea;
+}
+
+.quota-card.sick {
+  border-left: 4px solid #f5576c;
+}
+
+.quota-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.quota-icon {
+  font-size: 1.5rem;
+}
+
+.quota-type {
+  color: #333;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.quota-value {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #333;
+  line-height: 1;
+}
+
+.quota-label {
+  color: #666;
+  font-size: 0.875rem;
+  margin: 0.5rem 0 1rem 0;
+}
+
+.quota-progress-bar {
+  height: 8px;
+  background: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.quota-progress-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.quota-progress-fill.annual {
+  background: linear-gradient(90deg, #667eea, #764ba2);
+}
+
+.quota-progress-fill.sick {
+  background: linear-gradient(90deg, #f093fb, #f5576c);
+}
+
+@media (max-width: 768px) {
+  .profile-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .profile-card {
+    padding: 1.5rem;
+  }
+
+  .profile-info-grid {
+    grid-template-columns: 1fr;
+  }
+}
