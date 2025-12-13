@@ -1,10 +1,9 @@
 require("dotenv").config();
 const express = require("express");
-const passport = require("passport");
 const session = require("express-session");
-const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const cors = require("cors");
 const connectDB = require("./config/db");
+const passport = require("./config/passport"); // Import configured passport
 
 // Import routes
 const authRoutes = require("./routes/authRoutes");
