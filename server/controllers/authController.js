@@ -60,13 +60,11 @@ exports.register = async (req, res) => {
     await user.save();
 
     // Add user to department's employees array
-    const updatedDepartment = await Department.findByIdAndUpdate(
+    await Department.findByIdAndUpdate(
       departmentId,
       { $push: { employees: user._id } },
       { new: true }
     );
-    
-    console.log(`User ${user.name} added to department ${updatedDepartment.name}. Total employees: ${updatedDepartment.employees.length}`);
 
     // Generate JWT token
     const token = jwt.sign(
