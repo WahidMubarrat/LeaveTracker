@@ -7,6 +7,13 @@
   margin-bottom: 2rem;
 }
 
+.members-content {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
 .members-header h1 {
   color: #333;
   margin: 0 0 0.5rem 0;
@@ -96,6 +103,13 @@
   color: #666;
   margin: 0 0 1rem 0;
   font-size: 0.875rem;
+}
+
+.member-designation {
+  color: #444;
+  margin: 0 0 0.75rem 0;
+  font-size: 0.95rem;
+  font-weight: 500;
 }
 
 .member-role-badge {

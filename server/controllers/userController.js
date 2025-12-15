@@ -70,12 +70,12 @@ exports.getDepartmentMembers = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const members = await User.find({ 
-      department: currentUser.department 
+    const members = await User.find({
+      department: currentUser.department,
     })
-      .select("-password")
-      .populate("department", "name")
-      .sort({ name: 1 });
+      .select('name email designation role profilePic')
+      .sort({ name: 1 })
+      .lean();
 
     res.json({ members });
   } catch (error) {
