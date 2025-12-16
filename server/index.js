@@ -24,7 +24,7 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(session({
-  secret: process.env.SESSION_SECRET,
+  secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: false,
   saveUninitialized: true,
 }));  
@@ -44,8 +44,12 @@ app.get("/", (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
+  console.error('Error caught by middleware:');
   console.error(err.stack);
-  res.status(500).json({ message: "Something went wrong!" });
+  res.status(500).json({ 
+    message: "Something went wrong!",
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+  });
 });
 
 if (process.env.NODE_ENV !== 'test') {

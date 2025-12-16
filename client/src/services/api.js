@@ -36,4 +36,12 @@ export const departmentAPI = {
   getAll: () => api.get('/departments'),
 };
 
+// User API
+export const userAPI = {
+  getLeaveStatistics: () => api.get('/users/leave-statistics'),
+  getDepartmentMembers: () => api.get('/users/department-members'),
+  updateProfile: (data) => api.put('/users/profile', data),
+  changePassword: (data) => api.put('/users/change-password', data),
+};
+
 export default api;

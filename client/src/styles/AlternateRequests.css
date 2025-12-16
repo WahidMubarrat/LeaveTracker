@@ -1,0 +1,68 @@
+.alternate-requests-page {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.alternate-requests-header {
+  margin-bottom: 2rem;
+}
+
+.alternate-requests-header h1 {
+  color: #333;
+  margin: 0 0 0.5rem 0;
+  font-size: 2rem;
+}
+
+.alternate-requests-subtitle {
+  color: #666;
+  margin: 0;
+  font-size: 1rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.alternate-requests-status {
+  color: #999;
+  margin: 0.25rem 0 0;
+  font-size: 0.95rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.alternate-requests-placeholder {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+}
+
+.alternate-requests-placeholder .placeholder-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+}
+
+.alternate-requests-placeholder h2 {
+  margin: 0 0 0.75rem;
+  color: #333;
+  font-size: 1.75rem;
+}
+
+.alternate-requests-placeholder p {
+  margin: 0;
+  color: #666;
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .alternate-requests-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .alternate-requests-placeholder {
+    padding: 3rem 1.5rem;
+  }
+}

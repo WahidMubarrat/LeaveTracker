@@ -60,6 +60,26 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginWithToken = async (authToken) => {
+    try {
+      console.log('loginWithToken called with token:', authToken?.substring(0, 20) + '...');
+      localStorage.setItem('token', authToken);
+      setToken(authToken);
+      const response = await authAPI.getProfile();
+      console.log('Profile fetched successfully:', response.data.user);
+      setUser(response.data.user);
+      return { success: true };
+    } catch (error) {
+      console.error('loginWithToken error:', error.response?.data || error.message);
+      localStorage.removeItem('token');
+      setToken(null);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Authentication failed',
+      };
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     setToken(null);
@@ -70,10 +90,12 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider
       value={{
         user,
+        setUser,
         token,
         loading,
         login,
         register,
+        loginWithToken,
         logout,
       }}
     >
