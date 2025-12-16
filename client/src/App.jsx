@@ -7,6 +7,7 @@ import Members from './pages/Members';
 import LeaveHistory from './pages/LeaveHistory';
 import LeaveApplication from './pages/LeaveApplication';
 import ApplicationStatus from './pages/ApplicationStatus';
+import AlternateRequests from './pages/AlternateRequests';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
@@ -55,6 +56,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ApplicationStatus />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/alternate-requests"
+            element={
+              <ProtectedRoute>
+                <AlternateRequests />
               </ProtectedRoute>
             }
           />

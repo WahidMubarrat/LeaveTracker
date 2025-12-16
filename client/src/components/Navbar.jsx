@@ -18,6 +18,7 @@ const Navbar = () => {
     { path: '/leave-history', label: 'Leave History', icon: '📋' },
     { path: '/leave-application', label: 'Apply Leave', icon: '📝' },
     { path: '/application-status', label: 'Application Status', icon: '📊' },
+    { path: '/alternate-requests', label: 'Alternate Requests', icon: '🔄' },
   ];
 
   return (
