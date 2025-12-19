@@ -9,6 +9,16 @@ const authMiddleware = require("../middleware/authMiddleware");
 router.get("/department-members", authMiddleware, userController.getDepartmentMembers);
 router.get("/alternate-options", authMiddleware, userController.getAlternateOptions);
 
+// @route   GET /api/users/all-departments
+// @desc    Get all departments with members (HR only)
+// @access  Private (HR)
+router.get("/all-departments", authMiddleware, userController.getAllDepartmentsWithMembers);
+
+// @route   POST /api/users/assign-hod
+// @desc    Assign Head of Department role to a user
+// @access  Private (HR)
+router.post("/assign-hod", authMiddleware, userController.assignHoD);
+
 // @route   GET /api/users/leave-statistics
 // @desc    Get leave statistics for current user
 // @access  Private

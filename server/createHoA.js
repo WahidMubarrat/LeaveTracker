@@ -7,7 +7,7 @@ mongoose.connect(process.env.MONGO_URI);
 
 async function createHoA() {
   try {
-    const exists = await User.findOne({ role: "HR" });
+    const exists = await User.findOne({ roles: "HR" });
     if (exists) {
       console.log("❌ HR already exists:", exists.email);
       return process.exit();
@@ -20,7 +20,7 @@ async function createHoA() {
       email: "hr@leavetracker.com",
       password: hashedPassword,
       designation: "Professor",
-      role: "HR",
+      roles: ["HR"],
     });
 
     console.log("✅ HR created successfully");

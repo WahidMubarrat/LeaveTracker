@@ -73,7 +73,7 @@ exports.getDepartmentMembers = async (req, res) => {
     const members = await User.find({
       department: currentUser.department,
     })
-      .select('name email designation role profilePic')
+      .select('name email designation role roles profilePic')
       .sort({ name: 1 })
       .lean();
 
@@ -155,7 +155,8 @@ exports.updateProfile = async (req, res) => {
         name: user.name,
         email: user.email,
         designation: user.designation,
-        role: user.role,
+        role: user.role, // Virtual property for backward compatibility
+        roles: user.roles,
         department: user.department,
         leaveQuota: user.leaveQuota,
         profilePic: user.profilePic,
@@ -221,6 +222,130 @@ exports.changePassword = async (req, res) => {
     res.json({ message: "Password changed successfully" });
   } catch (error) {
     console.error("Change password error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get all departments with their members (HR only)
+exports.getAllDepartmentsWithMembers = async (req, res) => {
+  try {
+    const currentUser = await User.findById(req.user.id);
+    
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if user is HR
+    if (!currentUser.hasRole("HR")) {
+      return res.status(403).json({ message: "Access denied. HR only." });
+    }
+
+    const Department = require("../models/Department");
+
+    // Get all departments with their members
+    const departments = await Department.find()
+      .populate({
+        path: 'employees',
+        select: 'name email designation roles profilePic',
+        options: { sort: { name: 1 } }
+      })
+      .populate({
+        path: 'headOfDepartment',
+        select: 'name email designation'
+      })
+      .sort({ name: 1 })
+      .lean();
+
+    res.json({ departments });
+  } catch (error) {
+    console.error("Get all departments error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Assign HoD role to a user
+exports.assignHoD = async (req, res) => {
+  try {
+    const { userId, departmentId } = req.body;
+
+    if (!userId || !departmentId) {
+      return res.status(400).json({ message: "User ID and Department ID are required" });
+    }
+
+    const currentUser = await User.findById(req.user.id);
+    
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if user is HR
+    if (!currentUser.hasRole("HR")) {
+      return res.status(403).json({ message: "Access denied. HR only." });
+    }
+
+    const Department = require("../models/Department");
+
+    // Find the user to be assigned as HoD
+    const userToAssign = await User.findById(userId);
+    if (!userToAssign) {
+      return res.status(404).json({ message: "User to assign not found" });
+    }
+
+    // Find the department
+    const department = await Department.findById(departmentId);
+    if (!department) {
+      return res.status(404).json({ message: "Department not found" });
+    }
+
+    // Verify user belongs to this department
+    if (userToAssign.department.toString() !== departmentId) {
+      return res.status(400).json({ message: "User does not belong to this department" });
+    }
+
+    // Check if there's already a HoD for this department
+    const oldHoD = department.headOfDepartment;
+    
+    if (oldHoD) {
+      // Remove HoD role from previous HoD
+      const previousHoD = await User.findById(oldHoD);
+      if (previousHoD) {
+        previousHoD.roles = previousHoD.roles.filter(role => role !== "HoD");
+        await previousHoD.save();
+      }
+    }
+
+    // Add HoD role to the new user if they don't have it
+    if (!userToAssign.hasRole("HoD")) {
+      userToAssign.roles.push("HoD");
+      await userToAssign.save();
+    }
+
+    // Update department's headOfDepartment field
+    department.headOfDepartment = userId;
+    await department.save();
+
+    // Populate the updated user data
+    await userToAssign.populate('department');
+
+    res.json({ 
+      message: "Head of Department assigned successfully",
+      user: {
+        id: userToAssign._id,
+        name: userToAssign.name,
+        email: userToAssign.email,
+        designation: userToAssign.designation,
+        role: userToAssign.role,
+        roles: userToAssign.roles,
+        department: userToAssign.department
+      },
+      department: {
+        id: department._id,
+        name: department.name,
+        headOfDepartment: department.headOfDepartment
+      }
+    });
+  } catch (error) {
+    console.error("Assign HoD error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

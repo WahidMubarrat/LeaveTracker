@@ -1,4 +1,5 @@
 import HRLayout from '../../components/HRLayout';
+import HeadOfDepartment from '../../components/HeadOfDepartment';
 import '../../styles/SystemSettings.css';
 
 const SystemSettings = () => {
@@ -8,6 +9,11 @@ const SystemSettings = () => {
         <div className="page-header">
           <h1>System Settings</h1>
           <p className="page-subtitle">Manage system configurations and preferences</p>
+        </div>
+
+        {/* Head of Department Management Section */}
+        <div className="settings-section">
+          <HeadOfDepartment />
         </div>
 
         <div className="settings-grid">

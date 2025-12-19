@@ -134,14 +134,14 @@ exports.getPendingApprovals = async (req, res) => {
 
     let query = {};
 
-    if (currentUser.role === "HoD") {
+    if (currentUser.hasRole("HoD")) {
       // HoD sees pending requests in their department
       query = {
         department: currentUser.department,
         approvedByHoD: false,
         status: "Pending"
       };
-    } else if (currentUser.role === "HR") {
+    } else if (currentUser.hasRole("HR")) {
       // HR sees requests approved by HoD but not by HR
       query = {
         approvedByHoD: true,
@@ -184,10 +184,10 @@ exports.updateLeaveStatus = async (req, res) => {
     let historyAction = "";
 
     if (action === "approve") {
-      if (currentUser.role === "HoD") {
+      if (currentUser.hasRole("HoD")) {
         leaveRequest.approvedByHoD = true;
         historyAction = "Approved by HoD";
-      } else if (currentUser.role === "HR") {
+      } else if (currentUser.hasRole("HR")) {
         leaveRequest.approvedByHR = true;
         leaveRequest.status = "Approved";
         historyAction = "Approved by HR";

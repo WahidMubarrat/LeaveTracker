@@ -52,7 +52,7 @@ exports.register = async (req, res) => {
       email,
       password: hashedPassword,
       designation,
-      role: role || "Employee",
+      roles: ["Employee"], // Always register as Employee only
       department: departmentId,
       profilePic: profilePic || null,
     });
@@ -71,7 +71,7 @@ exports.register = async (req, res) => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { id: user._id, email: user.email, role: user.role },
+      { id: user._id, email: user.email, roles: user.roles },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
@@ -84,7 +84,8 @@ exports.register = async (req, res) => {
         name: user.name,
         email: user.email,
         designation: user.designation,
-        role: user.role,
+        role: user.role, // Virtual property for backward compatibility
+        roles: user.roles,
         department: user.department,
         leaveQuota: user.leaveQuota,
         profilePic: user.profilePic,
@@ -125,7 +126,7 @@ exports.login = async (req, res) => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { id: user._id, email: user.email, role: user.role },
+      { id: user._id, email: user.email, roles: user.roles },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
@@ -138,7 +139,8 @@ exports.login = async (req, res) => {
         name: user.name,
         email: user.email,
         designation: user.designation,
-        role: user.role,
+        role: user.role, // Virtual property for backward compatibility
+        roles: user.roles,
         department: user.department,
         leaveQuota: user.leaveQuota,
         profilePic: user.profilePic,
@@ -167,7 +169,8 @@ exports.getProfile = async (req, res) => {
         name: user.name,
         email: user.email,
         designation: user.designation,
-        role: user.role,
+        role: user.role, // Virtual property for backward compatibility
+        roles: user.roles,
         department: user.department,
         leaveQuota: user.leaveQuota,
         profilePic: user.profilePic,
