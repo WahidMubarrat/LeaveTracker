@@ -9,7 +9,11 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  designation: { type: String, required: true },
+  designation: { 
+    type: String, 
+    enum: ["Lecturer", "Assistant Professor", "Associate Professor", "Professor"],
+    required: true 
+  },
   role: { type: String, enum: ["Employee", "HoD", "HR"], default: "Employee" },
   department: { type: mongoose.Schema.Types.ObjectId, ref: "Department" },
   leaveQuota: { type: leaveQuotaSchema, default: () => ({}) },

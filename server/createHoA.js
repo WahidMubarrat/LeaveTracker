@@ -19,7 +19,7 @@ async function createHoA() {
       name: "Head of Administration",
       email: "hr@leavetracker.com",
       password: hashedPassword,
-      designation: "HR",
+      designation: "Professor",
       role: "HR",
     });
 

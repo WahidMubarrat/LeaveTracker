@@ -153,15 +153,19 @@ const Register = () => {
 
           <div className="form-group">
             <label htmlFor="designation">Designation *</label>
-            <input
-              type="text"
+            <select
               id="designation"
               name="designation"
               value={formData.designation}
               onChange={handleChange}
               required
-              placeholder="e.g., Assistant Professor, Lecturer"
-            />
+            >
+              <option value="">Select Designation</option>
+              <option value="Lecturer">Lecturer</option>
+              <option value="Assistant Professor">Assistant Professor</option>
+              <option value="Associate Professor">Associate Professor</option>
+              <option value="Professor">Professor</option>
+            </select>
           </div>
 
           <div className="form-group">

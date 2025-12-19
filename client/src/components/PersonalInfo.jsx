@@ -169,14 +169,18 @@ const PersonalInfo = () => {
           <div className="info-item">
             <label className="info-label">Designation</label>
             {isEditing ? (
-              <input
-                type="text"
+              <select
                 name="designation"
                 value={editData.designation}
                 onChange={handleChange}
                 className="info-input"
-                placeholder="Enter your designation"
-              />
+              >
+                <option value="">Select Designation</option>
+                <option value="Lecturer">Lecturer</option>
+                <option value="Assistant Professor">Assistant Professor</option>
+                <option value="Associate Professor">Associate Professor</option>
+                <option value="Professor">Professor</option>
+              </select>
             ) : (
               <p className="info-value">{user.designation || 'Not Set'}</p>
             )}
