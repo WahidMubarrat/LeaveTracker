@@ -5,7 +5,18 @@ const User = require("../models/User");
 // Apply for leave
 exports.applyLeave = async (req, res) => {
   try {
-    const { startDate, endDate, type, reason, backupEmployeeId } = req.body;
+    const {
+      startDate,
+      endDate,
+      type,
+      reason,
+      backupEmployeeId,
+      applicationDate,
+      applicantName,
+      departmentName,
+      applicantDesignation,
+      numberOfDays,
+    } = req.body;
 
     // Validate required fields
     if (!startDate || !endDate || !type) {
@@ -20,19 +31,19 @@ exports.applyLeave = async (req, res) => {
       return res.status(400).json({ message: "End date cannot be before start date" });
     }
 
-    const currentUser = await User.findById(req.user.id);
+    const currentUser = await User.findById(req.user.id).populate('department', 'name');
     if (!currentUser) {
       return res.status(404).json({ message: "User not found" });
     }
 
     // Calculate number of days
-    const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+    const calculatedDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+    const totalDays = Number(numberOfDays) > 0 ? Number(numberOfDays) : calculatedDays;
 
-    // Check leave quota
-    const quotaType = type === "Annual" ? "annual" : type === "Sick" ? "sick" : null;
-    if (quotaType && currentUser.leaveQuota[quotaType] < days) {
+    // Check leave quota (both Annual and Casual use annual quota)
+    if (currentUser.leaveQuota.annual < totalDays) {
       return res.status(400).json({ 
-        message: `Insufficient ${type.toLowerCase()} leave quota. Available: ${currentUser.leaveQuota[quotaType]} days` 
+        message: `Insufficient leave quota. Available: ${currentUser.leaveQuota.annual} days` 
       });
     }
 
@@ -40,10 +51,15 @@ exports.applyLeave = async (req, res) => {
     const leaveRequest = new LeaveRequest({
       employee: req.user.id,
       department: currentUser.department,
+      departmentName: departmentName || currentUser.department?.name || '',
+      applicantName: applicantName || currentUser.name,
+      applicantDesignation: applicantDesignation || currentUser.designation,
+      applicationDate: applicationDate ? new Date(applicationDate) : new Date(),
       startDate: start,
       endDate: end,
       type,
       reason,
+      numberOfDays: totalDays,
       backupEmployee: backupEmployeeId || null,
     });
 
@@ -107,7 +123,7 @@ exports.getLeaveHistory = async (req, res) => {
   }
 };
 
-// Get pending approvals (for HoD and HoA)
+// Get pending approvals (for HoD and HR)
 exports.getPendingApprovals = async (req, res) => {
   try {
     const currentUser = await User.findById(req.user.id);
@@ -125,11 +141,11 @@ exports.getPendingApprovals = async (req, res) => {
         approvedByHoD: false,
         status: "Pending"
       };
-    } else if (currentUser.role === "HoA") {
-      // HoA sees requests approved by HoD but not by HoA
+    } else if (currentUser.role === "HR") {
+      // HR sees requests approved by HoD but not by HR
       query = {
         approvedByHoD: true,
-        approvedByHoA: false,
+        approvedByHR: false,
         status: "Pending"
       };
     } else {
@@ -171,20 +187,16 @@ exports.updateLeaveStatus = async (req, res) => {
       if (currentUser.role === "HoD") {
         leaveRequest.approvedByHoD = true;
         historyAction = "Approved by HoD";
-      } else if (currentUser.role === "HoA") {
-        leaveRequest.approvedByHoA = true;
+      } else if (currentUser.role === "HR") {
+        leaveRequest.approvedByHR = true;
         leaveRequest.status = "Approved";
-        historyAction = "Approved by HoA";
+        historyAction = "Approved by HR";
 
-        // Deduct leave quota
+        // Deduct leave quota (both Annual and Casual deduct from annual quota)
         const employee = await User.findById(leaveRequest.employee);
         const days = Math.ceil((leaveRequest.endDate - leaveRequest.startDate) / (1000 * 60 * 60 * 24)) + 1;
         
-        if (leaveRequest.type === "Annual") {
-          employee.leaveQuota.annual -= days;
-        } else if (leaveRequest.type === "Sick") {
-          employee.leaveQuota.sick -= days;
-        }
+        employee.leaveQuota.annual -= days;
         
         await employee.save();
       } else {

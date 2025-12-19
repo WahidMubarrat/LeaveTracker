@@ -19,13 +19,13 @@ router.get("/my-applications", authMiddleware, leaveController.getMyApplications
 router.get("/history", authMiddleware, leaveController.getLeaveHistory);
 
 // @route   GET /api/leaves/pending-approvals
-// @desc    Get pending approvals (for HoD and HoA)
-// @access  Private (HoD, HoA only)
+// @desc    Get pending approvals (for HoD and HR)
+// @access  Private (HoD, HR only)
 router.get("/pending-approvals", authMiddleware, leaveController.getPendingApprovals);
 
 // @route   PUT /api/leaves/:leaveId/status
 // @desc    Approve or decline leave request
-// @access  Private (HoD, HoA only)
+// @access  Private (HoD, HR only)
 router.put("/:leaveId/status", authMiddleware, leaveController.updateLeaveStatus);
 
 // @route   GET /api/leaves/:leaveId/logs

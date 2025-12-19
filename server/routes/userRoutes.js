@@ -7,6 +7,7 @@ const authMiddleware = require("../middleware/authMiddleware");
 // @desc    Get all members from user's department
 // @access  Private
 router.get("/department-members", authMiddleware, userController.getDepartmentMembers);
+router.get("/alternate-options", authMiddleware, userController.getAlternateOptions);
 
 // @route   GET /api/users/leave-statistics
 // @desc    Get leave statistics for current user

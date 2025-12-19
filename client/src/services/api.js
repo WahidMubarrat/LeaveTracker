@@ -1,7 +1,7 @@
 
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Create axios instance
 const api = axios.create({
@@ -41,6 +41,7 @@ export const departmentAPI = {
 export const userAPI = {
   getLeaveStatistics: () => api.get('/users/leave-statistics'),
   getDepartmentMembers: () => api.get('/users/department-members'),
+  getAlternateOptions: () => api.get('/users/alternate-options'),
   updateProfile: (data) => api.put('/users/profile', data),
   changePassword: (data) => api.put('/users/change-password', data),
 };

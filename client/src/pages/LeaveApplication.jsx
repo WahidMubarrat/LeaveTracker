@@ -1,43 +1,65 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import Layout from '../components/Layout';
-import axios from 'axios';
+import AlternateSelection from '../components/AlternateSelection';
+import { AuthContext } from '../context/AuthContext';
+import api from '../services/api';
 import '../styles/LeaveApplication.css';
 
 const LeaveApplication = () => {
+  const { user } = useContext(AuthContext);
+  
   const [formData, setFormData] = useState({
-    type: 'Annual',
+    applicationDate: new Date().toISOString().split('T')[0],
+    applicantName: user?.name || '',
+    departmentName: user?.department?.name || '',
+    applicantDesignation: user?.designation || '',
+    type: 'Casual',
     startDate: '',
     endDate: '',
+    numberOfDays: '',
     reason: '',
     backupEmployeeId: '',
   });
-  const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    fetchDepartmentMembers();
-  }, []);
-
-  const fetchDepartmentMembers = async () => {
-    try {
-      const response = await axios.get('http://localhost:5000/api/users/department-members', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      setMembers(response.data.members || []);
-    } catch (error) {
-      console.error('Failed to fetch members:', error);
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        applicantName: user.name || '',
+        departmentName: user.department?.name || '',
+        applicantDesignation: user.designation || '',
+      }));
     }
-  };
+  }, [user]);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    // Auto-calculate days when dates change
+    if (name === 'startDate' || name === 'endDate') {
+      const start = name === 'startDate' ? value : formData.startDate;
+      const end = name === 'endDate' ? value : formData.endDate;
+      
+      if (start && end) {
+        const startDate = new Date(start);
+        const endDate = new Date(end);
+        const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+        
+        if (days > 0) {
+          setFormData(prev => ({
+            ...prev,
+            numberOfDays: days.toString(),
+          }));
+        }
+      }
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -54,22 +76,19 @@ const LeaveApplication = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post(
-        'http://localhost:5000/api/leaves/apply',
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        }
-      );
-
+      const response = await api.post('/leaves/apply', formData);
       setSuccess('Leave application submitted successfully!');
+      
       // Reset form
       setFormData({
-        type: 'Annual',
+        applicationDate: new Date().toISOString().split('T')[0],
+        applicantName: user?.name || '',
+        departmentName: user?.department?.name || '',
+        applicantDesignation: user?.designation || '',
+        type: 'Casual',
         startDate: '',
         endDate: '',
+        numberOfDays: '',
         reason: '',
         backupEmployeeId: '',
       });
@@ -80,14 +99,21 @@ const LeaveApplication = () => {
     }
   };
 
-  const calculateDays = () => {
-    if (formData.startDate && formData.endDate) {
-      const start = new Date(formData.startDate);
-      const end = new Date(formData.endDate);
-      const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-      return days > 0 ? days : 0;
-    }
-    return 0;
+  const handleClear = () => {
+    setFormData({
+      applicationDate: new Date().toISOString().split('T')[0],
+      applicantName: user?.name || '',
+      departmentName: user?.department?.name || '',
+      applicantDesignation: user?.designation || '',
+      type: 'Casual',
+      startDate: '',
+      endDate: '',
+      numberOfDays: '',
+      reason: '',
+      backupEmployeeId: '',
+    });
+    setError('');
+    setSuccess('');
   };
 
   return (
@@ -104,9 +130,65 @@ const LeaveApplication = () => {
             {success && <div className="application-success">{success}</div>}
 
             <form onSubmit={handleSubmit}>
+              {/* Application Date */}
               <div className="form-row">
                 <div className="form-group">
-                  <label htmlFor="type">Leave Type *</label>
+                  <label htmlFor="applicationDate">Application Date *</label>
+                  <input
+                    type="date"
+                    id="applicationDate"
+                    name="applicationDate"
+                    value={formData.applicationDate}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="applicantName">Name of Applicant *</label>
+                  <input
+                    type="text"
+                    id="applicantName"
+                    name="applicantName"
+                    value={formData.applicantName}
+                    onChange={handleChange}
+                    placeholder="Your full name"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Department and Designation */}
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="departmentName">Department *</label>
+                  <input
+                    type="text"
+                    id="departmentName"
+                    name="departmentName"
+                    value={formData.departmentName}
+                    onChange={handleChange}
+                    placeholder="Your department"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="applicantDesignation">Designation *</label>
+                  <input
+                    type="text"
+                    id="applicantDesignation"
+                    name="applicantDesignation"
+                    value={formData.applicantDesignation}
+                    onChange={handleChange}
+                    placeholder="Your designation"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Nature of Leave */}
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="type">Nature of Leave *</label>
                   <select
                     id="type"
                     name="type"
@@ -114,33 +196,29 @@ const LeaveApplication = () => {
                     onChange={handleChange}
                     required
                   >
+                    <option value="Casual">Casual Leave</option>
                     <option value="Annual">Annual Leave</option>
-                    <option value="Sick">Sick Leave</option>
-                    <option value="Other">Other</option>
                   </select>
                 </div>
-
                 <div className="form-group">
-                  <label htmlFor="backupEmployeeId">Backup Employee</label>
-                  <select
-                    id="backupEmployeeId"
-                    name="backupEmployeeId"
-                    value={formData.backupEmployeeId}
+                  <label htmlFor="numberOfDays">Number of Days *</label>
+                  <input
+                    type="number"
+                    id="numberOfDays"
+                    name="numberOfDays"
+                    value={formData.numberOfDays}
                     onChange={handleChange}
-                  >
-                    <option value="">Select Backup (Optional)</option>
-                    {members.map((member) => (
-                      <option key={member._id} value={member._id}>
-                        {member.name} ({member.role})
-                      </option>
-                    ))}
-                  </select>
+                    min="1"
+                    placeholder="Auto-calculated"
+                    required
+                  />
                 </div>
               </div>
 
+              {/* Period of Leave */}
               <div className="form-row">
                 <div className="form-group">
-                  <label htmlFor="startDate">Start Date *</label>
+                  <label htmlFor="startDate">From Date *</label>
                   <input
                     type="date"
                     id="startDate"
@@ -151,9 +229,8 @@ const LeaveApplication = () => {
                     required
                   />
                 </div>
-
                 <div className="form-group">
-                  <label htmlFor="endDate">End Date *</label>
+                  <label htmlFor="endDate">To Date *</label>
                   <input
                     type="date"
                     id="endDate"
@@ -166,22 +243,26 @@ const LeaveApplication = () => {
                 </div>
               </div>
 
-              {calculateDays() > 0 && (
-                <div className="days-info">
-                  <span className="days-label">Total Days:</span>
-                  <span className="days-value">{calculateDays()} days</span>
-                </div>
-              )}
-
+              {/* Purpose of Leave */}
               <div className="form-group">
-                <label htmlFor="reason">Reason</label>
+                <label htmlFor="reason">Purpose of Leave *</label>
                 <textarea
                   id="reason"
                   name="reason"
                   value={formData.reason}
                   onChange={handleChange}
                   rows="4"
-                  placeholder="Provide a reason for your leave application (optional)"
+                  placeholder="Describe the purpose of your leave"
+                  required
+                />
+              </div>
+
+              {/* Alternate Selection */}
+              <div className="form-group">
+                <AlternateSelection
+                  value={formData.backupEmployeeId}
+                  onChange={handleChange}
+                  required={false}
                 />
               </div>
 
@@ -189,17 +270,7 @@ const LeaveApplication = () => {
                 <button
                   type="button"
                   className="btn-secondary"
-                  onClick={() => {
-                    setFormData({
-                      type: 'Annual',
-                      startDate: '',
-                      endDate: '',
-                      reason: '',
-                      backupEmployeeId: '',
-                    });
-                    setError('');
-                    setSuccess('');
-                  }}
+                  onClick={handleClear}
                 >
                   Clear
                 </button>
