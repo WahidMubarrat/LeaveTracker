@@ -1,9 +1,9 @@
 import { useState, useEffect, useContext } from 'react';
-import Layout from '../components/Layout';
-import AlternateSelection from '../components/AlternateSelection';
-import { AuthContext } from '../context/AuthContext';
-import api from '../services/api';
-import '../styles/LeaveApplication.css';
+import Layout from '../../components/Layout';
+import AlternateSelection from '../../components/AlternateSelection';
+import { AuthContext } from '../../context/AuthContext';
+import api from '../../services/api';
+import '../../styles/LeaveApplication.css';
 
 const LeaveApplication = () => {
   const { user } = useContext(AuthContext);

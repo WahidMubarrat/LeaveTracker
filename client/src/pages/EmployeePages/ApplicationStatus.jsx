@@ -1,5 +1,5 @@
-import Layout from '../components/Layout';
-import '../styles/ApplicationStatus.css';
+import Layout from '../../components/Layout';
+import '../../styles/ApplicationStatus.css';
 
 const ApplicationStatus = () => {
   return (

@@ -1,5 +1,5 @@
-import Layout from '../components/Layout';
-import '../styles/LeaveHistory.css';
+import Layout from '../../components/Layout';
+import '../../styles/LeaveHistory.css';
 
 const LeaveHistory = () => {
   return (

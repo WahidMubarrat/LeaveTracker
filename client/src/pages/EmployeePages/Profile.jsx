@@ -1,9 +1,9 @@
 import { useContext } from 'react';
-import { AuthContext } from '../context/AuthContext';
-import Layout from '../components/Layout';
-import LeaveData from '../components/LeaveData';
-import PersonalInfo from '../components/PersonalInfo';
-import '../styles/Profile.css';
+import { AuthContext } from '../../context/AuthContext';
+import Layout from '../../components/Layout';
+import LeaveData from '../../components/LeaveData';
+import PersonalInfo from '../../components/PersonalInfo';
+import '../../styles/Profile.css';
 
 const Profile = () => {
   const { user } = useContext(AuthContext);

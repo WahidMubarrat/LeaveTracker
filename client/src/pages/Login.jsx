@@ -29,7 +29,12 @@ const Login = () => {
     const result = await login(formData);
 
     if (result.success) {
-      navigate('/profile');
+      // Redirect based on user role
+      if (result.user.role === 'HR') {
+        navigate('/hr/system-settings');
+      } else {
+        navigate('/profile');
+      }
     } else {
       setError(result.message);
     }

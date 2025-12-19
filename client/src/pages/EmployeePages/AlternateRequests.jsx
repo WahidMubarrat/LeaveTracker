@@ -1,5 +1,5 @@
-import Layout from '../components/Layout';
-import '../styles/AlternateRequests.css';
+import Layout from '../../components/Layout';
+import '../../styles/AlternateRequests.css';
 
 const AlternateRequests = () => {
   return (

@@ -2,13 +2,18 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import Profile from './pages/Profile';
-import Members from './pages/Members';
-import LeaveHistory from './pages/LeaveHistory';
-import LeaveApplication from './pages/LeaveApplication';
-import ApplicationStatus from './pages/ApplicationStatus';
-import AlternateRequests from './pages/AlternateRequests';
+import Profile from './pages/EmployeePages/Profile';
+import Members from './pages/EmployeePages/Members';
+import LeaveHistory from './pages/EmployeePages/LeaveHistory';
+import LeaveApplication from './pages/EmployeePages/LeaveApplication';
+import ApplicationStatus from './pages/EmployeePages/ApplicationStatus';
+import AlternateRequests from './pages/EmployeePages/AlternateRequests';
+import SystemSettings from './pages/HRPages/SystemSettings';
+import ReviewApplication from './pages/HRPages/ReviewApplication';
+import SystemMembers from './pages/HRPages/SystemMembers';
+import LeaveAnalytics from './pages/HRPages/LeaveAnalytics';
 import ProtectedRoute from './components/ProtectedRoute';
+import RoleBasedRoute from './components/RoleBasedRoute';
 import './App.css';
 
 function App() {
@@ -22,49 +27,82 @@ function App() {
           <Route
             path="/profile"
             element={
-              <ProtectedRoute>
+              <RoleBasedRoute allowedRoles={['Employee', 'HoD']}>
                 <Profile />
-              </ProtectedRoute>
+              </RoleBasedRoute>
             }
           />
           <Route
             path="/members"
             element={
-              <ProtectedRoute>
+              <RoleBasedRoute allowedRoles={['Employee', 'HoD']}>
                 <Members />
-              </ProtectedRoute>
+              </RoleBasedRoute>
             }
           />
           <Route
             path="/leave-history"
             element={
-              <ProtectedRoute>
+              <RoleBasedRoute allowedRoles={['Employee', 'HoD']}>
                 <LeaveHistory />
-              </ProtectedRoute>
+              </RoleBasedRoute>
             }
           />
           <Route
             path="/leave-application"
             element={
-              <ProtectedRoute>
+              <RoleBasedRoute allowedRoles={['Employee', 'HoD']}>
                 <LeaveApplication />
-              </ProtectedRoute>
+              </RoleBasedRoute>
             }
           />
           <Route
             path="/application-status"
             element={
-              <ProtectedRoute>
+              <RoleBasedRoute allowedRoles={['Employee', 'HoD']}>
                 <ApplicationStatus />
-              </ProtectedRoute>
+              </RoleBasedRoute>
             }
           />
           <Route
             path="/alternate-requests"
             element={
-              <ProtectedRoute>
+              <RoleBasedRoute allowedRoles={['Employee', 'HoD']}>
                 <AlternateRequests />
-              </ProtectedRoute>
+              </RoleBasedRoute>
+            }
+          />
+          {/* HR Routes */}
+          <Route
+            path="/hr/system-settings"
+            element={
+              <RoleBasedRoute allowedRoles={['HR']}>
+                <SystemSettings />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="/hr/review-application"
+            element={
+              <RoleBasedRoute allowedRoles={['HR']}>
+                <ReviewApplication />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="/hr/system-members"
+            element={
+              <RoleBasedRoute allowedRoles={['HR']}>
+                <SystemMembers />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="/hr/leave-analytics"
+            element={
+              <RoleBasedRoute allowedRoles={['HR']}>
+                <LeaveAnalytics />
+              </RoleBasedRoute>
             }
           />
           {/* Redirect old dashboard route to profile */}
