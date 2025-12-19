@@ -66,6 +66,9 @@ exports.register = async (req, res) => {
       { new: true }
     );
 
+    // Populate department before sending response
+    await user.populate('department');
+
     // Generate JWT token
     const token = jwt.sign(
       { id: user._id, email: user.email, role: user.role },
@@ -109,9 +112,9 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // Check if user has a password (not Google auth only)
+    // Check if user has a password
     if (!user.password) {
-      return res.status(400).json({ message: "Please login with Google" });
+      return res.status(400).json({ message: "No password set for this account" });
     }
 
     // Verify password

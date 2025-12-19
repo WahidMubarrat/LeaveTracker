@@ -126,7 +126,17 @@ exports.updateProfile = async (req, res) => {
 
     res.json({ 
       message: "Profile updated successfully",
-      user 
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        designation: user.designation,
+        role: user.role,
+        department: user.department,
+        leaveQuota: user.leaveQuota,
+        profilePic: user.profilePic,
+        createdAt: user.createdAt,
+      }
     });
   } catch (error) {
     console.error("Update profile error:", error);
@@ -163,9 +173,9 @@ exports.changePassword = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Check if user has a password (not Google auth only)
+    // Check if user has a password
     if (!user.password) {
-      return res.status(400).json({ message: "Cannot change password for Google authenticated accounts" });
+      return res.status(400).json({ message: "No password set for this account" });
     }
 
     // Verify current password

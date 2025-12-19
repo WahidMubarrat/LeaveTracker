@@ -2,7 +2,6 @@ import { useState, useContext, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { departmentAPI } from '../services/api';
-import { getTokenFromURL, clearTokenFromURL } from '../utils/googleAuth';
 import '../styles/Register.css';
 
 const Register = () => {
@@ -19,35 +18,11 @@ const Register = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { register, loginWithToken } = useContext(AuthContext);
+  const { register } = useContext(AuthContext);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchDepartments();
-    
-    const handleOAuthCallback = async () => {
-      // Check if redirected from Google OAuth with token
-      const token = getTokenFromURL();
-      if (token) {
-        console.log('Token detected from URL, logging in...');
-        setLoading(true);
-        
-        // Clear the token from URL immediately
-        clearTokenFromURL();
-        
-        const result = await loginWithToken(token);
-        console.log('OAuth login result:', result);
-        
-        if (result.success) {
-          navigate('/profile', { replace: true });
-        } else {
-          setError(result.message || 'Google authentication failed');
-        }
-        setLoading(false);
-      }
-    };
-    
-    handleOAuthCallback();
   }, []);
 
   const fetchDepartments = async () => {
