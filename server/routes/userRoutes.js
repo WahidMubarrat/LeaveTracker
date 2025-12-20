@@ -1,12 +1,24 @@
 const express = require("express");
 const router = express.Router();
 const userController = require("../controllers/userController");
+const roleController = require("../controllers/roleController");
 const authMiddleware = require("../middleware/authMiddleware");
+
+// @route   GET /api/users/all-users
+// @desc    Get all users with their roles (HR only)
+// @access  Private (HR)
+router.get("/all-users", authMiddleware, roleController.getAllUsers);
+
+// @route   PATCH /api/users/:userId/role
+// @desc    Assign or remove HoD role (HR only)
+// @access  Private (HR)
+router.patch("/:userId/role", authMiddleware, roleController.updateUserRole);
 
 // @route   GET /api/users/department-members
 // @desc    Get all members from user's department
 // @access  Private
 router.get("/department-members", authMiddleware, userController.getDepartmentMembers);
+router.get("/alternate-options", authMiddleware, userController.getAlternateOptions);
 
 // @route   GET /api/users/leave-statistics
 // @desc    Get leave statistics for current user

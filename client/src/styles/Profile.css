@@ -7,6 +7,15 @@
 
 .profile-header {
   margin-bottom: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.profile-header > div {
+  flex: 1;
 }
 
 .profile-header h1 {
@@ -20,6 +29,29 @@
   font-size: 16px;
   color: #7f8c8d;
   margin: 0;
+}
+
+.refresh-profile-btn {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.refresh-profile-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.refresh-profile-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .profile-content {

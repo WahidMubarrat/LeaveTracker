@@ -100,7 +100,7 @@ const PersonalInfo = () => {
         </div>
         <div className="profile-header-details">
           <h2 className="profile-name">{user.name}</h2>
-          <span className="profile-role-badge">{user.role}</span>
+          <span className="profile-role-badge">{user.roles.join(', ')}</span>
         </div>
       </div>
 
@@ -169,14 +169,18 @@ const PersonalInfo = () => {
           <div className="info-item">
             <label className="info-label">Designation</label>
             {isEditing ? (
-              <input
-                type="text"
+              <select
                 name="designation"
                 value={editData.designation}
                 onChange={handleChange}
                 className="info-input"
-                placeholder="Enter your designation"
-              />
+              >
+                <option value="">Select Designation</option>
+                <option value="Lecturer">Lecturer</option>
+                <option value="Assistant Professor">Assistant Professor</option>
+                <option value="Associate Professor">Associate Professor</option>
+                <option value="Professor">Professor</option>
+              </select>
             ) : (
               <p className="info-value">{user.designation || 'Not Set'}</p>
             )}
@@ -184,7 +188,7 @@ const PersonalInfo = () => {
           
           <div className="info-item">
             <label className="info-label">Role</label>
-            <p className="info-value">{user.role}</p>
+            <p className="info-value">{user.roles.join(', ')}</p>
           </div>
           
           <div className="info-item">

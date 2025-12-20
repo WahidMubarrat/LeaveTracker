@@ -17,6 +17,21 @@ const userSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
+// Virtual property to maintain backward compatibility with 'role' (singular)
+// Returns first role in array
+userSchema.virtual('role').get(function() {
+  return this.roles && this.roles.length > 0 ? this.roles[0] : 'Employee';
+});
+
+// Method to check if user has a specific role
+userSchema.methods.hasRole = function(role) {
+  return this.roles && this.roles.includes(role);
+};
+
+// Ensure virtuals are included when converting to JSON
+userSchema.set('toJSON', { virtuals: true });
+userSchema.set('toObject', { virtuals: true });
+
 
 
 module.exports = mongoose.model("User", userSchema);

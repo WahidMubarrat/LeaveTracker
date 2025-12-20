@@ -32,25 +32,25 @@ exports.getUserLeaveStatistics = async (req, res) => {
       
       if (leave.type === "Annual") {
         annualLeaveTaken += days;
-      } else if (leave.type === "Sick") {
+      } else if (leave.type === "Casual") {
         casualLeaveTaken += days;
       }
     });
 
     // Calculate remaining leave
-    const annualTotal = user.leaveQuota?.annual || 30;
-    const casualTotal = user.leaveQuota?.sick || 10;
+    const totalQuota = user.leaveQuota?.annual || 30;
+    const totalTaken = annualLeaveTaken + casualLeaveTaken;
 
     const leaveData = {
       annual: {
-        total: annualTotal,
-        taken: annualLeaveTaken,
-        remaining: Math.max(0, annualTotal - annualLeaveTaken)
+        total: totalQuota,
+        taken: totalTaken,
+        remaining: Math.max(0, totalQuota - totalTaken)
       },
       casual: {
-        total: casualTotal,
-        taken: casualLeaveTaken,
-        remaining: Math.max(0, casualTotal - casualLeaveTaken)
+        total: totalQuota,
+        taken: totalTaken,
+        remaining: Math.max(0, totalQuota - totalTaken)
       }
     };
 
@@ -73,13 +73,37 @@ exports.getDepartmentMembers = async (req, res) => {
     const members = await User.find({
       department: currentUser.department,
     })
-      .select('name email designation role profilePic')
+      .select('name email designation role roles profilePic')
       .sort({ name: 1 })
       .lean();
 
     res.json({ members });
   } catch (error) {
     console.error("Get department members error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get alternate selection options (department colleagues except current user)
+exports.getAlternateOptions = async (req, res) => {
+  try {
+    const currentUser = await User.findById(req.user.id).select('department');
+
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const members = await User.find({
+      department: currentUser.department,
+      _id: { $ne: currentUser._id }
+    })
+      .select('name designation role email profilePic')
+      .sort({ name: 1 })
+      .lean();
+
+    res.json({ members });
+  } catch (error) {
+    console.error("Get alternate options error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -126,7 +150,18 @@ exports.updateProfile = async (req, res) => {
 
     res.json({ 
       message: "Profile updated successfully",
-      user 
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        designation: user.designation,
+        role: user.role, // Virtual property for backward compatibility
+        roles: user.roles,
+        department: user.department,
+        leaveQuota: user.leaveQuota,
+        profilePic: user.profilePic,
+        createdAt: user.createdAt,
+      }
     });
   } catch (error) {
     console.error("Update profile error:", error);
