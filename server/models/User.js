@@ -8,13 +8,12 @@ const leaveQuotaSchema = new mongoose.Schema({
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  password: { type: String }, // required if not Google auth
-  designation: { type: String }, // optional - can be set after Google OAuth
+  password: { type: String },
+  designation: { type: String },
   role: { type: String, enum: ["Employee", "HoD", "HoA"], default: "Employee" },
   department: { type: mongoose.Schema.Types.ObjectId, ref: "Department" },
   leaveQuota: { type: leaveQuotaSchema, default: () => ({}) },
   profilePic: { type: String }, // URL from Cloudinary
-  googleId: { type: String },   // for Google authentication
   createdAt: { type: Date, default: Date.now },
 });
 

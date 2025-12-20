@@ -163,9 +163,9 @@ exports.changePassword = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Check if user has a password (not Google auth only)
+    // Users without a stored password cannot change it (legacy accounts)
     if (!user.password) {
-      return res.status(400).json({ message: "Cannot change password for Google authenticated accounts" });
+      return res.status(400).json({ message: "Password is not set for this account. Please contact an administrator." });
     }
 
     // Verify current password

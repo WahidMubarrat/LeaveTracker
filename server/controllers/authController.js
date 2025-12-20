@@ -109,9 +109,9 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // Check if user has a password (not Google auth only)
+    // If the account has no password set, treat as invalid for manual login
     if (!user.password) {
-      return res.status(400).json({ message: "Please login with Google" });
+      return res.status(400).json({ message: "Invalid credentials" });
     }
 
     // Verify password
