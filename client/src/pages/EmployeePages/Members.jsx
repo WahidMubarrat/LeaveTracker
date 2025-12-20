@@ -1,8 +1,8 @@
 import { useState, useContext, useCallback } from 'react';
-import { AuthContext } from '../context/AuthContext';
-import Layout from '../components/Layout';
-import CollegueInfo from '../components/CollegueInfo';
-import '../styles/Members.css';
+import { AuthContext } from '../../context/AuthContext';
+import Layout from '../../components/Layout';
+import CollegueInfo from '../../components/CollegueInfo';
+import '../../styles/Members.css';
 
 const Members = () => {
   const { user } = useContext(AuthContext);

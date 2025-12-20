@@ -72,10 +72,14 @@ const CollegueInfo = ({ onMembersLoaded }) => {
                 {member.designation && (
                   <p className="member-designation">{member.designation}</p>
                 )}
-                {member.role && (
-                  <span className={`member-role-badge ${member.role.toLowerCase()}`}>
-                    {member.role}
-                  </span>
+                {member.roles && member.roles.length > 0 && (
+                  <div className="member-roles">
+                    {member.roles.map((role, index) => (
+                      <span key={index} className={`member-role-badge ${role.toLowerCase()}`}>
+                        {role}
+                      </span>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>

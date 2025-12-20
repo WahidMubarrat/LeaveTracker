@@ -1,9 +1,10 @@
 import { useContext } from 'react';
-import { AuthContext } from '../context/AuthContext';
-import Layout from '../components/Layout';
-import LeaveData from '../components/LeaveData';
-import PersonalInfo from '../components/PersonalInfo';
-import '../styles/Profile.css';
+import { AuthContext } from '../../context/AuthContext';
+import Layout from '../../components/Layout';
+import LeaveData from '../../components/LeaveData';
+import PersonalInfo from '../../components/PersonalInfo';
+import RoleToggle from '../../components/RoleToggle';
+import '../../styles/Profile.css';
 
 const Profile = () => {
   const { user } = useContext(AuthContext);
@@ -23,6 +24,9 @@ const Profile = () => {
           <h1>My Profile</h1>
           <p className="profile-subtitle">Manage your personal information and leave balance</p>
         </div>
+
+        {/* Role Toggle - shows only if user has multiple roles */}
+        <RoleToggle />
 
         <div className="profile-content">
           <PersonalInfo />
