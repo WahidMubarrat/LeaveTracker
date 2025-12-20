@@ -3,6 +3,8 @@ import HoDLayout from '../../components/HoDLayout';
 import RoleToggle from '../../components/RoleToggle';
 import '../../styles/HoDPendingRequests.css';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 const HoDPendingRequests = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,15 +18,15 @@ const HoDPendingRequests = () => {
   const fetchPendingRequests = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API call
+      
+      // Mock data - replace with actual API call when backend is ready
       // const token = localStorage.getItem('token');
-      // const response = await fetch('http://localhost:5000/api/hod/pending-requests', {
+      // const response = await fetch(`${API_URL}/hod/pending-requests`, {
       //   headers: { 'Authorization': `Bearer ${token}` }
       // });
       // const data = await response.json();
       // setRequests(data.requests);
       
-      // Mock data for now
       setRequests([
         {
           _id: '1',
@@ -59,13 +61,14 @@ const HoDPendingRequests = () => {
   const handleApprove = async (requestId) => {
     try {
       setProcessingRequestId(requestId);
-      // TODO: Add actual API call
-      // await fetch(`http://localhost:5000/api/hod/requests/${requestId}/approve`, {
+      
+      // Mock action - replace with actual API call when backend is ready
+      // const token = localStorage.getItem('token');
+      // await fetch(`${API_URL}/hod/requests/${requestId}/approve`, {
       //   method: 'PATCH',
       //   headers: { 'Authorization': `Bearer ${token}` }
       // });
       
-      // Update local state
       setRequests(requests.map(req => 
         req._id === requestId ? { ...req, status: 'Approved' } : req
       ));
@@ -79,7 +82,13 @@ const HoDPendingRequests = () => {
   const handleReject = async (requestId) => {
     try {
       setProcessingRequestId(requestId);
-      // TODO: Add actual API call
+      
+      // Mock action - replace with actual API call when backend is ready
+      // const token = localStorage.getItem('token');
+      // await fetch(`${API_URL}/hod/requests/${requestId}/reject`, {
+      //   method: 'PATCH',
+      //   headers: { 'Authorization': `Bearer ${token}` }
+      // });
       
       setRequests(requests.map(req => 
         req._id === requestId ? { ...req, status: 'Rejected' } : req

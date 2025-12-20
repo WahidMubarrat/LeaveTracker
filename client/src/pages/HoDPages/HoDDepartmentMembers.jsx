@@ -3,6 +3,8 @@ import HoDLayout from '../../components/HoDLayout';
 import RoleToggle from '../../components/RoleToggle';
 import '../../styles/HoDDepartmentMembers.css';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 const HoDDepartmentMembers = () => {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,15 +18,15 @@ const HoDDepartmentMembers = () => {
   const fetchDepartmentMembers = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API call
+      
+      // Mock data - replace with actual API call when backend is ready
       // const token = localStorage.getItem('token');
-      // const response = await fetch('http://localhost:5000/api/hod/department-members', {
+      // const response = await fetch(`${API_URL}/hod/department-members`, {
       //   headers: { 'Authorization': `Bearer ${token}` }
       // });
       // const data = await response.json();
       // setMembers(data.members);
 
-      // Mock data for now
       setMembers([
         {
           _id: '1',
