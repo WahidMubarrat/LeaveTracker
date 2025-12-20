@@ -169,7 +169,7 @@ exports.getPendingApprovals = async (req, res) => {
 exports.updateLeaveStatus = async (req, res) => {
   try {
     const { leaveId } = req.params;
-    const { action, notes } = req.body; // action: "approve" or "decline"
+    const { action, remarks } = req.body; // action: "approve" or "decline", remarks: optional remarks
 
     const currentUser = await User.findById(req.user.id);
     if (!currentUser) {
@@ -185,26 +185,76 @@ exports.updateLeaveStatus = async (req, res) => {
 
     if (action === "approve") {
       if (currentUser.hasRole("HoD")) {
+        // Check if already processed by HoD
+        if (leaveRequest.approvedByHoD) {
+          return res.status(400).json({ message: "This request has already been processed by HoD" });
+        }
+        
         leaveRequest.approvedByHoD = true;
+        leaveRequest.hodRemarks = remarks || "";
+        // Status remains "Pending" until HR reviews
         historyAction = "Approved by HoD";
       } else if (currentUser.hasRole("HR")) {
+        // Check if HoD has approved first
+        if (!leaveRequest.approvedByHoD) {
+          return res.status(400).json({ message: "HoD approval is required before HR can approve" });
+        }
+        
+        // Check if already processed by HR
+        if (leaveRequest.approvedByHR) {
+          return res.status(400).json({ message: "This request has already been processed by HR" });
+        }
+        
         leaveRequest.approvedByHR = true;
         leaveRequest.status = "Approved";
+        leaveRequest.hrRemarks = remarks || "";
         historyAction = "Approved by HR";
 
         // Deduct leave quota (both Annual and Casual deduct from annual quota)
         const employee = await User.findById(leaveRequest.employee);
-        const days = Math.ceil((leaveRequest.endDate - leaveRequest.startDate) / (1000 * 60 * 60 * 24)) + 1;
-        
-        employee.leaveQuota.annual -= days;
-        
-        await employee.save();
+        if (employee) {
+          const days = leaveRequest.numberOfDays || Math.ceil((leaveRequest.endDate - leaveRequest.startDate) / (1000 * 60 * 60 * 24)) + 1;
+          
+          employee.leaveQuota.annual -= days;
+          
+          await employee.save();
+          
+          // Update employee's leave status
+          await employee.updateLeaveStatus();
+        }
       } else {
         return res.status(403).json({ message: "Unauthorized" });
       }
     } else if (action === "decline") {
-      leaveRequest.status = "Declined";
-      historyAction = "Declined";
+      // If HoD declines, completely decline the application
+      if (currentUser.hasRole("HoD")) {
+        if (leaveRequest.approvedByHoD) {
+          return res.status(400).json({ message: "This request has already been processed by HoD" });
+        }
+        leaveRequest.status = "Declined";
+        leaveRequest.hodRemarks = remarks || "";
+        historyAction = "Declined by HoD";
+      } 
+      // If HR declines, completely decline the application
+      else if (currentUser.hasRole("HR")) {
+        if (!leaveRequest.approvedByHoD) {
+          return res.status(400).json({ message: "HoD approval is required before HR can review" });
+        }
+        if (leaveRequest.approvedByHR) {
+          return res.status(400).json({ message: "This request has already been processed by HR" });
+        }
+        leaveRequest.status = "Declined";
+        leaveRequest.hrRemarks = remarks || "";
+        historyAction = "Declined by HR";
+      } else {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      
+      // Update employee's leave status (in case they were on leave)
+      const employee = await User.findById(leaveRequest.employee);
+      if (employee) {
+        await employee.updateLeaveStatus();
+      }
     } else {
       return res.status(400).json({ message: "Invalid action" });
     }
@@ -217,7 +267,7 @@ exports.updateLeaveStatus = async (req, res) => {
       leaveRequest: leaveRequest._id,
       action: historyAction,
       performedBy: req.user.id,
-      notes,
+      notes: remarks || "",
     });
 
     await historyLog.save();

@@ -73,7 +73,7 @@ exports.getDepartmentMembers = async (req, res) => {
     const members = await User.find({
       department: currentUser.department,
     })
-      .select('name email designation role roles profilePic')
+      .select('name email designation role roles profilePic currentStatus')
       .sort({ name: 1 })
       .lean();
 

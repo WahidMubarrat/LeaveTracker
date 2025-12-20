@@ -16,6 +16,8 @@ const leaveRequestSchema = new mongoose.Schema({
   status: { type: String, enum: ["Pending", "Approved", "Declined"], default: "Pending" },
   approvedByHoD: { type: Boolean, default: false },
   approvedByHR: { type: Boolean, default: false },
+  hodRemarks: { type: String, default: "" },
+  hrRemarks: { type: String, default: "" },
   createdAt: { type: Date, default: Date.now },
 });
 

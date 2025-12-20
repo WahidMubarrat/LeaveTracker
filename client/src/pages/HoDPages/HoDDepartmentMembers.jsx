@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import HoDLayout from '../../components/HoDLayout';
 import RoleToggle from '../../components/RoleToggle';
+import Status from '../../components/Status';
 import '../../styles/HoDDepartmentMembers.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -19,54 +20,15 @@ const HoDDepartmentMembers = () => {
     try {
       setLoading(true);
       
-      // Mock data - replace with actual API call when backend is ready
-      // const token = localStorage.getItem('token');
-      // const response = await fetch(`${API_URL}/hod/department-members`, {
-      //   headers: { 'Authorization': `Bearer ${token}` }
-      // });
-      // const data = await response.json();
-      // setMembers(data.members);
-
-      setMembers([
-        {
-          _id: '1',
-          name: 'John Doe',
-          email: 'john@example.com',
-          designation: 'Lecturer',
-          leaveQuota: { annual: 30, sick: 10 },
-          usedLeave: { annual: 5, sick: 2 },
-          profilePic: null
-        },
-        {
-          _id: '2',
-          name: 'Jane Smith',
-          email: 'jane@example.com',
-          designation: 'Assistant Professor',
-          leaveQuota: { annual: 30, sick: 10 },
-          usedLeave: { annual: 8, sick: 1 },
-          profilePic: null
-        },
-        {
-          _id: '3',
-          name: 'Mike Johnson',
-          email: 'mike@example.com',
-          designation: 'Associate Professor',
-          leaveQuota: { annual: 30, sick: 10 },
-          usedLeave: { annual: 12, sick: 3 },
-          profilePic: null
-        },
-        {
-          _id: '4',
-          name: 'Sarah Williams',
-          email: 'sarah@example.com',
-          designation: 'Professor',
-          leaveQuota: { annual: 30, sick: 10 },
-          usedLeave: { annual: 3, sick: 0 },
-          profilePic: null
-        }
-      ]);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/users/department-members`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      setMembers(data.members || []);
     } catch (error) {
       console.error('Error fetching members:', error);
+      setMembers([]);
     } finally {
       setLoading(false);
     }
@@ -141,6 +103,7 @@ const HoDDepartmentMembers = () => {
                     <h3>{member.name}</h3>
                     <p className="member-designation">{member.designation}</p>
                     <p className="member-email">{member.email}</p>
+                    <Status currentStatus={member.currentStatus || 'OnDuty'} />
                   </div>
                 </div>
 

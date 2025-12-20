@@ -48,4 +48,14 @@ export const userAPI = {
   updateUserRole: (userId, action) => api.patch(`/users/${userId}/role`, { action }),
 };
 
+// Leave API
+export const leaveAPI = {
+  applyLeave: (data) => api.post('/leaves/apply', data),
+  getMyApplications: () => api.get('/leaves/my-applications'),
+  getLeaveHistory: () => api.get('/leaves/history'),
+  getPendingApprovals: () => api.get('/leaves/pending-approvals'),
+  updateLeaveStatus: (leaveId, action, remarks) => api.put(`/leaves/${leaveId}/status`, { action, remarks }),
+  getLeaveRequestLogs: (leaveId) => api.get(`/leaves/${leaveId}/logs`),
+};
+
 export default api;
