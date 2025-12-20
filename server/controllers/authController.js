@@ -84,7 +84,6 @@ exports.register = async (req, res) => {
         name: user.name,
         email: user.email,
         designation: user.designation,
-        role: user.role, // Virtual property for backward compatibility
         roles: user.roles,
         department: user.department,
         leaveQuota: user.leaveQuota,
@@ -139,7 +138,6 @@ exports.login = async (req, res) => {
         name: user.name,
         email: user.email,
         designation: user.designation,
-        role: user.role, // Virtual property for backward compatibility
         roles: user.roles,
         department: user.department,
         leaveQuota: user.leaveQuota,
@@ -169,7 +167,6 @@ exports.getProfile = async (req, res) => {
         name: user.name,
         email: user.email,
         designation: user.designation,
-        role: user.role, // Virtual property for backward compatibility
         roles: user.roles,
         department: user.department,
         leaveQuota: user.leaveQuota,

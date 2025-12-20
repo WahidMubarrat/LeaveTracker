@@ -1,5 +1,6 @@
 import HRLayout from '../../components/HRLayout';
-import HeadOfDepartment from '../../components/HeadOfDepartment';
+import HoDSetter from '../../components/HoDSetter';
+import RoleToggle from '../../components/RoleToggle';
 import '../../styles/SystemSettings.css';
 
 const SystemSettings = () => {
@@ -11,10 +12,11 @@ const SystemSettings = () => {
           <p className="page-subtitle">Manage system configurations and preferences</p>
         </div>
 
-        {/* Head of Department Management Section */}
-        <div className="settings-section">
-          <HeadOfDepartment />
-        </div>
+        {/* Role Toggle */}
+        <RoleToggle />
+
+        {/* Head of Department Setter */}
+        <HoDSetter />
 
         <div className="settings-grid">
           <div className="setting-card">

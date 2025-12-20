@@ -29,9 +29,11 @@ const Login = () => {
     const result = await login(formData);
 
     if (result.success) {
-      // Redirect based on user role
-      if (result.user.role === 'HR') {
+      // Redirect based on highest priority role (HR > HoD > Employee)
+      if (result.user.roles.includes('HR')) {
         navigate('/hr/system-settings');
+      } else if (result.user.roles.includes('HoD')) {
+        navigate('/hod/dashboard');
       } else {
         navigate('/profile');
       }

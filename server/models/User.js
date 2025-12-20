@@ -32,7 +32,7 @@ const userSchema = new mongoose.Schema({
 });
 
 // Virtual property to maintain backward compatibility with 'role' (singular)
-// Returns the primary role (first role in the array)
+// Returns first role in array
 userSchema.virtual('role').get(function() {
   return this.roles && this.roles.length > 0 ? this.roles[0] : 'Employee';
 });

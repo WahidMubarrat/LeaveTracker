@@ -100,7 +100,7 @@ const PersonalInfo = () => {
         </div>
         <div className="profile-header-details">
           <h2 className="profile-name">{user.name}</h2>
-          <span className="profile-role-badge">{user.role}</span>
+          <span className="profile-role-badge">{user.roles.join(', ')}</span>
         </div>
       </div>
 
@@ -188,7 +188,7 @@ const PersonalInfo = () => {
           
           <div className="info-item">
             <label className="info-label">Role</label>
-            <p className="info-value">{user.role}</p>
+            <p className="info-value">{user.roles.join(', ')}</p>
           </div>
           
           <div className="info-item">

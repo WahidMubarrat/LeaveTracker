@@ -66,6 +66,30 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const refreshProfile = async () => {
+    if (token) {
+      await fetchUserProfile();
+    }
+  };
+
+  const switchRole = async (newRole) => {
+    try {
+      const response = await authAPI.updateActiveRole(newRole);
+      // Update user in state with new activeRole
+      setUser(prev => ({
+        ...prev,
+        activeRole: response.data.activeRole
+      }));
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to switch role:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to switch role'
+      };
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -76,6 +100,8 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
+        refreshProfile,
+        switchRole,
       }}
     >
       {children}

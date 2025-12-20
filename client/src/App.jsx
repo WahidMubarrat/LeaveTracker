@@ -9,9 +9,12 @@ import LeaveApplication from './pages/EmployeePages/LeaveApplication';
 import ApplicationStatus from './pages/EmployeePages/ApplicationStatus';
 import AlternateRequests from './pages/EmployeePages/AlternateRequests';
 import SystemSettings from './pages/HRPages/SystemSettings';
-import ReviewApplication from './pages/HRPages/ReviewApplication';
+import HRReviewApplication from './pages/HRPages/ReviewApplication';
 import SystemMembers from './pages/HRPages/SystemMembers';
-import LeaveAnalytics from './pages/HRPages/LeaveAnalytics';
+import HRLeaveAnalytics from './pages/HRPages/LeaveAnalytics';
+import HoDDashboard from './pages/HoDPages/HoDDashboard';
+import HoDPendingRequests from './pages/HoDPages/HoDPendingRequests';
+import HoDDepartmentMembers from './pages/HoDPages/HoDDepartmentMembers';
 import ProtectedRoute from './components/ProtectedRoute';
 import RoleBasedRoute from './components/RoleBasedRoute';
 import './App.css';
@@ -85,7 +88,7 @@ function App() {
             path="/hr/review-application"
             element={
               <RoleBasedRoute allowedRoles={['HR']}>
-                <ReviewApplication />
+                <HRReviewApplication />
               </RoleBasedRoute>
             }
           />
@@ -101,7 +104,32 @@ function App() {
             path="/hr/leave-analytics"
             element={
               <RoleBasedRoute allowedRoles={['HR']}>
-                <LeaveAnalytics />
+                <HRLeaveAnalytics />
+              </RoleBasedRoute>
+            }
+          />
+          {/* HoD Routes */}
+          <Route
+            path="/hod/dashboard"
+            element={
+              <RoleBasedRoute allowedRoles={['HoD']}>
+                <HoDDashboard />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="/hod/pending-requests"
+            element={
+              <RoleBasedRoute allowedRoles={['HoD']}>
+                <HoDPendingRequests />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="/hod/department-members"
+            element={
+              <RoleBasedRoute allowedRoles={['HoD']}>
+                <HoDDepartmentMembers />
               </RoleBasedRoute>
             }
           />

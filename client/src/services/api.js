@@ -44,8 +44,8 @@ export const userAPI = {
   getAlternateOptions: () => api.get('/users/alternate-options'),
   updateProfile: (data) => api.put('/users/profile', data),
   changePassword: (data) => api.put('/users/change-password', data),
-  getAllDepartments: () => api.get('/users/all-departments'),
-  assignHoD: (data) => api.post('/users/assign-hod', data),
+  getAllUsers: () => api.get('/users/all-users'),
+  updateUserRole: (userId, action) => api.patch(`/users/${userId}/role`, { action }),
 };
 
 export default api;

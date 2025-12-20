@@ -22,11 +22,13 @@ const RoleBasedRoute = ({ children, allowedRoles }) => {
     return <Navigate to="/login" replace />;
   }
 
-  // Check if user's role is in the allowed roles
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
-    // Redirect based on their actual role
-    if (user.role === 'HR') {
+  // Check if user has any of the allowed roles
+  if (allowedRoles && !allowedRoles.some(role => user.roles.includes(role))) {
+    // Redirect based on their highest priority role (HR > HoD > Employee)
+    if (user.roles.includes('HR')) {
       return <Navigate to="/hr/system-settings" replace />;
+    } else if (user.roles.includes('HoD')) {
+      return <Navigate to="/hod/dashboard" replace />;
     } else {
       return <Navigate to="/profile" replace />;
     }
