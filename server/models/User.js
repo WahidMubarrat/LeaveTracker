@@ -10,17 +10,11 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String },
   designation: { type: String },
-  role: { type: String, enum: ["Employee", "HoD", "HoA"], default: "Employee" },
+  roles: [{ type: String, enum: ["Employee", "HoD", "HoA"], default: "Employee" }],
   department: { type: mongoose.Schema.Types.ObjectId, ref: "Department" },
   leaveQuota: { type: leaveQuotaSchema, default: () => ({}) },
   profilePic: { type: String }, // URL from Cloudinary
   createdAt: { type: Date, default: Date.now },
-});
-
-// Virtual property to maintain backward compatibility with 'role' (singular)
-// Returns first role in array
-userSchema.virtual('role').get(function() {
-  return this.roles && this.roles.length > 0 ? this.roles[0] : 'Employee';
 });
 
 // Method to check if user has a specific role
