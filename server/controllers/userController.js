@@ -198,9 +198,9 @@ exports.changePassword = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Check if user has a password
+    // Users without a stored password cannot change it (legacy accounts)
     if (!user.password) {
-      return res.status(400).json({ message: "No password set for this account" });
+      return res.status(400).json({ message: "Password is not set for this account. Please contact an administrator." });
     }
 
     // Verify current password

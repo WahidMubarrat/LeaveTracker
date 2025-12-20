@@ -8,26 +8,12 @@ const leaveQuotaSchema = new mongoose.Schema({
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  designation: { 
-    type: String, 
-    enum: ["Lecturer", "Assistant Professor", "Associate Professor", "Professor"],
-    required: true 
-  },
-  roles: { 
-    type: [String], 
-    enum: ["Employee", "HoD", "HR"], 
-    default: ["Employee"],
-    validate: {
-      validator: function(roles) {
-        return roles && roles.length > 0;
-      },
-      message: "User must have at least one role"
-    }
-  },
+  password: { type: String },
+  designation: { type: String },
+  role: { type: String, enum: ["Employee", "HoD", "HoA"], default: "Employee" },
   department: { type: mongoose.Schema.Types.ObjectId, ref: "Department" },
   leaveQuota: { type: leaveQuotaSchema, default: () => ({}) },
-  profilePic: { type: String },
+  profilePic: { type: String }, // URL from Cloudinary
   createdAt: { type: Date, default: Date.now },
 });
 
