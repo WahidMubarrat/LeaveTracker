@@ -126,14 +126,34 @@ const ApplicationStatus = () => {
                     <span className="detail-label">Designation:</span>
                     <span className="detail-value">{application.applicantDesignation || 'N/A'}</span>
                   </div>
-                  {application.backupEmployee && (
+                  {application.alternateEmployees && application.alternateEmployees.length > 0 ? (
+                    <div className="detail-row alternate-row">
+                      <span className="detail-label">Alternate Employees:</span>
+                      <span className="detail-value">
+                        <div className="alternate-status-list">
+                          {application.alternateEmployees.map((alt, index) => (
+                            <div key={index} className="alternate-status-item">
+                              <span className="alternate-name">
+                                {alt.employee?.name || 'Unknown'}
+                              </span>
+                              <span className={`alternate-response ${alt.response}`}>
+                                {alt.response === 'ok' && '✓ OK'}
+                                {alt.response === 'sorry' && '✗ Sorry'}
+                                {alt.response === 'pending' && '⏳ Pending'}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </span>
+                    </div>
+                  ) : application.backupEmployee ? (
                     <div className="detail-row">
                       <span className="detail-label">Alternate Employee:</span>
                       <span className="detail-value">
                         {application.backupEmployee.name || 'N/A'}
                       </span>
                     </div>
-                  )}
+                  ) : null}
                   <div className="detail-row">
                     <span className="detail-label">Purpose:</span>
                     <span className="detail-value">{application.reason || 'N/A'}</span>

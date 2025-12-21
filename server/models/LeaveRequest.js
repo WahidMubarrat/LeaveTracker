@@ -12,7 +12,12 @@ const leaveRequestSchema = new mongoose.Schema({
   numberOfDays: { type: Number },
   type: { type: String, enum: ["Annual", "Casual"], required: true },
   reason: { type: String },
-  backupEmployee: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  backupEmployee: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Keep for backward compatibility
+  alternateEmployees: [{ 
+    employee: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    response: { type: String, enum: ["pending", "ok", "sorry"], default: "pending" },
+    respondedAt: { type: Date }
+  }],
   status: { type: String, enum: ["Pending", "Approved", "Declined"], default: "Pending" },
   approvedByHoD: { type: Boolean, default: false },
   approvedByHR: { type: Boolean, default: false },

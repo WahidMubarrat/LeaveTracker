@@ -33,4 +33,14 @@ router.put("/:leaveId/status", authMiddleware, leaveController.updateLeaveStatus
 // @access  Private
 router.get("/:leaveId/logs", authMiddleware, leaveController.getLeaveRequestLogs);
 
+// @route   GET /api/leaves/alternate-requests
+// @desc    Get alternate requests for current user
+// @access  Private
+router.get("/alternate-requests", authMiddleware, leaveController.getAlternateRequests);
+
+// @route   PUT /api/leaves/alternate-requests/:alternateRequestId/respond
+// @desc    Respond to alternate request (ok or sorry)
+// @access  Private
+router.put("/alternate-requests/:alternateRequestId/respond", authMiddleware, leaveController.respondToAlternateRequest);
+
 module.exports = router;

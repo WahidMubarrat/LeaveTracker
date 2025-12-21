@@ -1,5 +1,6 @@
 const LeaveRequest = require("../models/LeaveRequest");
 const LeaveHistoryLog = require("../models/LeaveHistoryLog");
+const AlternateRequest = require("../models/AlternateRequest");
 const User = require("../models/User");
 
 // Apply for leave
@@ -11,6 +12,7 @@ exports.applyLeave = async (req, res) => {
       type,
       reason,
       backupEmployeeId,
+      alternateEmployeeIds, // Array of alternate employee IDs
       applicationDate,
       applicantName,
       departmentName,
@@ -47,6 +49,13 @@ exports.applyLeave = async (req, res) => {
       });
     }
 
+    // Process alternate employees
+    const alternateIds = alternateEmployeeIds || (backupEmployeeId ? [backupEmployeeId] : []);
+    const alternateEmployees = alternateIds.map(id => ({
+      employee: id,
+      response: "pending"
+    }));
+
     // Create leave request
     const leaveRequest = new LeaveRequest({
       employee: req.user.id,
@@ -60,10 +69,23 @@ exports.applyLeave = async (req, res) => {
       type,
       reason,
       numberOfDays: totalDays,
-      backupEmployee: backupEmployeeId || null,
+      backupEmployee: backupEmployeeId || null, // Keep for backward compatibility
+      alternateEmployees: alternateEmployees,
     });
 
     await leaveRequest.save();
+
+    // Create alternate requests for each alternate employee
+    if (alternateIds.length > 0) {
+      const alternateRequests = alternateIds.map(altId => ({
+        leaveRequest: leaveRequest._id,
+        applicant: req.user.id,
+        alternate: altId,
+        status: "pending"
+      }));
+
+      await AlternateRequest.insertMany(alternateRequests);
+    }
 
     // Create history log
     const historyLog = new LeaveHistoryLog({
@@ -89,6 +111,7 @@ exports.getMyApplications = async (req, res) => {
   try {
     const applications = await LeaveRequest.find({ employee: req.user.id })
       .populate("backupEmployee", "name email")
+      .populate("alternateEmployees.employee", "name email")
       .populate("department", "name")
       .sort({ createdAt: -1 });
 
@@ -113,6 +136,7 @@ exports.getLeaveHistory = async (req, res) => {
     })
       .populate("employee", "name email profilePic")
       .populate("backupEmployee", "name email")
+      .populate("alternateEmployees.employee", "name email")
       .populate("department", "name")
       .sort({ createdAt: -1 });
 
@@ -156,6 +180,7 @@ exports.getPendingApprovals = async (req, res) => {
       .populate("employee", "name email profilePic")
       .populate("department", "name")
       .populate("backupEmployee", "name email")
+      .populate("alternateEmployees.employee", "name email")
       .sort({ createdAt: -1 });
 
     res.json({ pendingApprovals });
@@ -294,6 +319,82 @@ exports.getLeaveRequestLogs = async (req, res) => {
     res.json({ logs });
   } catch (error) {
     console.error("Get leave request logs error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get alternate requests for current user
+exports.getAlternateRequests = async (req, res) => {
+  try {
+    const alternateRequests = await AlternateRequest.find({ 
+      alternate: req.user.id,
+      status: "pending"
+    })
+      .populate("leaveRequest", "applicantName applicantDesignation startDate endDate type reason numberOfDays")
+      .populate("applicant", "name email")
+      .sort({ createdAt: -1 });
+
+    res.json({ alternateRequests });
+  } catch (error) {
+    console.error("Get alternate requests error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Respond to alternate request (ok or sorry)
+exports.respondToAlternateRequest = async (req, res) => {
+  try {
+    const { alternateRequestId } = req.params;
+    const { response } = req.body; // "ok" or "sorry"
+
+    if (!response || !["ok", "sorry"].includes(response)) {
+      return res.status(400).json({ message: "Response must be 'ok' or 'sorry'" });
+    }
+
+    const alternateRequest = await AlternateRequest.findById(alternateRequestId)
+      .populate("leaveRequest");
+
+    if (!alternateRequest) {
+      return res.status(404).json({ message: "Alternate request not found" });
+    }
+
+    if (alternateRequest.alternate.toString() !== req.user.id.toString()) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    if (alternateRequest.status !== "pending") {
+      return res.status(400).json({ message: "This request has already been responded to" });
+    }
+
+    // Update alternate request
+    alternateRequest.status = response === "ok" ? "accepted" : "declined";
+    alternateRequest.respondedAt = new Date();
+    await alternateRequest.save();
+
+    // Update leave request's alternateEmployees array
+    const leaveRequest = alternateRequest.leaveRequest;
+    const alternateIndex = leaveRequest.alternateEmployees.findIndex(
+      alt => alt.employee.toString() === req.user.id.toString()
+    );
+
+    if (alternateIndex !== -1) {
+      leaveRequest.alternateEmployees[alternateIndex].response = response;
+      leaveRequest.alternateEmployees[alternateIndex].respondedAt = new Date();
+      
+      // If response is "sorry", remove from alternateEmployees array
+      if (response === "sorry") {
+        leaveRequest.alternateEmployees.splice(alternateIndex, 1);
+      }
+      
+      await leaveRequest.save();
+    }
+
+    res.json({ 
+      message: `Alternate request ${response === "ok" ? "accepted" : "declined"} successfully`,
+      alternateRequest 
+    });
+  } catch (error) {
+    console.error("Respond to alternate request error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

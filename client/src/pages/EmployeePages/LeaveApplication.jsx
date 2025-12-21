@@ -19,6 +19,7 @@ const LeaveApplication = () => {
     numberOfDays: '',
     reason: '',
     backupEmployeeId: '',
+    alternateEmployeeIds: [],
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -62,6 +63,13 @@ const LeaveApplication = () => {
     }
   };
 
+  const handleAlternateSelectionChange = (selectedIds) => {
+    setFormData(prev => ({
+      ...prev,
+      alternateEmployeeIds: selectedIds,
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -91,6 +99,7 @@ const LeaveApplication = () => {
         numberOfDays: '',
         reason: '',
         backupEmployeeId: '',
+        alternateEmployeeIds: [],
       });
     } catch (error) {
       setError(error.response?.data?.message || 'Failed to submit leave application');
@@ -111,6 +120,7 @@ const LeaveApplication = () => {
       numberOfDays: '',
       reason: '',
       backupEmployeeId: '',
+      alternateEmployeeIds: [],
     });
     setError('');
     setSuccess('');
@@ -260,8 +270,8 @@ const LeaveApplication = () => {
               {/* Alternate Selection */}
               <div className="form-group">
                 <AlternateSelection
-                  value={formData.backupEmployeeId}
-                  onChange={handleChange}
+                  selectedAlternates={formData.alternateEmployeeIds}
+                  onSelectionChange={handleAlternateSelectionChange}
                   required={false}
                 />
               </div>
