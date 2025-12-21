@@ -1,0 +1,72 @@
+/* Leave Data Container */
+.leave-data-container {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 28px;
+  margin-top: 24px;
+}
+
+.leave-data-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0 0 24px 0;
+  padding-bottom: 12px;
+  border-bottom: 3px solid #e0e0e0;
+}
+
+/* Grid Layout for Leave Cards */
+.leave-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+/* Loading and Error States */
+.loading-spinner {
+  text-align: center;
+  padding: 40px;
+  font-size: 16px;
+  color: #7f8c8d;
+}
+
+.error-message {
+  background: #fee;
+  color: #c33;
+  padding: 16px;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid #fcc;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+  .leave-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .leave-data-container {
+    padding: 20px;
+  }
+
+  .leave-data-title {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 576px) {
+  .leave-data-container {
+    padding: 16px;
+    margin-top: 16px;
+  }
+
+  .leave-data-title {
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+
+  .leave-cards-grid {
+    gap: 16px;
+  }
+}
