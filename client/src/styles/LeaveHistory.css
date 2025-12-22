@@ -1,0 +1,187 @@
+.history-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.history-header {
+  margin-bottom: 2rem;
+}
+
+.history-header h1 {
+  color: #333;
+  margin: 0 0 0.5rem 0;
+  font-size: 2rem;
+}
+
+.history-subtitle {
+  color: #666;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.history-loading,
+.history-error {
+  text-align: center;
+  padding: 3rem;
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.history-error {
+  color: #c33;
+  background: #fee;
+  border-radius: 8px;
+}
+
+.history-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.history-table-wrapper {
+  overflow-x: auto;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.history-table thead {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.history-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.history-table tbody tr {
+  border-bottom: 1px solid #eee;
+  transition: background 0.2s ease;
+}
+
+.history-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.history-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.history-table td {
+  padding: 1rem;
+  color: #333;
+}
+
+.leave-type-badge {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.leave-type-badge.annual {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.leave-type-badge.sick {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.leave-type-badge.other {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.days-cell {
+  font-weight: 600;
+  color: #667eea;
+}
+
+.reason-cell {
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-badge.status-approved {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-badge.status-pending {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.status-badge.status-declined {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.history-empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.history-empty p {
+  color: #333;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+}
+
+.empty-subtitle {
+  color: #666 !important;
+  font-size: 1rem !important;
+  font-weight: 400 !important;
+}
+
+@media (max-width: 768px) {
+  .history-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .history-table {
+    font-size: 0.875rem;
+  }
+
+  .history-table th,
+  .history-table td {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .reason-cell {
+    max-width: 150px;
+  }
+}

@@ -1,0 +1,25 @@
+.hod-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f5f7fa;
+}
+
+.hod-content {
+  margin-left: 260px;
+  flex: 1;
+  padding: 2rem;
+  max-width: 1600px;
+  margin-right: auto;
+}
+
+@media (max-width: 768px) {
+  .hod-content {
+    margin-left: 0;
+    width: 100%;
+    padding: 1rem;
+  }
+  
+  .hod-navbar {
+    display: none;
+  }
+}
