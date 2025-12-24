@@ -14,7 +14,7 @@ exports.register = async (req, res) => {
     }
 
     // Validate email format
-    if (!email.includes('@')) {
+    if (!email.includes('@iut-dhaka.edu')) {
       return res.status(400).json({ message: "Please provide a valid email address" });
     }
 
