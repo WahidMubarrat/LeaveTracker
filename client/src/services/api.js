@@ -60,4 +60,12 @@ export const leaveAPI = {
   respondToAlternateRequest: (alternateRequestId, response) => api.put(`/leaves/alternate-requests/${alternateRequestId}/respond`, { response }),
 };
 
+// Leave Quota API
+export const leaveQuotaAPI = {
+  getSettings: () => api.get('/leave-quota/settings'),
+  updateAll: (data) => api.put('/leave-quota/update-all', data),
+  updateUser: (userId, data) => api.put(`/leave-quota/update-user/${userId}`, data),
+  resetAll: () => api.post('/leave-quota/reset-all'),
+};
+
 export default api;

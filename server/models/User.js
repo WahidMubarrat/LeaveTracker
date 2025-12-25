@@ -1,8 +1,14 @@
 const mongoose = require("mongoose");
 
 const leaveQuotaSchema = new mongoose.Schema({
-  annual: { type: Number, default: 30 },
-  sick: { type: Number, default: 10 },
+  annual: {
+    allocated: { type: Number, default: 20 },
+    used: { type: Number, default: 0 }
+  },
+  casual: {
+    allocated: { type: Number, default: 10 },
+    used: { type: Number, default: 0 }
+  }
 });
 
 const userSchema = new mongoose.Schema({

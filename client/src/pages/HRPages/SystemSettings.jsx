@@ -1,6 +1,7 @@
 import HRLayout from '../../components/HRLayout';
 import HoDSetter from '../../components/HoDSetter';
 import RoleToggle from '../../components/RoleToggle';
+import LeaveQuotaSetter from '../../components/LeaveQuotaSetter';
 import '../../styles/SystemSettings.css';
 
 const SystemSettings = () => {
@@ -11,6 +12,9 @@ const SystemSettings = () => {
           <h1>System Settings</h1>
           <p className="page-subtitle">Manage system configurations and preferences</p>
         </div>
+
+        {/* Leave Quota Settings */}
+        <LeaveQuotaSetter />
 
         {/* Role Toggle */}
         <RoleToggle />
