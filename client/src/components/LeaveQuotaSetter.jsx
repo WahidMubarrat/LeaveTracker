@@ -127,56 +127,62 @@ const LeaveQuotaSetter = () => {
       )}
 
       <div className="quota-form">
-        <div className="quota-input-group">
-          <label htmlFor="annual">
-            <span className="label-text">Annual Leave</span>
-            <span className="label-description">Days per year for annual/vacation leave</span>
-          </label>
-          <input
-            type="number"
-            id="annual"
-            name="annual"
-            value={quotaSettings.annual}
-            onChange={handleInputChange}
-            min="0"
-            max="365"
-            disabled={loading}
-          />
-        </div>
+        <div className="quota-input-section">
+          <div className="quota-inputs">
+            <div className="quota-input-group">
+              <label htmlFor="annual">
+                <span className="label-text">Annual Leave</span>
+                <span className="label-description">Days per year for annual/vacation leave</span>
+              </label>
+              <input
+                type="number"
+                id="annual"
+                name="annual"
+                value={quotaSettings.annual}
+                onChange={handleInputChange}
+                min="0"
+                max="365"
+                disabled={loading}
+              />
+            </div>
 
-        <div className="quota-input-group">
-          <label htmlFor="casual">
-            <span className="label-text">Casual Leave</span>
-            <span className="label-description">Days per year for casual leave</span>
-          </label>
-          <input
-            type="number"
-            id="casual"
-            name="casual"
-            value={quotaSettings.casual}
-            onChange={handleInputChange}
-            min="0"
-            max="365"
-            disabled={loading}
-          />
-        </div>
+            <div className="quota-input-group">
+              <label htmlFor="casual">
+                <span className="label-text">Casual Leave</span>
+                <span className="label-description">Days per year for casual leave</span>
+              </label>
+              <input
+                type="number"
+                id="casual"
+                name="casual"
+                value={quotaSettings.casual}
+                onChange={handleInputChange}
+                min="0"
+                max="365"
+                disabled={loading}
+              />
+            </div>
+          </div>
 
-        <div className="quota-actions">
-          <button
-            className="btn-primary"
-            onClick={handleUpdateQuota}
-            disabled={loading}
-          >
-            {loading ? 'Updating...' : 'Update Leave Quota for All Users'}
-          </button>
+          <div className="quota-actions">
+            <button
+              className="btn-primary"
+              onClick={handleUpdateQuota}
+              disabled={loading}
+            >
+              {loading ? 'Updating...' : 'Update Leave Quota for All Users'}
+            </button>
+          </div>
 
-          <button
-            className="btn-secondary"
-            onClick={() => setShowResetConfirm(true)}
-            disabled={loading}
-          >
-            Reset Used Leave (New Year)
-          </button>
+          <div className="quota-reset">
+            <button
+              className="btn-secondary"
+              onClick={() => setShowResetConfirm(true)}
+              disabled={loading}
+            >
+              Reset Used Leave (New Year)
+            </button>
+          </div>
         </div>
 
         <div className="quota-summary">

@@ -58,6 +58,32 @@ exports.getDepartmentMembers = async (req, res) => {
   }
 };
 
+// Get members by department id (HR access)
+exports.getMembersByDepartmentId = async (req, res) => {
+  try {
+    const { departmentId } = req.params;
+
+    if (!departmentId) {
+      return res.status(400).json({ message: "Department ID is required" });
+    }
+
+    if (!req.user.roles?.includes("HR")) {
+      return res.status(403).json({ message: "Only HR can view department members" });
+    }
+
+    const members = await User.find({ department: departmentId })
+      .select("name email designation roles profilePic currentStatus department")
+      .populate("department", "name")
+      .sort({ name: 1 })
+      .lean();
+
+    res.json({ members });
+  } catch (error) {
+    console.error("Get members by department error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 // Get alternate selection options (department colleagues except current user)
 exports.getAlternateOptions = async (req, res) => {
   try {

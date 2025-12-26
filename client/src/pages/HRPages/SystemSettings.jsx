@@ -1,6 +1,5 @@
 import HRLayout from '../../components/HRLayout';
-import HoDSetter from '../../components/HoDSetter';
-import RoleToggle from '../../components/RoleToggle';
+import HoDSettings from '../../components/HoDSettings';
 import LeaveQuotaSetter from '../../components/LeaveQuotaSetter';
 import '../../styles/SystemSettings.css';
 
@@ -16,37 +15,8 @@ const SystemSettings = () => {
         {/* Leave Quota Settings */}
         <LeaveQuotaSetter />
 
-        {/* Role Toggle */}
-        <RoleToggle />
-
-        {/* Head of Department Setter */}
-        <HoDSetter />
-
-        <div className="settings-grid">
-          <div className="setting-card">
-            <div className="setting-icon">⚙️</div>
-            <h3>General Settings</h3>
-            <p>Configure basic system parameters</p>
-          </div>
-
-          <div className="setting-card">
-            <div className="setting-icon">🔔</div>
-            <h3>Notifications</h3>
-            <p>Manage email and system notifications</p>
-          </div>
-
-          <div className="setting-card">
-            <div className="setting-icon">🔐</div>
-            <h3>Security</h3>
-            <p>Configure security and access controls</p>
-          </div>
-
-          <div className="setting-card">
-            <div className="setting-icon">📅</div>
-            <h3>Leave Policies</h3>
-            <p>Set leave quotas and approval rules</p>
-          </div>
-        </div>
+        {/* Head of Department Settings */}
+        <HoDSettings />
       </div>
     </HRLayout>
   );
