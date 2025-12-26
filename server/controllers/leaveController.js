@@ -42,10 +42,17 @@ exports.applyLeave = async (req, res) => {
     const calculatedDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
     const totalDays = Number(numberOfDays) > 0 ? Number(numberOfDays) : calculatedDays;
 
-    // Check leave quota (both Annual and Casual use annual quota)
-    if (currentUser.leaveQuota.annual < totalDays) {
+    // Check leave quota based on leave type
+    const leaveType = type.toLowerCase(); // 'annual' or 'casual'
+    const quotaKey = leaveType === 'annual' || leaveType === 'casual' ? leaveType : 'annual';
+    
+    const allocated = currentUser.leaveQuota[quotaKey]?.allocated || 0;
+    const used = currentUser.leaveQuota[quotaKey]?.used || 0;
+    const remaining = allocated - used;
+
+    if (remaining < totalDays) {
       return res.status(400).json({ 
-        message: `Insufficient leave quota. Available: ${currentUser.leaveQuota.annual} days` 
+        message: `Insufficient ${type} leave quota. Available: ${remaining} days, Requested: ${totalDays} days` 
       });
     }
 
@@ -235,12 +242,17 @@ exports.updateLeaveStatus = async (req, res) => {
         leaveRequest.hrRemarks = remarks || "";
         historyAction = "Approved by HR";
 
-        // Deduct leave quota (both Annual and Casual deduct from annual quota)
+        // Deduct leave quota based on leave type
         const employee = await User.findById(leaveRequest.employee);
         if (employee) {
           const days = leaveRequest.numberOfDays || Math.ceil((leaveRequest.endDate - leaveRequest.startDate) / (1000 * 60 * 60 * 24)) + 1;
+          const leaveType = leaveRequest.type.toLowerCase();
+          const quotaKey = leaveType === 'annual' || leaveType === 'casual' ? leaveType : 'annual';
           
-          employee.leaveQuota.annual -= days;
+          // Increment used days for the specific leave type
+          if (employee.leaveQuota[quotaKey]) {
+            employee.leaveQuota[quotaKey].used += days;
+          }
           
           await employee.save();
           

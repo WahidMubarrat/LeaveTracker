@@ -41,6 +41,7 @@ export const departmentAPI = {
 export const userAPI = {
   getLeaveStatistics: () => api.get('/users/leave-statistics'),
   getDepartmentMembers: () => api.get('/users/department-members'),
+  getMembersByDepartment: (departmentId) => api.get(`/users/department/${departmentId}/members`),
   getAlternateOptions: () => api.get('/users/alternate-options'),
   updateProfile: (data) => api.put('/users/profile', data),
   changePassword: (data) => api.put('/users/change-password', data),
@@ -58,6 +59,14 @@ export const leaveAPI = {
   getLeaveRequestLogs: (leaveId) => api.get(`/leaves/${leaveId}/logs`),
   getAlternateRequests: () => api.get('/leaves/alternate-requests'),
   respondToAlternateRequest: (alternateRequestId, response) => api.put(`/leaves/alternate-requests/${alternateRequestId}/respond`, { response }),
+};
+
+// Leave Quota API
+export const leaveQuotaAPI = {
+  getSettings: () => api.get('/leave-quota/settings'),
+  updateAll: (data) => api.put('/leave-quota/update-all', data),
+  updateUser: (userId, data) => api.put(`/leave-quota/update-user/${userId}`, data),
+  resetAll: () => api.post('/leave-quota/reset-all'),
 };
 
 export default api;
