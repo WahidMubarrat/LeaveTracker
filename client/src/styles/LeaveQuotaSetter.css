@@ -45,8 +45,22 @@
 
 .quota-form {
   display: flex;
+  gap: 32px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.quota-input-section {
+  flex: 1;
+  min-width: 280px;
+  display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
+}
+
+.quota-inputs {
+  display: grid;
+  gap: 20px;
 }
 
 .quota-input-group {
@@ -94,9 +108,21 @@
 
 .quota-actions {
   display: flex;
-  gap: 12px;
   margin-top: 8px;
-  flex-wrap: wrap;
+}
+
+.quota-actions .btn-primary {
+  width: 100%;
+  max-width: 280px;
+}
+
+.quota-reset {
+  margin-top: 4px;
+}
+
+.quota-reset .btn-secondary {
+  width: 100%;
+  max-width: 280px;
 }
 
 .btn-primary,
@@ -157,6 +183,8 @@
   padding: 20px;
   border-radius: 6px;
   border-left: 4px solid #4a90e2;
+  flex: 0 0 280px;
+  min-width: 240px;
 }
 
 .quota-summary h3 {
@@ -257,6 +285,22 @@
 @media (max-width: 768px) {
   .leave-quota-setter {
     padding: 16px;
+  }
+
+  .quota-form {
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .quota-actions,
+  .quota-reset {
+    width: 100%;
+  }
+
+  .quota-actions .btn-primary,
+  .quota-reset .btn-secondary {
+    width: 100%;
+    max-width: none;
   }
 
   .quota-header h2 {
