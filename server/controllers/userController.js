@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const LeaveRequest = require("../models/LeaveRequest");
+const { uploadToCloudinary, deleteFromCloudinary } = require("../utils/cloudinaryUpload");
 
 // Get leave statistics for current user
 exports.getUserLeaveStatistics = async (req, res) => {
@@ -131,12 +132,36 @@ exports.getUserById = async (req, res) => {
 // Update user profile
 exports.updateProfile = async (req, res) => {
   try {
-    const { name, designation, profilePic } = req.body;
+    const { name, designation } = req.body;
     
     const updateData = {};
     if (name) updateData.name = name;
     if (designation) updateData.designation = designation;
-    if (profilePic) updateData.profilePic = profilePic;
+    
+    // Upload new profile picture to Cloudinary if provided
+    if (req.file) {
+      try {
+        // Get current user to retrieve old profile pic URL
+        const currentUser = await User.findById(req.user.id).select('profilePic');
+        
+        // Upload new profile picture
+        const newProfilePicUrl = await uploadToCloudinary(req.file.buffer, 'leave-tracker/profiles');
+        updateData.profilePic = newProfilePicUrl;
+        
+        // Delete old profile picture from Cloudinary if exists
+        if (currentUser.profilePic && currentUser.profilePic.includes('cloudinary')) {
+          try {
+            await deleteFromCloudinary(currentUser.profilePic);
+          } catch (deleteError) {
+            console.error('Failed to delete old profile pic:', deleteError);
+            // Continue anyway - new pic is uploaded
+          }
+        }
+      } catch (uploadError) {
+        console.error('Profile pic upload error:', uploadError);
+        return res.status(500).json({ message: 'Failed to upload profile picture' });
+      }
+    }
 
     const user = await User.findByIdAndUpdate(
       req.user.id,
