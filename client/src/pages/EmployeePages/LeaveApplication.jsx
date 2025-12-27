@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from 'react';
 import Layout from '../../components/Layout';
 import AlternateSelection from '../../components/AlternateSelection';
+import LeaveDocument from '../../components/LeaveDocument';
 import { AuthContext } from '../../context/AuthContext';
 import { leaveAPI } from '../../services/api';
 import '../../styles/LeaveApplication.css';
@@ -20,6 +21,7 @@ const LeaveApplication = () => {
     reason: '',
     backupEmployeeId: '',
     alternateEmployeeIds: [],
+    leaveDocument: null,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -100,6 +102,7 @@ const LeaveApplication = () => {
         reason: '',
         backupEmployeeId: '',
         alternateEmployeeIds: [],
+        leaveDocument: null,
       });
     } catch (error) {
       setError(error.response?.data?.message || 'Failed to submit leave application');
@@ -121,9 +124,17 @@ const LeaveApplication = () => {
       reason: '',
       backupEmployeeId: '',
       alternateEmployeeIds: [],
+      leaveDocument: null,
     });
     setError('');
     setSuccess('');
+  };
+
+  const handleDocumentChange = (document) => {
+    setFormData(prev => ({
+      ...prev,
+      leaveDocument: document,
+    }));
   };
 
   return (
@@ -264,6 +275,14 @@ const LeaveApplication = () => {
                   rows="4"
                   placeholder="Describe the purpose of your leave"
                   required
+                />
+              </div>
+
+              {/* Leave Document */}
+              <div className="form-group">
+                <LeaveDocument
+                  onDocumentChange={handleDocumentChange}
+                  initialDocument={formData.leaveDocument}
                 />
               </div>
 

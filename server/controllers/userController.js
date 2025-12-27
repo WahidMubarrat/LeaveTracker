@@ -47,7 +47,8 @@ exports.getDepartmentMembers = async (req, res) => {
     const members = await User.find({
       department: currentUser.department,
     })
-      .select('name email designation role roles profilePic currentStatus')
+      .select('name email designation role roles profilePic currentStatus currentLeave')
+      .populate('currentLeave', 'endDate')
       .sort({ name: 1 })
       .lean();
 
@@ -72,8 +73,9 @@ exports.getMembersByDepartmentId = async (req, res) => {
     }
 
     const members = await User.find({ department: departmentId })
-      .select("name email designation roles profilePic currentStatus department")
+      .select("name email designation roles profilePic currentStatus currentLeave department")
       .populate("department", "name")
+      .populate("currentLeave", "endDate")
       .sort({ name: 1 })
       .lean();
 

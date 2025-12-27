@@ -101,12 +101,6 @@ const AlternateRequests = () => {
 
                 <div className="alternate-request-details">
                   <div className="detail-row">
-                    <span className="detail-label">Leave Type:</span>
-                    <span className="detail-value">
-                      {request.leaveRequest?.type || 'N/A'}
-                    </span>
-                  </div>
-                  <div className="detail-row">
                     <span className="detail-label">From:</span>
                     <span className="detail-value">
                       {formatDate(request.leaveRequest?.startDate)}
@@ -124,14 +118,6 @@ const AlternateRequests = () => {
                       {request.leaveRequest?.numberOfDays || 'N/A'} day(s)
                     </span>
                   </div>
-                  {request.leaveRequest?.reason && (
-                    <div className="detail-row">
-                      <span className="detail-label">Reason:</span>
-                      <span className="detail-value">
-                        {request.leaveRequest.reason}
-                      </span>
-                    </div>
-                  )}
                   <div className="detail-row">
                     <span className="detail-label">Requested On:</span>
                     <span className="detail-value">

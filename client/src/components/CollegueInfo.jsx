@@ -73,7 +73,10 @@ const CollegueInfo = ({ onMembersLoaded }) => {
                 {member.designation && (
                   <p className="member-designation">{member.designation}</p>
                 )}
-                <Status currentStatus={member.currentStatus || 'OnDuty'} />
+                <Status 
+                  currentStatus={member.currentStatus || 'OnDuty'} 
+                  returnDate={member.currentLeave?.endDate}
+                />
                 {member.roles && member.roles.length > 0 && (
                   <div className="member-roles">
                     {member.roles.map((role, index) => (

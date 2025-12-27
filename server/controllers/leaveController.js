@@ -18,6 +18,7 @@ exports.applyLeave = async (req, res) => {
       departmentName,
       applicantDesignation,
       numberOfDays,
+      leaveDocument, // Optional document (base64 image)
     } = req.body;
 
     // Validate required fields
@@ -78,6 +79,7 @@ exports.applyLeave = async (req, res) => {
       numberOfDays: totalDays,
       backupEmployee: backupEmployeeId || null, // Keep for backward compatibility
       alternateEmployees: alternateEmployees,
+      leaveDocument: leaveDocument || null,
     });
 
     await leaveRequest.save();
