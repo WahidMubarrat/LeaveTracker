@@ -57,6 +57,22 @@ const ApplicationStatus = () => {
     return 'status-pending';
   };
 
+  const getStatusProgress = (application) => {
+    if (application.status === 'Declined') {
+      return { width: '100%', color: '#dc3545' }; // Red - fully declined
+    }
+    
+    if (application.approvedByHR && application.status === 'Approved') {
+      return { width: '100%', color: '#28a745' }; // Green - fully approved
+    }
+    
+    if (application.approvedByHoD) {
+      return { width: '50%', color: '#ffc107' }; // Yellow - half way (HOD approved)
+    }
+    
+    return { width: '0%', color: '#ffc107' }; // No progress - pending
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -109,6 +125,28 @@ const ApplicationStatus = () => {
                   <span className={`status-badge ${getStatusClass(application)}`}>
                     {getStatusMessage(application)}
                   </span>
+                </div>
+
+                {/* Status Progress Bar */}
+                <div className="status-progress-container">
+                  <div className="status-progress-bar">
+                    <div 
+                      className="status-progress-fill"
+                      style={{
+                        width: getStatusProgress(application).width,
+                        backgroundColor: getStatusProgress(application).color,
+                        transition: 'width 0.3s ease, background-color 0.3s ease'
+                      }}
+                    ></div>
+                  </div>
+                  <div className="status-progress-labels">
+                    <span className={application.approvedByHoD ? 'progress-label active' : 'progress-label'}>
+                      HoD
+                    </span>
+                    <span className={application.approvedByHR && application.status === 'Approved' ? 'progress-label active' : 'progress-label'}>
+                      HR
+                    </span>
+                  </div>
                 </div>
 
                 <div className="application-details">

@@ -103,7 +103,10 @@ const HoDDepartmentMembers = () => {
                     <h3>{member.name}</h3>
                     <p className="member-designation">{member.designation}</p>
                     <p className="member-email">{member.email}</p>
-                    <Status currentStatus={member.currentStatus || 'OnDuty'} />
+                    <Status 
+                      currentStatus={member.currentStatus || 'OnDuty'} 
+                      returnDate={member.currentLeave?.endDate}
+                    />
                   </div>
                 </div>
 
