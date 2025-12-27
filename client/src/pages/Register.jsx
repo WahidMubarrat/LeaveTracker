@@ -12,8 +12,8 @@ const Register = () => {
     confirmPassword: '',
     designation: '',
     departmentId: '',
-    profilePic: '',
   });
+  const [profilePicFile, setProfilePicFile] = useState(null);
   const [departments, setDepartments] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -48,14 +48,7 @@ const Register = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData({
-          ...formData,
-          profilePic: reader.result,
-        });
-      };
-      reader.readAsDataURL(file);
+      setProfilePicFile(file);
     }
   };
 
@@ -97,15 +90,20 @@ const Register = () => {
 
     setLoading(true);
 
-    const result = await register({
-      name: formData.name,
-      email: formData.email,
-      password: formData.password,
-      designation: formData.designation,
-      departmentId: formData.departmentId,
-      profilePic: formData.profilePic || null,
-      role: 'Employee',
-    });
+    // Create FormData for file upload
+    const submitData = new FormData();
+    submitData.append('name', formData.name);
+    submitData.append('email', formData.email);
+    submitData.append('password', formData.password);
+    submitData.append('designation', formData.designation);
+    submitData.append('departmentId', formData.departmentId);
+    submitData.append('role', 'Employee');
+    
+    if (profilePicFile) {
+      submitData.append('profilePic', profilePicFile);
+    }
+
+    const result = await register(submitData);
 
     if (result.success) {
       navigate('/profile');

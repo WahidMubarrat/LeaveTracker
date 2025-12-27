@@ -2,24 +2,33 @@ const LeaveRequest = require("../models/LeaveRequest");
 const LeaveHistoryLog = require("../models/LeaveHistoryLog");
 const AlternateRequest = require("../models/AlternateRequest");
 const User = require("../models/User");
+const { uploadToCloudinary } = require("../utils/cloudinaryUpload");
 
 // Apply for leave
 exports.applyLeave = async (req, res) => {
   try {
-    const {
+    let {
       startDate,
       endDate,
       type,
       reason,
       backupEmployeeId,
-      alternateEmployeeIds, // Array of alternate employee IDs
+      alternateEmployeeIds, // Array of alternate employee IDs or JSON string
       applicationDate,
       applicantName,
       departmentName,
       applicantDesignation,
       numberOfDays,
-      leaveDocument, // Optional document (base64 image)
     } = req.body;
+
+    // Parse alternateEmployeeIds if it's a JSON string (from FormData)
+    if (typeof alternateEmployeeIds === 'string') {
+      try {
+        alternateEmployeeIds = JSON.parse(alternateEmployeeIds);
+      } catch (e) {
+        alternateEmployeeIds = [];
+      }
+    }
 
     // Validate required fields
     if (!startDate || !endDate || !type) {
@@ -57,6 +66,17 @@ exports.applyLeave = async (req, res) => {
       });
     }
 
+    // Upload leave document to Cloudinary if provided
+    let leaveDocumentUrl = null;
+    if (req.file) {
+      try {
+        leaveDocumentUrl = await uploadToCloudinary(req.file.buffer, 'leave-tracker/documents');
+      } catch (uploadError) {
+        console.error('Leave document upload error:', uploadError);
+        return res.status(500).json({ message: 'Failed to upload leave document' });
+      }
+    }
+
     // Process alternate employees
     const alternateIds = alternateEmployeeIds || (backupEmployeeId ? [backupEmployeeId] : []);
     const alternateEmployees = alternateIds.map(id => ({
@@ -79,7 +99,7 @@ exports.applyLeave = async (req, res) => {
       numberOfDays: totalDays,
       backupEmployee: backupEmployeeId || null, // Keep for backward compatibility
       alternateEmployees: alternateEmployees,
-      leaveDocument: leaveDocument || null,
+      leaveDocument: leaveDocumentUrl,
     });
 
     await leaveRequest.save();

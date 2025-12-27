@@ -86,7 +86,33 @@ const LeaveApplication = () => {
     setLoading(true);
 
     try {
-      const response = await leaveAPI.applyLeave(formData);
+      // Create FormData for file upload
+      const submitData = new FormData();
+      submitData.append('applicationDate', formData.applicationDate);
+      submitData.append('applicantName', formData.applicantName);
+      submitData.append('departmentName', formData.departmentName);
+      submitData.append('applicantDesignation', formData.applicantDesignation);
+      submitData.append('type', formData.type);
+      submitData.append('startDate', formData.startDate);
+      submitData.append('endDate', formData.endDate);
+      submitData.append('numberOfDays', formData.numberOfDays);
+      submitData.append('reason', formData.reason);
+      
+      if (formData.backupEmployeeId) {
+        submitData.append('backupEmployeeId', formData.backupEmployeeId);
+      }
+      
+      // Append alternate employee IDs as JSON string
+      if (formData.alternateEmployeeIds && formData.alternateEmployeeIds.length > 0) {
+        submitData.append('alternateEmployeeIds', JSON.stringify(formData.alternateEmployeeIds));
+      }
+      
+      // Append leave document file if provided
+      if (formData.leaveDocument) {
+        submitData.append('leaveDocument', formData.leaveDocument);
+      }
+
+      const response = await leaveAPI.applyLeave(submitData);
       setSuccess('Leave application submitted successfully!');
       
       // Reset form
