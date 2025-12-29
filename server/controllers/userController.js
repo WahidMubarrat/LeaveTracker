@@ -45,15 +45,36 @@ exports.getDepartmentMembers = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    const LeaveRequest = require("../models/LeaveRequest");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     const members = await User.find({
       department: currentUser.department,
     })
-      .select('name email designation role roles profilePic currentStatus currentLeave')
-      .populate('currentLeave', 'endDate')
+      .select('name email designation role roles profilePic')
       .sort({ name: 1 })
       .lean();
 
-    res.json({ members });
+    // Check current leave status for each member
+    const membersWithStatus = await Promise.all(
+      members.map(async (member) => {
+        const activeLeave = await LeaveRequest.findOne({
+          employee: member._id,
+          status: "Approved",
+          startDate: { $lte: today },
+          endDate: { $gte: today }
+        }).select('endDate').lean();
+
+        return {
+          ...member,
+          currentStatus: activeLeave ? 'OnLeave' : 'OnDuty',
+          currentLeave: activeLeave || null
+        };
+      })
+    );
+
+    res.json({ members: membersWithStatus });
   } catch (error) {
     console.error("Get department members error:", error);
     res.status(500).json({ message: "Server error" });
@@ -73,14 +94,35 @@ exports.getMembersByDepartmentId = async (req, res) => {
       return res.status(403).json({ message: "Only HR can view department members" });
     }
 
+    const LeaveRequest = require("../models/LeaveRequest");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     const members = await User.find({ department: departmentId })
-      .select("name email designation roles profilePic currentStatus currentLeave department")
+      .select("name email designation roles profilePic department")
       .populate("department", "name")
-      .populate("currentLeave", "endDate")
       .sort({ name: 1 })
       .lean();
 
-    res.json({ members });
+    // Check current leave status for each member
+    const membersWithStatus = await Promise.all(
+      members.map(async (member) => {
+        const activeLeave = await LeaveRequest.findOne({
+          employee: member._id,
+          status: "Approved",
+          startDate: { $lte: today },
+          endDate: { $gte: today }
+        }).select('endDate').lean();
+
+        return {
+          ...member,
+          currentStatus: activeLeave ? 'OnLeave' : 'OnDuty',
+          currentLeave: activeLeave || null
+        };
+      })
+    );
+
+    res.json({ members: membersWithStatus });
   } catch (error) {
     console.error("Get members by department error:", error);
     res.status(500).json({ message: "Server error" });
