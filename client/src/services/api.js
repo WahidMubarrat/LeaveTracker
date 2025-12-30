@@ -38,6 +38,7 @@ export const authAPI = {
   },
   login: (credentials) => api.post('/auth/login', credentials),
   getProfile: () => api.get('/auth/profile'),
+  updateActiveRole: (role) => api.post('/auth/switch-role', { role }),
 };
 
 // Department API
