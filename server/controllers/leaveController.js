@@ -76,8 +76,15 @@ exports.applyLeave = async (req, res) => {
       });
     }
 
-    // Check leave quota based on leave type
+    // Check casual leave limit (max 2 consecutive days)
     const leaveType = type.toLowerCase(); // 'annual' or 'casual'
+    if (leaveType === 'casual' && totalDays > 2) {
+      return res.status(400).json({ 
+        message: `Casual leave cannot exceed 2 consecutive days. You are requesting ${totalDays} days. Please apply for Annual Leave instead.` 
+      });
+    }
+
+    // Check leave quota based on leave type
     const quotaKey = leaveType === 'annual' || leaveType === 'casual' ? leaveType : 'annual';
     
     const allocated = currentUser.leaveQuota[quotaKey]?.allocated || 0;

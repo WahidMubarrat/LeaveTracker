@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
-import './LeaveDocument.css';
+import '../styles/LeaveDocument.css';
 
 const LeaveDocument = ({ onDocumentChange, initialDocument }) => {
   const [documentFile, setDocumentFile] = useState(null);
