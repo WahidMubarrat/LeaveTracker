@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import './Status.css';
+import '../styles/Status.css';
 
 const Status = ({ currentStatus, returnDate }) => {
   const isOnLeave = currentStatus === 'OnLeave';
