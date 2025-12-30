@@ -1,8 +1,14 @@
 const mongoose = require("mongoose");
 
 const leaveQuotaSchema = new mongoose.Schema({
-  annual: { type: Number, default: 30 },
-  sick: { type: Number, default: 10 },
+  annual: {
+    allocated: { type: Number, default: 20 },
+    used: { type: Number, default: 0 }
+  },
+  casual: {
+    allocated: { type: Number, default: 10 },
+    used: { type: Number, default: 0 }
+  }
 });
 
 const userSchema = new mongoose.Schema({
@@ -20,6 +26,47 @@ const userSchema = new mongoose.Schema({
 // Method to check if user has a specific role
 userSchema.methods.hasRole = function(role) {
   return this.roles && this.roles.includes(role);
+};
+
+// Method to check if user is currently on leave
+userSchema.methods.isOnLeave = async function() {
+  const LeaveRequest = mongoose.model("LeaveRequest");
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const activeLeave = await LeaveRequest.findOne({
+    employee: this._id,
+    status: "Approved",
+    startDate: { $lte: today },
+    endDate: { $gte: today }
+  });
+
+  return !!activeLeave;
+};
+
+// Method to update leave status
+userSchema.methods.updateLeaveStatus = async function() {
+  const LeaveRequest = mongoose.model("LeaveRequest");
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const activeLeave = await LeaveRequest.findOne({
+    employee: this._id,
+    status: "Approved",
+    startDate: { $lte: today },
+    endDate: { $gte: today }
+  });
+
+  if (activeLeave) {
+    this.currentStatus = "OnLeave";
+    this.currentLeave = activeLeave._id;
+  } else {
+    this.currentStatus = "OnDuty";
+    this.currentLeave = null;
+  }
+
+  await this.save();
+  return this.currentStatus;
 };
 
 // Ensure virtuals are included when converting to JSON

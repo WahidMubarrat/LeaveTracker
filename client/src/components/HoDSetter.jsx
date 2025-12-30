@@ -20,8 +20,6 @@ const HoDSetter = () => {
       setLoading(true);
       const token = localStorage.getItem('token');
       
-      console.log('🔄 Fetching data for HoD setter...');
-      
       // Fetch all users and departments
       const [usersResponse, departmentsResponse] = await Promise.all([
         fetch(`${API_URL}/users/all-users`, {
@@ -31,9 +29,6 @@ const HoDSetter = () => {
           headers: { 'Authorization': `Bearer ${token}` },
         })
       ]);
-
-      console.log('Users response status:', usersResponse.status);
-      console.log('Departments response status:', departmentsResponse.status);
 
       if (!usersResponse.ok) {
         const errorData = await usersResponse.json();
@@ -49,9 +44,6 @@ const HoDSetter = () => {
 
       const usersData = await usersResponse.json();
       const departmentsData = await departmentsResponse.json();
-
-      console.log('Fetched users:', usersData.users?.length || 0);
-      console.log('Fetched departments:', departmentsData.departments?.length || departmentsData.length || 0);
 
       setUsers(usersData.users || []);
       setDepartments(departmentsData.departments || departmentsData || []);
@@ -77,11 +69,6 @@ const HoDSetter = () => {
       const roles = currentRoles && Array.isArray(currentRoles) ? currentRoles : ['Employee'];
       const action = roles.includes('HoD') ? 'remove' : 'add';
       
-      console.log('🔄 Sending HoD assignment request...');
-      console.log('User ID:', userId);
-      console.log('Action:', action);
-      console.log('Current roles:', roles);
-      
       const response = await fetch(`${API_URL}/users/${userId}/role`, {
         method: 'PATCH',
         headers: {
@@ -91,9 +78,7 @@ const HoDSetter = () => {
         body: JSON.stringify({ action }),
       });
 
-      console.log('Response status:', response.status);
       const data = await response.json();
-      console.log('Response data:', data);
 
       if (!response.ok) {
         throw new Error(data.message || 'Failed to update role');
@@ -107,7 +92,6 @@ const HoDSetter = () => {
       ));
 
       setSuccess(data.message);
-      console.log('✅ Success:', data.message);
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       console.error('❌ Error:', err);
@@ -131,7 +115,6 @@ const HoDSetter = () => {
       return true;
     });
     
-    console.log(`Department ${departmentId}: Found ${filtered.length} users`);
     return filtered;
   };
 

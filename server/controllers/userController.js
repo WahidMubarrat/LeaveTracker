@@ -1,56 +1,31 @@
 const User = require("../models/User");
 const LeaveRequest = require("../models/LeaveRequest");
+const { uploadToCloudinary, deleteFromCloudinary } = require("../utils/cloudinaryUpload");
 
 // Get leave statistics for current user
 exports.getUserLeaveStatistics = async (req, res) => {
   try {
-    // Fetch only required fields for better performance
+    // Fetch user with leave quota
     const user = await User.findById(req.user.id).select('leaveQuota').lean();
     
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Get all approved leave requests for the current year
-    const currentYear = new Date().getFullYear();
-    const yearStart = new Date(currentYear, 0, 1);
-    const yearEnd = new Date(currentYear, 11, 31, 23, 59, 59);
-
-    // Optimized query - only fetch needed fields and use lean() for faster queries
-    const approvedLeaves = await LeaveRequest.find({
-      employee: req.user.id,
-      status: "Approved",
-      startDate: { $gte: yearStart, $lte: yearEnd }
-    }).select('type startDate endDate').lean();
-
-    // Calculate leave days taken
-    let annualLeaveTaken = 0;
-    let casualLeaveTaken = 0;
-
-    approvedLeaves.forEach(leave => {
-      const days = Math.ceil((new Date(leave.endDate) - new Date(leave.startDate)) / (1000 * 60 * 60 * 24)) + 1;
-      
-      if (leave.type === "Annual") {
-        annualLeaveTaken += days;
-      } else if (leave.type === "Casual") {
-        casualLeaveTaken += days;
-      }
-    });
-
-    // Calculate remaining leave
-    const totalQuota = user.leaveQuota?.annual || 30;
-    const totalTaken = annualLeaveTaken + casualLeaveTaken;
+    // Calculate remaining leave for each type
+    const annual = user.leaveQuota?.annual || { allocated: 20, used: 0 };
+    const casual = user.leaveQuota?.casual || { allocated: 10, used: 0 };
 
     const leaveData = {
       annual: {
-        total: totalQuota,
-        taken: totalTaken,
-        remaining: Math.max(0, totalQuota - totalTaken)
+        total: annual.allocated,
+        taken: annual.used,
+        remaining: Math.max(0, annual.allocated - annual.used)
       },
       casual: {
-        total: totalQuota,
-        taken: totalTaken,
-        remaining: Math.max(0, totalQuota - totalTaken)
+        total: casual.allocated,
+        taken: casual.used,
+        remaining: Math.max(0, casual.allocated - casual.used)
       }
     };
 
@@ -70,6 +45,10 @@ exports.getDepartmentMembers = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    const LeaveRequest = require("../models/LeaveRequest");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     const members = await User.find({
       department: currentUser.department,
     })
@@ -77,9 +56,75 @@ exports.getDepartmentMembers = async (req, res) => {
       .sort({ name: 1 })
       .lean();
 
-    res.json({ members });
+    // Check current leave status for each member
+    const membersWithStatus = await Promise.all(
+      members.map(async (member) => {
+        const activeLeave = await LeaveRequest.findOne({
+          employee: member._id,
+          status: "Approved",
+          startDate: { $lte: today },
+          endDate: { $gte: today }
+        }).select('endDate').lean();
+
+        return {
+          ...member,
+          currentStatus: activeLeave ? 'OnLeave' : 'OnDuty',
+          currentLeave: activeLeave || null
+        };
+      })
+    );
+
+    res.json({ members: membersWithStatus });
   } catch (error) {
     console.error("Get department members error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get members by department id (HR access)
+exports.getMembersByDepartmentId = async (req, res) => {
+  try {
+    const { departmentId } = req.params;
+
+    if (!departmentId) {
+      return res.status(400).json({ message: "Department ID is required" });
+    }
+
+    if (!req.user.roles?.includes("HR")) {
+      return res.status(403).json({ message: "Only HR can view department members" });
+    }
+
+    const LeaveRequest = require("../models/LeaveRequest");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const members = await User.find({ department: departmentId })
+      .select("name email designation roles profilePic department")
+      .populate("department", "name")
+      .sort({ name: 1 })
+      .lean();
+
+    // Check current leave status for each member
+    const membersWithStatus = await Promise.all(
+      members.map(async (member) => {
+        const activeLeave = await LeaveRequest.findOne({
+          employee: member._id,
+          status: "Approved",
+          startDate: { $lte: today },
+          endDate: { $gte: today }
+        }).select('endDate').lean();
+
+        return {
+          ...member,
+          currentStatus: activeLeave ? 'OnLeave' : 'OnDuty',
+          currentLeave: activeLeave || null
+        };
+      })
+    );
+
+    res.json({ members: membersWithStatus });
+  } catch (error) {
+    console.error("Get members by department error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -129,12 +174,36 @@ exports.getUserById = async (req, res) => {
 // Update user profile
 exports.updateProfile = async (req, res) => {
   try {
-    const { name, designation, profilePic } = req.body;
+    const { name, designation } = req.body;
     
     const updateData = {};
     if (name) updateData.name = name;
     if (designation) updateData.designation = designation;
-    if (profilePic) updateData.profilePic = profilePic;
+    
+    // Upload new profile picture to Cloudinary if provided
+    if (req.file) {
+      try {
+        // Get current user to retrieve old profile pic URL
+        const currentUser = await User.findById(req.user.id).select('profilePic');
+        
+        // Upload new profile picture
+        const newProfilePicUrl = await uploadToCloudinary(req.file.buffer, 'leave-tracker/profiles');
+        updateData.profilePic = newProfilePicUrl;
+        
+        // Delete old profile picture from Cloudinary if exists
+        if (currentUser.profilePic && currentUser.profilePic.includes('cloudinary')) {
+          try {
+            await deleteFromCloudinary(currentUser.profilePic);
+          } catch (deleteError) {
+            console.error('Failed to delete old profile pic:', deleteError);
+            // Continue anyway - new pic is uploaded
+          }
+        }
+      } catch (uploadError) {
+        console.error('Profile pic upload error:', uploadError);
+        return res.status(500).json({ message: 'Failed to upload profile picture' });
+      }
+    }
 
     const user = await User.findByIdAndUpdate(
       req.user.id,

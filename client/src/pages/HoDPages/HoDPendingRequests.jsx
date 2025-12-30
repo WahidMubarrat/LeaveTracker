@@ -1,13 +1,19 @@
 import { useState, useEffect } from 'react';
 import HoDLayout from '../../components/HoDLayout';
 import RoleToggle from '../../components/RoleToggle';
+import { leaveAPI } from '../../services/api';
 import '../../styles/HoDPendingRequests.css';
 
 const HoDPendingRequests = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all'); // all, pending, approved, rejected
+  const [filter, setFilter] = useState('pending'); // all, pending, approved, declined
   const [processingRequestId, setProcessingRequestId] = useState(null);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [remarks, setRemarks] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [actionType, setActionType] = useState(''); // 'approve' or 'decline'
+  const [error, setError] = useState('');
 
   useEffect(() => {
     fetchPendingRequests();
@@ -16,76 +22,42 @@ const HoDPendingRequests = () => {
   const fetchPendingRequests = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API call
-      // const token = localStorage.getItem('token');
-      // const response = await fetch('http://localhost:5000/api/hod/pending-requests', {
-      //   headers: { 'Authorization': `Bearer ${token}` }
-      // });
-      // const data = await response.json();
-      // setRequests(data.requests);
-      
-      // Mock data for now
-      setRequests([
-        {
-          _id: '1',
-          employee: { name: 'John Doe', email: 'john@example.com' },
-          leaveType: 'Annual Leave',
-          startDate: '2025-12-25',
-          endDate: '2025-12-27',
-          duration: 3,
-          reason: 'Family vacation',
-          status: 'Pending',
-          submittedAt: '2025-12-18'
-        },
-        {
-          _id: '2',
-          employee: { name: 'Jane Smith', email: 'jane@example.com' },
-          leaveType: 'Sick Leave',
-          startDate: '2025-12-22',
-          endDate: '2025-12-22',
-          duration: 1,
-          reason: 'Medical appointment',
-          status: 'Pending',
-          submittedAt: '2025-12-19'
-        }
-      ]);
-    } catch (error) {
-      console.error('Error fetching requests:', error);
+      setError('');
+      const response = await leaveAPI.getPendingApprovals();
+      setRequests(response.data.pendingApprovals || []);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to fetch pending requests');
+      console.error('Error fetching requests:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleApprove = async (requestId) => {
-    try {
-      setProcessingRequestId(requestId);
-      // TODO: Add actual API call
-      // await fetch(`http://localhost:5000/api/hod/requests/${requestId}/approve`, {
-      //   method: 'PATCH',
-      //   headers: { 'Authorization': `Bearer ${token}` }
-      // });
-      
-      // Update local state
-      setRequests(requests.map(req => 
-        req._id === requestId ? { ...req, status: 'Approved' } : req
-      ));
-    } catch (error) {
-      console.error('Error approving request:', error);
-    } finally {
-      setProcessingRequestId(null);
-    }
+  const handleActionClick = (request, action) => {
+    setSelectedRequest(request);
+    setActionType(action);
+    setRemarks('');
+    setShowModal(true);
   };
 
-  const handleReject = async (requestId) => {
+  const handleConfirmAction = async () => {
+    if (!selectedRequest) return;
+
     try {
-      setProcessingRequestId(requestId);
-      // TODO: Add actual API call
+      setProcessingRequestId(selectedRequest._id);
+      setError('');
       
-      setRequests(requests.map(req => 
-        req._id === requestId ? { ...req, status: 'Rejected' } : req
-      ));
-    } catch (error) {
-      console.error('Error rejecting request:', error);
+      await leaveAPI.updateLeaveStatus(selectedRequest._id, actionType, remarks);
+      
+      setShowModal(false);
+      setSelectedRequest(null);
+      setRemarks('');
+      
+      // Refresh the list
+      await fetchPendingRequests();
+    } catch (err) {
+      setError(err.response?.data?.message || `Failed to ${actionType} request`);
+      console.error(`Error ${actionType}ing request:`, err);
     } finally {
       setProcessingRequestId(null);
     }
@@ -93,16 +65,31 @@ const HoDPendingRequests = () => {
 
   const filteredRequests = requests.filter(req => {
     if (filter === 'all') return true;
-    return req.status.toLowerCase() === filter;
+    if (filter === 'pending') return !req.approvedByHoD && req.status === 'Pending';
+    if (filter === 'approved') return req.approvedByHoD && req.status === 'Pending';
+    if (filter === 'declined') return req.status === 'Declined';
+    return true;
   });
 
-  const getStatusClass = (status) => {
-    switch(status.toLowerCase()) {
-      case 'pending': return 'status-pending';
-      case 'approved': return 'status-approved';
-      case 'rejected': return 'status-rejected';
-      default: return '';
-    }
+  const getStatusClass = (request) => {
+    if (request.status === 'Declined') return 'status-declined';
+    if (request.approvedByHoD) return 'status-approved';
+    return 'status-pending';
+  };
+
+  const getStatusText = (request) => {
+    if (request.status === 'Declined') return 'Declined';
+    if (request.approvedByHoD) return 'Approved by HoD';
+    return 'Pending';
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
   return (
@@ -114,6 +101,8 @@ const HoDPendingRequests = () => {
         </div>
 
         <RoleToggle />
+
+        {error && <div className="error-message">{error}</div>}
 
         <div className="requests-controls">
           <div className="filter-tabs">
@@ -127,19 +116,19 @@ const HoDPendingRequests = () => {
               className={filter === 'pending' ? 'filter-tab active' : 'filter-tab'}
               onClick={() => setFilter('pending')}
             >
-              Pending ({requests.filter(r => r.status === 'Pending').length})
+              Pending ({requests.filter(r => !r.approvedByHoD && r.status === 'Pending').length})
             </button>
             <button 
               className={filter === 'approved' ? 'filter-tab active' : 'filter-tab'}
               onClick={() => setFilter('approved')}
             >
-              Approved ({requests.filter(r => r.status === 'Approved').length})
+              Approved ({requests.filter(r => r.approvedByHoD && r.status === 'Pending').length})
             </button>
             <button 
-              className={filter === 'rejected' ? 'filter-tab active' : 'filter-tab'}
-              onClick={() => setFilter('rejected')}
+              className={filter === 'declined' ? 'filter-tab active' : 'filter-tab'}
+              onClick={() => setFilter('declined')}
             >
-              Rejected ({requests.filter(r => r.status === 'Rejected').length})
+              Declined ({requests.filter(r => r.status === 'Declined').length})
             </button>
           </div>
         </div>
@@ -158,61 +147,157 @@ const HoDPendingRequests = () => {
               <div key={request._id} className="request-card">
                 <div className="request-header">
                   <div className="employee-info">
-                    <h3>{request.employee.name}</h3>
-                    <p className="employee-email">{request.employee.email}</p>
+                    <h3>{request.employee?.name || request.applicantName || 'N/A'}</h3>
+                    <p className="employee-email">{request.employee?.email || 'N/A'}</p>
                   </div>
-                  <span className={`request-status ${getStatusClass(request.status)}`}>
-                    {request.status}
+                  <span className={`request-status ${getStatusClass(request)}`}>
+                    {getStatusText(request)}
                   </span>
                 </div>
 
                 <div className="request-details">
                   <div className="detail-row">
+                    <span className="detail-label">Designation:</span>
+                    <span className="detail-value">{request.applicantDesignation || 'N/A'}</span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Department:</span>
+                    <span className="detail-value">
+                      {request.departmentName || request.department?.name || 'N/A'}
+                    </span>
+                  </div>
+                  <div className="detail-row">
                     <span className="detail-label">Leave Type:</span>
-                    <span className="detail-value">{request.leaveType}</span>
+                    <span className="detail-value">{request.type || 'N/A'}</span>
                   </div>
                   <div className="detail-row">
-                    <span className="detail-label">Duration:</span>
-                    <span className="detail-value">{request.duration} day(s)</span>
+                    <span className="detail-label">Number of Days:</span>
+                    <span className="detail-value">{request.numberOfDays || 'N/A'} day(s)</span>
                   </div>
                   <div className="detail-row">
-                    <span className="detail-label">Dates:</span>
-                    <span className="detail-value">
-                      {new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}
-                    </span>
+                    <span className="detail-label">Start Date:</span>
+                    <span className="detail-value">{formatDate(request.startDate)}</span>
                   </div>
                   <div className="detail-row">
-                    <span className="detail-label">Reason:</span>
-                    <span className="detail-value">{request.reason}</span>
+                    <span className="detail-label">End Date:</span>
+                    <span className="detail-value">{formatDate(request.endDate)}</span>
                   </div>
                   <div className="detail-row">
-                    <span className="detail-label">Submitted:</span>
-                    <span className="detail-value">
-                      {new Date(request.submittedAt).toLocaleDateString()}
-                    </span>
+                    <span className="detail-label">Purpose:</span>
+                    <span className="detail-value">{request.reason || 'N/A'}</span>
                   </div>
+                  {request.leaveDocument && (
+                    <div className="detail-row">
+                      <span className="detail-label">Leave Document:</span>
+                      <span className="detail-value">
+                        <img 
+                          src={request.leaveDocument} 
+                          alt="Leave document" 
+                          style={{ maxWidth: '300px', maxHeight: '300px', borderRadius: '8px', marginTop: '0.5rem' }}
+                        />
+                      </span>
+                    </div>
+                  )}
+                  {request.alternateEmployees && request.alternateEmployees.length > 0 ? (
+                    <div className="detail-row">
+                      <span className="detail-label">Alternate Employees:</span>
+                      <span className="detail-value">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
+                          {request.alternateEmployees.map((alt, index) => (
+                            <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <span>{alt.employee?.name || 'Unknown'}</span>
+                              <span style={{ 
+                                padding: '0.25rem 0.5rem', 
+                                borderRadius: '4px', 
+                                fontSize: '0.85rem',
+                                backgroundColor: alt.response === 'ok' ? '#d4edda' : alt.response === 'sorry' ? '#f8d7da' : '#fff3cd',
+                                color: alt.response === 'ok' ? '#155724' : alt.response === 'sorry' ? '#721c24' : '#856404'
+                              }}>
+                                {alt.response === 'ok' ? '✓ OK' : alt.response === 'sorry' ? '✗ Sorry' : '⏳ Pending'}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </span>
+                    </div>
+                  ) : request.backupEmployee && (
+                    <div className="detail-row">
+                      <span className="detail-label">Alternate Employee:</span>
+                      <span className="detail-value">
+                        {request.backupEmployee.name || 'N/A'}
+                      </span>
+                    </div>
+                  )}
+                  <div className="detail-row">
+                    <span className="detail-label">Application Date:</span>
+                    <span className="detail-value">{formatDate(request.applicationDate)}</span>
+                  </div>
+                  {request.hodRemarks && (
+                    <div className="detail-row remarks">
+                      <span className="detail-label">Your Remarks:</span>
+                      <span className="detail-value">{request.hodRemarks}</span>
+                    </div>
+                  )}
                 </div>
 
-                {request.status === 'Pending' && (
+                {!request.approvedByHoD && request.status === 'Pending' && (
                   <div className="request-actions">
                     <button
                       className="approve-btn"
-                      onClick={() => handleApprove(request._id)}
+                      onClick={() => handleActionClick(request, 'approve')}
                       disabled={processingRequestId === request._id}
                     >
                       {processingRequestId === request._id ? 'Processing...' : '✓ Approve'}
                     </button>
                     <button
                       className="reject-btn"
-                      onClick={() => handleReject(request._id)}
+                      onClick={() => handleActionClick(request, 'decline')}
                       disabled={processingRequestId === request._id}
                     >
-                      {processingRequestId === request._id ? 'Processing...' : '✗ Reject'}
+                      {processingRequestId === request._id ? 'Processing...' : '✗ Decline'}
                     </button>
                   </div>
                 )}
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Modal for remarks */}
+        {showModal && (
+          <div className="modal-overlay" onClick={() => setShowModal(false)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <h3>{actionType === 'approve' ? 'Approve' : 'Decline'} Leave Request</h3>
+              <div className="modal-body">
+                <label htmlFor="remarks">Remarks (Optional):</label>
+                <textarea
+                  id="remarks"
+                  value={remarks}
+                  onChange={(e) => setRemarks(e.target.value)}
+                  placeholder={`Enter remarks for ${actionType === 'approve' ? 'approval' : 'decline'}...`}
+                  rows="4"
+                />
+              </div>
+              <div className="modal-actions">
+                <button
+                  className="btn-secondary"
+                  onClick={() => {
+                    setShowModal(false);
+                    setSelectedRequest(null);
+                    setRemarks('');
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  className={actionType === 'approve' ? 'btn-primary' : 'btn-danger'}
+                  onClick={handleConfirmAction}
+                  disabled={processingRequestId === selectedRequest?._id}
+                >
+                  {processingRequestId === selectedRequest?._id ? 'Processing...' : `Confirm ${actionType === 'approve' ? 'Approve' : 'Decline'}`}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -221,3 +306,4 @@ const HoDPendingRequests = () => {
 };
 
 export default HoDPendingRequests;
+

@@ -8,6 +8,7 @@ const authRoutes = require("./routes/authRoutes");
 const departmentRoutes = require("./routes/departmentRoutes");
 const userRoutes = require("./routes/userRoutes");
 const leaveRoutes = require("./routes/leaveRoutes");
+const leaveQuotaRoutes = require("./routes/leaveQuotaRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -30,6 +31,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/departments", departmentRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/leaves", leaveRoutes);
+app.use("/api/leave-quota", leaveQuotaRoutes);
 
 // Health check route
 app.get("/", (req, res) => {

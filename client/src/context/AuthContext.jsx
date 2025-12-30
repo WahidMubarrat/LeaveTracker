@@ -72,23 +72,8 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const switchRole = async (newRole) => {
-    try {
-      const response = await authAPI.updateActiveRole(newRole);
-      // Update user in state with new activeRole
-      setUser(prev => ({
-        ...prev,
-        activeRole: response.data.activeRole
-      }));
-      return { success: true };
-    } catch (error) {
-      console.error('Failed to switch role:', error);
-      return {
-        success: false,
-        message: error.response?.data?.message || 'Failed to switch role'
-      };
-    }
-  };
+  // Role switching is now UI-only - no backend call needed
+  // User's actual roles don't change, just which panel they're viewing
 
   return (
     <AuthContext.Provider
@@ -101,7 +86,6 @@ export const AuthProvider = ({ children }) => {
         register,
         logout,
         refreshProfile,
-        switchRole,
       }}
     >
       {children}

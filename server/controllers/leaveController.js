@@ -1,22 +1,34 @@
 const LeaveRequest = require("../models/LeaveRequest");
 const LeaveHistoryLog = require("../models/LeaveHistoryLog");
+const AlternateRequest = require("../models/AlternateRequest");
 const User = require("../models/User");
+const { uploadToCloudinary } = require("../utils/cloudinaryUpload");
 
 // Apply for leave
 exports.applyLeave = async (req, res) => {
   try {
-    const {
+    let {
       startDate,
       endDate,
       type,
       reason,
       backupEmployeeId,
+      alternateEmployeeIds, // Array of alternate employee IDs or JSON string
       applicationDate,
       applicantName,
       departmentName,
       applicantDesignation,
       numberOfDays,
     } = req.body;
+
+    // Parse alternateEmployeeIds if it's a JSON string (from FormData)
+    if (typeof alternateEmployeeIds === 'string') {
+      try {
+        alternateEmployeeIds = JSON.parse(alternateEmployeeIds);
+      } catch (e) {
+        alternateEmployeeIds = [];
+      }
+    }
 
     // Validate required fields
     if (!startDate || !endDate || !type) {
@@ -36,16 +48,72 @@ exports.applyLeave = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Calculate number of days
-    const calculatedDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-    const totalDays = Number(numberOfDays) > 0 ? Number(numberOfDays) : calculatedDays;
+    // Calculate number of weekdays (excluding Saturday and Sunday)
+    const calculateWeekdays = (startDate, endDate) => {
+      let count = 0;
+      const current = new Date(startDate);
+      const end = new Date(endDate);
+      
+      while (current <= end) {
+        const dayOfWeek = current.getDay();
+        // 0 = Sunday, 6 = Saturday
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+          count++;
+        }
+        current.setDate(current.getDate() + 1);
+      }
+      
+      return count;
+    };
 
-    // Check leave quota (both Annual and Casual use annual quota)
-    if (currentUser.leaveQuota.annual < totalDays) {
+    const calculatedWeekdays = calculateWeekdays(start, end);
+    const totalDays = Number(numberOfDays) > 0 ? Number(numberOfDays) : calculatedWeekdays;
+
+    // Validate that the calculated days match (security check)
+    if (Math.abs(totalDays - calculatedWeekdays) > 1) {
       return res.status(400).json({ 
-        message: `Insufficient leave quota. Available: ${currentUser.leaveQuota.annual} days` 
+        message: `Day calculation mismatch. Expected ${calculatedWeekdays} weekdays, received ${totalDays}` 
       });
     }
+
+    // Check casual leave limit (max 2 consecutive days)
+    const leaveType = type.toLowerCase(); // 'annual' or 'casual'
+    if (leaveType === 'casual' && totalDays > 2) {
+      return res.status(400).json({ 
+        message: `Casual leave cannot exceed 2 consecutive days. You are requesting ${totalDays} days. Please apply for Annual Leave instead.` 
+      });
+    }
+
+    // Check leave quota based on leave type
+    const quotaKey = leaveType === 'annual' || leaveType === 'casual' ? leaveType : 'annual';
+    
+    const allocated = currentUser.leaveQuota[quotaKey]?.allocated || 0;
+    const used = currentUser.leaveQuota[quotaKey]?.used || 0;
+    const remaining = allocated - used;
+
+    if (remaining < totalDays) {
+      return res.status(400).json({ 
+        message: `Insufficient ${type} leave quota. Available: ${remaining} days, Requested: ${totalDays} days` 
+      });
+    }
+
+    // Upload leave document to Cloudinary if provided
+    let leaveDocumentUrl = null;
+    if (req.file) {
+      try {
+        leaveDocumentUrl = await uploadToCloudinary(req.file.buffer, 'leave-tracker/documents');
+      } catch (uploadError) {
+        console.error('Leave document upload error:', uploadError);
+        return res.status(500).json({ message: 'Failed to upload leave document' });
+      }
+    }
+
+    // Process alternate employees
+    const alternateIds = alternateEmployeeIds || (backupEmployeeId ? [backupEmployeeId] : []);
+    const alternateEmployees = alternateIds.map(id => ({
+      employee: id,
+      response: "pending"
+    }));
 
     // Create leave request
     const leaveRequest = new LeaveRequest({
@@ -60,10 +128,24 @@ exports.applyLeave = async (req, res) => {
       type,
       reason,
       numberOfDays: totalDays,
-      backupEmployee: backupEmployeeId || null,
+      backupEmployee: backupEmployeeId || null, // Keep for backward compatibility
+      alternateEmployees: alternateEmployees,
+      leaveDocument: leaveDocumentUrl,
     });
 
     await leaveRequest.save();
+
+    // Create alternate requests for each alternate employee
+    if (alternateIds.length > 0) {
+      const alternateRequests = alternateIds.map(altId => ({
+        leaveRequest: leaveRequest._id,
+        applicant: req.user.id,
+        alternate: altId,
+        status: "pending"
+      }));
+
+      await AlternateRequest.insertMany(alternateRequests);
+    }
 
     // Create history log
     const historyLog = new LeaveHistoryLog({
@@ -89,6 +171,7 @@ exports.getMyApplications = async (req, res) => {
   try {
     const applications = await LeaveRequest.find({ employee: req.user.id })
       .populate("backupEmployee", "name email")
+      .populate("alternateEmployees.employee", "name email")
       .populate("department", "name")
       .sort({ createdAt: -1 });
 
@@ -113,6 +196,7 @@ exports.getLeaveHistory = async (req, res) => {
     })
       .populate("employee", "name email profilePic")
       .populate("backupEmployee", "name email")
+      .populate("alternateEmployees.employee", "name email")
       .populate("department", "name")
       .sort({ createdAt: -1 });
 
@@ -156,6 +240,7 @@ exports.getPendingApprovals = async (req, res) => {
       .populate("employee", "name email profilePic")
       .populate("department", "name")
       .populate("backupEmployee", "name email")
+      .populate("alternateEmployees.employee", "name email")
       .sort({ createdAt: -1 });
 
     res.json({ pendingApprovals });
@@ -169,7 +254,7 @@ exports.getPendingApprovals = async (req, res) => {
 exports.updateLeaveStatus = async (req, res) => {
   try {
     const { leaveId } = req.params;
-    const { action, notes } = req.body; // action: "approve" or "decline"
+    const { action, remarks } = req.body; // action: "approve" or "decline", remarks: optional remarks
 
     const currentUser = await User.findById(req.user.id);
     if (!currentUser) {
@@ -185,26 +270,81 @@ exports.updateLeaveStatus = async (req, res) => {
 
     if (action === "approve") {
       if (currentUser.hasRole("HoD")) {
+        // Check if already processed by HoD
+        if (leaveRequest.approvedByHoD) {
+          return res.status(400).json({ message: "This request has already been processed by HoD" });
+        }
+        
         leaveRequest.approvedByHoD = true;
+        leaveRequest.hodRemarks = remarks || "";
+        // Status remains "Pending" until HR reviews
         historyAction = "Approved by HoD";
       } else if (currentUser.hasRole("HR")) {
+        // Check if HoD has approved first
+        if (!leaveRequest.approvedByHoD) {
+          return res.status(400).json({ message: "HoD approval is required before HR can approve" });
+        }
+        
+        // Check if already processed by HR
+        if (leaveRequest.approvedByHR) {
+          return res.status(400).json({ message: "This request has already been processed by HR" });
+        }
+        
         leaveRequest.approvedByHR = true;
         leaveRequest.status = "Approved";
+        leaveRequest.hrRemarks = remarks || "";
         historyAction = "Approved by HR";
 
-        // Deduct leave quota (both Annual and Casual deduct from annual quota)
+        // Deduct leave quota based on leave type
         const employee = await User.findById(leaveRequest.employee);
-        const days = Math.ceil((leaveRequest.endDate - leaveRequest.startDate) / (1000 * 60 * 60 * 24)) + 1;
-        
-        employee.leaveQuota.annual -= days;
-        
-        await employee.save();
+        if (employee) {
+          const days = leaveRequest.numberOfDays || Math.ceil((leaveRequest.endDate - leaveRequest.startDate) / (1000 * 60 * 60 * 24)) + 1;
+          const leaveType = leaveRequest.type.toLowerCase();
+          const quotaKey = leaveType === 'annual' || leaveType === 'casual' ? leaveType : 'annual';
+          
+          // Increment used days for the specific leave type
+          if (employee.leaveQuota[quotaKey]) {
+            employee.leaveQuota[quotaKey].used += days;
+          }
+          
+          await employee.save();
+          
+          // Update employee's leave status
+          await employee.updateLeaveStatus();
+        }
       } else {
         return res.status(403).json({ message: "Unauthorized" });
       }
     } else if (action === "decline") {
-      leaveRequest.status = "Declined";
-      historyAction = "Declined";
+      // If HoD declines, completely decline the application
+      if (currentUser.hasRole("HoD")) {
+        if (leaveRequest.approvedByHoD) {
+          return res.status(400).json({ message: "This request has already been processed by HoD" });
+        }
+        leaveRequest.status = "Declined";
+        leaveRequest.hodRemarks = remarks || "";
+        historyAction = "Declined by HoD";
+      } 
+      // If HR declines, completely decline the application
+      else if (currentUser.hasRole("HR")) {
+        if (!leaveRequest.approvedByHoD) {
+          return res.status(400).json({ message: "HoD approval is required before HR can review" });
+        }
+        if (leaveRequest.approvedByHR) {
+          return res.status(400).json({ message: "This request has already been processed by HR" });
+        }
+        leaveRequest.status = "Declined";
+        leaveRequest.hrRemarks = remarks || "";
+        historyAction = "Declined by HR";
+      } else {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      
+      // Update employee's leave status (in case they were on leave)
+      const employee = await User.findById(leaveRequest.employee);
+      if (employee) {
+        await employee.updateLeaveStatus();
+      }
     } else {
       return res.status(400).json({ message: "Invalid action" });
     }
@@ -217,7 +357,7 @@ exports.updateLeaveStatus = async (req, res) => {
       leaveRequest: leaveRequest._id,
       action: historyAction,
       performedBy: req.user.id,
-      notes,
+      notes: remarks || "",
     });
 
     await historyLog.save();
@@ -244,6 +384,82 @@ exports.getLeaveRequestLogs = async (req, res) => {
     res.json({ logs });
   } catch (error) {
     console.error("Get leave request logs error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get alternate requests for current user
+exports.getAlternateRequests = async (req, res) => {
+  try {
+    const alternateRequests = await AlternateRequest.find({ 
+      alternate: req.user.id,
+      status: "pending"
+    })
+      .populate("leaveRequest", "applicantName applicantDesignation startDate endDate type reason numberOfDays")
+      .populate("applicant", "name email")
+      .sort({ createdAt: -1 });
+
+    res.json({ alternateRequests });
+  } catch (error) {
+    console.error("Get alternate requests error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Respond to alternate request (ok or sorry)
+exports.respondToAlternateRequest = async (req, res) => {
+  try {
+    const { alternateRequestId } = req.params;
+    const { response } = req.body; // "ok" or "sorry"
+
+    if (!response || !["ok", "sorry"].includes(response)) {
+      return res.status(400).json({ message: "Response must be 'ok' or 'sorry'" });
+    }
+
+    const alternateRequest = await AlternateRequest.findById(alternateRequestId)
+      .populate("leaveRequest");
+
+    if (!alternateRequest) {
+      return res.status(404).json({ message: "Alternate request not found" });
+    }
+
+    if (alternateRequest.alternate.toString() !== req.user.id.toString()) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    if (alternateRequest.status !== "pending") {
+      return res.status(400).json({ message: "This request has already been responded to" });
+    }
+
+    // Update alternate request
+    alternateRequest.status = response === "ok" ? "accepted" : "declined";
+    alternateRequest.respondedAt = new Date();
+    await alternateRequest.save();
+
+    // Update leave request's alternateEmployees array
+    const leaveRequest = alternateRequest.leaveRequest;
+    const alternateIndex = leaveRequest.alternateEmployees.findIndex(
+      alt => alt.employee.toString() === req.user.id.toString()
+    );
+
+    if (alternateIndex !== -1) {
+      leaveRequest.alternateEmployees[alternateIndex].response = response;
+      leaveRequest.alternateEmployees[alternateIndex].respondedAt = new Date();
+      
+      // If response is "sorry", remove from alternateEmployees array
+      if (response === "sorry") {
+        leaveRequest.alternateEmployees.splice(alternateIndex, 1);
+      }
+      
+      await leaveRequest.save();
+    }
+
+    res.json({ 
+      message: `Alternate request ${response === "ok" ? "accepted" : "declined"} successfully`,
+      alternateRequest 
+    });
+  } catch (error) {
+    console.error("Respond to alternate request error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

@@ -2,11 +2,12 @@ const express = require("express");
 const router = express.Router();
 const leaveController = require("../controllers/leaveController");
 const authMiddleware = require("../middleware/authMiddleware");
+const upload = require("../middleware/upload");
 
 // @route   POST /api/leaves/apply
 // @desc    Apply for leave
 // @access  Private
-router.post("/apply", authMiddleware, leaveController.applyLeave);
+router.post("/apply", authMiddleware, upload.single('leaveDocument'), leaveController.applyLeave);
 
 // @route   GET /api/leaves/my-applications
 // @desc    Get all leave applications for current user
@@ -32,5 +33,15 @@ router.put("/:leaveId/status", authMiddleware, leaveController.updateLeaveStatus
 // @desc    Get detailed history logs for a leave request
 // @access  Private
 router.get("/:leaveId/logs", authMiddleware, leaveController.getLeaveRequestLogs);
+
+// @route   GET /api/leaves/alternate-requests
+// @desc    Get alternate requests for current user
+// @access  Private
+router.get("/alternate-requests", authMiddleware, leaveController.getAlternateRequests);
+
+// @route   PUT /api/leaves/alternate-requests/:alternateRequestId/respond
+// @desc    Respond to alternate request (ok or sorry)
+// @access  Private
+router.put("/alternate-requests/:alternateRequestId/respond", authMiddleware, leaveController.respondToAlternateRequest);
 
 module.exports = router;

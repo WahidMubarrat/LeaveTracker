@@ -2,11 +2,12 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const Department = require("../models/Department");
+const { uploadToCloudinary } = require("../utils/cloudinaryUpload");
 
 // Register new user
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, designation, role, departmentId, profilePic } = req.body;
+    const { name, email, password, designation, role, departmentId } = req.body;
 
     // Validate required fields
     if (!name || !email || !password || !designation || !departmentId) {
@@ -14,7 +15,7 @@ exports.register = async (req, res) => {
     }
 
     // Validate email format
-    if (!email.includes('@')) {
+    if (!email.includes('@iut-dhaka.edu')) {
       return res.status(400).json({ message: "Please provide a valid email address" });
     }
 
@@ -46,6 +47,17 @@ exports.register = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    // Upload profile picture to Cloudinary if provided
+    let profilePicUrl = null;
+    if (req.file) {
+      try {
+        profilePicUrl = await uploadToCloudinary(req.file.buffer, 'leave-tracker/profiles');
+      } catch (uploadError) {
+        console.error('Profile pic upload error:', uploadError);
+        return res.status(500).json({ message: 'Failed to upload profile picture' });
+      }
+    }
+
     // Create new user
     const user = new User({
       name,
@@ -54,7 +66,7 @@ exports.register = async (req, res) => {
       designation,
       roles: ["Employee"], // Always register as Employee only
       department: departmentId,
-      profilePic: profilePic || null,
+      profilePic: profilePicUrl,
     });
 
     await user.save();
