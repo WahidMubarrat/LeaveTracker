@@ -48,9 +48,33 @@ exports.applyLeave = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Calculate number of days
-    const calculatedDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-    const totalDays = Number(numberOfDays) > 0 ? Number(numberOfDays) : calculatedDays;
+    // Calculate number of weekdays (excluding Saturday and Sunday)
+    const calculateWeekdays = (startDate, endDate) => {
+      let count = 0;
+      const current = new Date(startDate);
+      const end = new Date(endDate);
+      
+      while (current <= end) {
+        const dayOfWeek = current.getDay();
+        // 0 = Sunday, 6 = Saturday
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+          count++;
+        }
+        current.setDate(current.getDate() + 1);
+      }
+      
+      return count;
+    };
+
+    const calculatedWeekdays = calculateWeekdays(start, end);
+    const totalDays = Number(numberOfDays) > 0 ? Number(numberOfDays) : calculatedWeekdays;
+
+    // Validate that the calculated days match (security check)
+    if (Math.abs(totalDays - calculatedWeekdays) > 1) {
+      return res.status(400).json({ 
+        message: `Day calculation mismatch. Expected ${calculatedWeekdays} weekdays, received ${totalDays}` 
+      });
+    }
 
     // Check leave quota based on leave type
     const leaveType = type.toLowerCase(); // 'annual' or 'casual'

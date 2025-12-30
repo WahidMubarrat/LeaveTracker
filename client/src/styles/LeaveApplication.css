@@ -98,6 +98,14 @@
   min-height: 100px;
 }
 
+.form-group input.readonly-field,
+.form-group input:disabled {
+  background-color: #f5f7fa;
+  color: #666;
+  cursor: not-allowed;
+  border-color: #e0e0e0;
+}
+
 .days-info {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;

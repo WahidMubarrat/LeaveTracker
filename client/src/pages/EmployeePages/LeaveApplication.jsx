@@ -38,6 +38,24 @@ const LeaveApplication = () => {
     }
   }, [user]);
 
+  // Helper function to calculate weekdays excluding weekends
+  const calculateWeekdays = (startDate, endDate) => {
+    let count = 0;
+    const current = new Date(startDate);
+    const end = new Date(endDate);
+    
+    while (current <= end) {
+      const dayOfWeek = current.getDay();
+      // 0 = Sunday, 6 = Saturday
+      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+        count++;
+      }
+      current.setDate(current.getDate() + 1);
+    }
+    
+    return count;
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -45,7 +63,7 @@ const LeaveApplication = () => {
       [name]: value,
     }));
 
-    // Auto-calculate days when dates change
+    // Auto-calculate weekdays when dates change
     if (name === 'startDate' || name === 'endDate') {
       const start = name === 'startDate' ? value : formData.startDate;
       const end = name === 'endDate' ? value : formData.endDate;
@@ -53,12 +71,12 @@ const LeaveApplication = () => {
       if (start && end) {
         const startDate = new Date(start);
         const endDate = new Date(end);
-        const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
         
-        if (days > 0) {
+        if (endDate >= startDate) {
+          const weekdays = calculateWeekdays(startDate, endDate);
           setFormData(prev => ({
             ...prev,
-            numberOfDays: days.toString(),
+            numberOfDays: weekdays.toString(),
           }));
         }
       }
@@ -186,7 +204,9 @@ const LeaveApplication = () => {
                     id="applicationDate"
                     name="applicationDate"
                     value={formData.applicationDate}
-                    onChange={handleChange}
+                    readOnly
+                    disabled
+                    className="readonly-field"
                     required
                   />
                 </div>
@@ -197,7 +217,9 @@ const LeaveApplication = () => {
                     id="applicantName"
                     name="applicantName"
                     value={formData.applicantName}
-                    onChange={handleChange}
+                    readOnly
+                    disabled
+                    className="readonly-field"
                     placeholder="Your full name"
                     required
                   />
@@ -213,7 +235,9 @@ const LeaveApplication = () => {
                     id="departmentName"
                     name="departmentName"
                     value={formData.departmentName}
-                    onChange={handleChange}
+                    readOnly
+                    disabled
+                    className="readonly-field"
                     placeholder="Your department"
                     required
                   />
@@ -225,7 +249,9 @@ const LeaveApplication = () => {
                     id="applicantDesignation"
                     name="applicantDesignation"
                     value={formData.applicantDesignation}
-                    onChange={handleChange}
+                    readOnly
+                    disabled
+                    className="readonly-field"
                     placeholder="Your designation"
                     required
                   />
@@ -248,13 +274,15 @@ const LeaveApplication = () => {
                   </select>
                 </div>
                 <div className="form-group">
-                  <label htmlFor="numberOfDays">Number of Days *</label>
+                  <label htmlFor="numberOfDays">Number of Days (Weekdays) *</label>
                   <input
                     type="number"
                     id="numberOfDays"
                     name="numberOfDays"
                     value={formData.numberOfDays}
-                    onChange={handleChange}
+                    readOnly
+                    disabled
+                    className="readonly-field"
                     min="1"
                     placeholder="Auto-calculated"
                     required
