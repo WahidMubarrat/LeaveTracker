@@ -3,6 +3,7 @@ const LeaveHistoryLog = require("../models/LeaveHistoryLog");
 const AlternateRequest = require("../models/AlternateRequest");
 const User = require("../models/User");
 
+
 // Apply for leave
 exports.applyLeave = async (req, res) => {
   try {
@@ -410,3 +411,31 @@ exports.respondToAlternateRequest = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+
+
+
+
+
+// =======================================
+// Get MY leave history (employee only)
+// =======================================
+exports.getMyLeaveHistory = async (req, res) => {
+  try {
+    const history = await LeaveHistoryLog.find({
+      employee: req.user.id
+    })
+      .populate({
+        path: "leaveRequest",
+        populate: { path: "department", select: "name" }
+      })
+      .populate("performedBy", "name email role")
+      .sort({ timestamp: -1 });
+
+    res.json({ history });
+  } catch (error) {
+    console.error("Get my leave history error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+

@@ -11,7 +11,7 @@ const leaveRoutes = require("./routes/leaveRoutes");
 const leaveQuotaRoutes = require("./routes/leaveQuotaRoutes");
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5050;
 
 // Connect to MongoDB (skip during tests)
 if (process.env.NODE_ENV !== 'test') {
