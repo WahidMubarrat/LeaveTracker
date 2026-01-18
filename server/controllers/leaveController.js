@@ -2,6 +2,7 @@ const LeaveRequest = require("../models/LeaveRequest");
 const LeaveHistoryLog = require("../models/LeaveHistoryLog");
 const AlternateRequest = require("../models/AlternateRequest");
 const User = require("../models/User");
+const Vacation = require("../models/Vacation");
 const { uploadToCloudinary } = require("../utils/cloudinaryUpload");
 
 // Apply for leave
@@ -48,16 +49,57 @@ exports.applyLeave = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Calculate number of weekdays (excluding Saturday and Sunday)
-    const calculateWeekdays = (startDate, endDate) => {
-      let count = 0;
-      const current = new Date(startDate);
+    // Helper function to check if a date falls within a holiday period
+    const isHoliday = (date, holidaysList) => {
+      const checkDate = new Date(date);
+      checkDate.setHours(0, 0, 0, 0);
+      
+      return holidaysList.some(holiday => {
+        const holidayStartDate = new Date(holiday.date);
+        holidayStartDate.setHours(0, 0, 0, 0);
+        const holidayEndDate = new Date(holidayStartDate);
+        holidayEndDate.setDate(holidayEndDate.getDate() + holiday.numberOfDays - 1);
+        holidayEndDate.setHours(23, 59, 59, 999);
+        
+        return checkDate >= holidayStartDate && checkDate <= holidayEndDate;
+      });
+    };
+
+    // Calculate number of weekdays (excluding Saturday, Sunday, and holidays)
+    const calculateWeekdays = async (startDate, endDate) => {
+      // Normalize dates to start/end of day
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
       const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+
+      // Fetch holidays that could potentially overlap with the date range
+      // Get holidays that start before or on the end date
+      const allHolidays = await Vacation.find({
+        date: { $lte: end }
+      });
+
+      // Filter holidays that actually overlap with the date range
+      const holidays = allHolidays.filter(holiday => {
+        const holidayStart = new Date(holiday.date);
+        holidayStart.setHours(0, 0, 0, 0);
+        const holidayEnd = new Date(holidayStart);
+        holidayEnd.setDate(holidayEnd.getDate() + holiday.numberOfDays - 1);
+        holidayEnd.setHours(23, 59, 59, 999);
+        
+        // Check if holiday overlaps with the date range
+        return holidayStart <= end && holidayEnd >= start;
+      });
+
+      let count = 0;
+      const current = new Date(start);
+      current.setHours(0, 0, 0, 0);
       
       while (current <= end) {
         const dayOfWeek = current.getDay();
         // 0 = Sunday, 6 = Saturday
-        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+        // Only count weekdays that are not holidays
+        if (dayOfWeek !== 0 && dayOfWeek !== 6 && !isHoliday(current, holidays)) {
           count++;
         }
         current.setDate(current.getDate() + 1);
@@ -66,7 +108,7 @@ exports.applyLeave = async (req, res) => {
       return count;
     };
 
-    const calculatedWeekdays = calculateWeekdays(start, end);
+    const calculatedWeekdays = await calculateWeekdays(start, end);
     const totalDays = Number(numberOfDays) > 0 ? Number(numberOfDays) : calculatedWeekdays;
 
     // Validate that the calculated days match (security check)
