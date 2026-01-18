@@ -1,6 +1,7 @@
 import HRLayout from '../../components/HRLayout';
 import HoDSettings from '../../components/HoDSettings';
 import LeaveQuotaSetter from '../../components/LeaveQuotaSetter';
+import PublicHoliday from '../../components/PublicHoliday';
 import '../../styles/SystemSettings.css';
 
 const SystemSettings = () => {
@@ -17,6 +18,9 @@ const SystemSettings = () => {
 
         {/* Head of Department Settings */}
         <HoDSettings />
+
+        {/* Public Holiday Management */}
+        <PublicHoliday />
       </div>
     </HRLayout>
   );

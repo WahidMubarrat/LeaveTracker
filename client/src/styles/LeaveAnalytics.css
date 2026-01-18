@@ -58,33 +58,168 @@
 }
 
 .charts-section {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.chart-card {
   background: white;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 3rem;
-  min-height: 400px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 2rem;
 }
 
-.chart-placeholder {
+.chart-card h3 {
+  margin: 0 0 1.5rem 0;
+  color: #1e293b;
+  font-size: 1.25rem;
+}
+
+.chart-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.bar-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bar-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bar-label {
+  font-weight: 500;
+  color: #475569;
+}
+
+.bar-value {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 1.125rem;
+}
+
+.bar-container {
+  height: 30px;
+  background: #f1f5f9;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.5s ease;
+}
+
+.dept-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.dept-stat-row {
+  display: grid;
+  grid-template-columns: 100px 1fr 80px;
+  gap: 1rem;
+  align-items: center;
+}
+
+.dept-badge-small {
+  display: inline-block;
+  padding: 0.25rem 0.625rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
   text-align: center;
 }
 
-.placeholder-icon {
-  font-size: 4rem;
-  margin-bottom: 1rem;
+.dept-badge-small.dept-cse { background: #dbeafe; color: #1e40af; }
+.dept-badge-small.dept-eee { background: #fef3c7; color: #92400e; }
+.dept-badge-small.dept-civil { background: #d1fae5; color: #065f46; }
+.dept-badge-small.dept-mechanical { background: #fee2e2; color: #991b1b; }
+.dept-badge-small.dept-btm { background: #f3e8ff; color: #6b21a8; }
+.dept-badge-small.dept-tve { background: #ffedd5; color: #9a3412; }
+
+.dept-stat-bar {
+  height: 24px;
+  background: #f1f5f9;
+  border-radius: 6px;
+  overflow: hidden;
 }
 
-.chart-placeholder h3 {
-  color: #333;
-  margin: 0 0 0.5rem 0;
-  font-size: 1.5rem;
+.dept-stat-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  border-radius: 6px;
+  transition: width 0.5s ease;
 }
 
-.chart-placeholder p {
-  color: #666;
-  margin: 0;
-  font-size: 1rem;
+.dept-stat-count {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #475569;
+  text-align: right;
 }
+
+.recent-leaves-section {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+}
+
+.recent-leaves-section h3 {
+  margin: 0 0 1.5rem 0;
+  color: #1e293b;
+  font-size: 1.25rem;
+}
+
+.recent-leaves-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.recent-leaves-table thead {
+  background: #f8fafc;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.recent-leaves-table th {
+  padding: 0.875rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #475569;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.recent-leaves-table td {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
+}
+
+.recent-leaves-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.status-badge-small {
+  display: inline-block;
+  padding: 0.25rem 0.625rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-badge-small.status-approved { background: #d1fae5; color: #065f46; }
+.status-badge-small.status-pending { background: #fef3c7; color: #92400e; }
+.status-badge-small.status-declined { background: #fee2e2; color: #991b1b; }

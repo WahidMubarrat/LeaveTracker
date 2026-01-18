@@ -52,7 +52,7 @@
 
 .form-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1.5rem;
   margin-bottom: 1.5rem;
 }
@@ -60,6 +60,8 @@
 .form-group {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  min-width: 0;
 }
 
 .form-group label {
@@ -67,17 +69,27 @@
   font-weight: 600;
   margin-bottom: 0.5rem;
   font-size: 0.9rem;
+  min-height: 1.2em;
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
+  width: 100%;
   padding: 0.75rem;
   border: 1px solid #ddd;
   border-radius: 8px;
   font-size: 1rem;
   font-family: inherit;
   transition: border-color 0.3s ease;
+  box-sizing: border-box;
+}
+
+/* Ensure all input boxes in grid have same fixed height and width */
+.form-row .form-group input,
+.form-row .form-group select {
+  height: 48px;
+  width: 100%;
 }
 
 .form-group input:focus,

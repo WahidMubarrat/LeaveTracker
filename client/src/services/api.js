@@ -93,4 +93,13 @@ export const leaveQuotaAPI = {
   resetAll: () => api.post('/leave-quota/reset-all'),
 };
 
+// Vacation/Holiday API
+export const vacationAPI = {
+  getAll: () => api.get('/vacations'),
+  getInRange: (startDate, endDate) => api.get('/vacations/range', { params: { startDate, endDate } }),
+  create: (data) => api.post('/vacations', data),
+  update: (holidayId, data) => api.put(`/vacations/${holidayId}`, data),
+  delete: (holidayId) => api.delete(`/vacations/${holidayId}`),
+};
+
 export default api;
