@@ -17,7 +17,14 @@ const ApplicationStatus = () => {
     try {
       setLoading(true);
       const response = await leaveAPI.getMyApplications();
-      setApplications(response.data.applications || []);
+      const apps = response.data.applications || [];
+      
+      // Sort by application date - latest first
+      const sortedApps = apps.sort((a, b) => {
+        return new Date(b.applicationDate) - new Date(a.applicationDate);
+      });
+      
+      setApplications(sortedApps);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to fetch applications');
       console.error('Error fetching applications:', err);
