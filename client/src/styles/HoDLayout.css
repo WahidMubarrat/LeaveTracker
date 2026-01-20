@@ -2,14 +2,18 @@
   display: flex;
   min-height: 100vh;
   background: #f5f7fa;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 .hod-content {
   margin-left: 100px;
   flex: 1;
   padding: 2rem;
-  max-width: 1600px;
-  margin-right: auto;
+  width: calc(100% - 100px);
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 @media (max-width: 768px) {

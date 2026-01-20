@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import AnnualLeave from './AnnualLeave';
 import CasualLeave from './CasualLeave';
+import EmployeeHoliday from './EmployeeHoliday';
 import { userAPI } from '../services/api';
 import '../styles/LeaveData.css';
 
@@ -62,6 +63,7 @@ const LeaveData = () => {
           remaining={leaveData.casual.remaining}
         />
       </div>
+      <EmployeeHoliday />
     </div>
   );
 };
