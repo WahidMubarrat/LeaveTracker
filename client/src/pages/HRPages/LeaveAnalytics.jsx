@@ -19,8 +19,8 @@ const LeaveAnalytics = () => {
   const departmentData = [
     { dept: 'CSE', leaves: 18, members: 60 },
     { dept: 'EEE', leaves: 10, members: 25 },
-    { dept: 'Civil', leaves: 7, members: 20 },
-    { dept: 'Mechanical', leaves: 6, members: 18 },
+    { dept: 'CEE', leaves: 7, members: 20 },
+    { dept: 'MPE', leaves: 6, members: 18 },
     { dept: 'BTM', leaves: 3, members: 12 },
     { dept: 'TVE', leaves: 1, members: 8 }
   ];
@@ -28,8 +28,8 @@ const LeaveAnalytics = () => {
   const recentLeaves = [
     { id: 1, name: 'Dr. Md. Hasanul Kabir', dept: 'CSE', type: 'Annual', days: 5, status: 'Approved', date: '2026-01-15' },
     { id: 2, name: 'Rashid Ahmed', dept: 'EEE', type: 'Casual', days: 2, status: 'Pending', date: '2026-01-16' },
-    { id: 3, name: 'Dr. Sanjida Rahman', dept: 'Civil', type: 'Sick', days: 1, status: 'Approved', date: '2026-01-14' },
-    { id: 4, name: 'Kamal Hossain', dept: 'Mechanical', type: 'Annual', days: 7, status: 'Approved', date: '2026-01-12' },
+    { id: 3, name: 'Dr. Sanjida Rahman', dept: 'CEE', type: 'Sick', days: 1, status: 'Approved', date: '2026-01-14' },
+    { id: 4, name: 'Kamal Hossain', dept: 'MPE', type: 'Annual', days: 7, status: 'Approved', date: '2026-01-12' },
     { id: 5, name: 'Fatima Khan', dept: 'BTM', type: 'Casual', days: 1, status: 'Declined', date: '2026-01-17' }
   ];
 

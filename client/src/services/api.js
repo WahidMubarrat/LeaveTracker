@@ -102,4 +102,9 @@ export const vacationAPI = {
   delete: (holidayId) => api.delete(`/vacations/${holidayId}`),
 };
 
+// HoD Dashboard API
+export const hodDashboardAPI = {
+  getStats: () => api.get('/hod-dashboard/stats'),
+};
+
 export default api;

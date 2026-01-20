@@ -168,8 +168,12 @@ const HoDDepartmentMembers = () => {
         ) : (
           <div className="members-grid">
             {filteredMembers.map(member => (
-              <div key={member._id} className="member-card">
-                <div className="member-header">
+              <div 
+                key={member._id} 
+                className={`member-card ${selectedMember?._id === member._id ? 'expanded' : ''}`}
+                onClick={() => handleViewDetails(member)}
+              >
+                <div className="member-compact-view">
                   <div className="member-avatar">
                     {member.profilePic ? (
                       <img src={member.profilePic} alt={member.name} />
@@ -179,91 +183,92 @@ const HoDDepartmentMembers = () => {
                       </span>
                     )}
                   </div>
-                  <div className="member-basic-info">
+                  <div className="member-info-compact">
                     <h3>{member.name}</h3>
                     <p className="member-designation">{member.designation}</p>
-                    <p className="member-email">{member.email}</p>
                     <Status 
                       currentStatus={member.currentStatus || 'OnDuty'} 
                       returnDate={member.returnDate}
                     />
                   </div>
-                </div>
-
-                <div className="member-leave-summary">
-                  <div className="leave-stat">
-                    <div className="leave-stat-header">
-                      <span className="leave-type">Annual Leave</span>
-                      <span className="leave-numbers">
-                        {member.leaveBalance.annual.used} / {member.leaveBalance.annual.total}
-                      </span>
-                    </div>
-                    <div className="leave-progress-bar">
-                      <div 
-                        className="leave-progress-fill annual"
-                        style={{ width: `${calculateLeavePercentage(member.leaveBalance.annual.used, member.leaveBalance.annual.total)}%` }}
-                      ></div>
-                    </div>
-                    <span className="leave-remaining">
-                      {member.leaveBalance.annual.total - member.leaveBalance.annual.used} remaining
-                    </span>
-                  </div>
-
-                  <div className="leave-stat">
-                    <div className="leave-stat-header">
-                      <span className="leave-type">Casual Leave</span>
-                      <span className="leave-numbers">
-                        {member.leaveBalance.casual.used} / {member.leaveBalance.casual.total}
-                      </span>
-                    </div>
-                    <div className="leave-progress-bar">
-                      <div 
-                        className="leave-progress-fill sick"
-                        style={{ width: `${calculateLeavePercentage(member.leaveBalance.casual.used, member.leaveBalance.casual.total)}%` }}
-                      ></div>
-                    </div>
-                    <span className="leave-remaining">
-                      {member.leaveBalance.casual.total - member.leaveBalance.casual.used} remaining
-                    </span>
+                  <div className="expand-icon">
+                    {selectedMember?._id === member._id ? '▲' : '▼'}
                   </div>
                 </div>
-
-                <button
-                  className="view-details-btn"
-                  onClick={() => handleViewDetails(member)}
-                >
-                  {selectedMember?._id === member._id ? 'Hide Details' : 'View Details'}
-                </button>
 
                 {selectedMember?._id === member._id && (
-                  <div className="member-details-expanded">
-                    <div className="detail-section">
-                      <h4>Leave Statistics</h4>
-                      <div className="stats-grid">
-                        <div className="stat-item">
-                          <span className="stat-label">Total Leave Used:</span>
-                          <span className="stat-value">
-                            {member.leaveBalance.annual.used + member.leaveBalance.casual.used} days
+                  <div className="member-expanded-view">
+                    <div className="expanded-section">
+                      <div className="info-row">
+                        <span className="info-label">📧 Email</span>
+                        <span className="info-value">{member.email}</span>
+                      </div>
+                    </div>
+
+                    <div className="expanded-section">
+                      <h4 className="section-title">📊 Leave Balance</h4>
+                      
+                      <div className="leave-item">
+                        <div className="leave-header">
+                          <span className="leave-type">Annual Leave</span>
+                          <span className="leave-count">
+                            {member.leaveBalance.annual.used} / {member.leaveBalance.annual.total}
                           </span>
                         </div>
-                        <div className="stat-item">
-                          <span className="stat-label">Total Remaining:</span>
-                          <span className="stat-value">
+                        <div className="leave-bar">
+                          <div 
+                            className="leave-bar-fill annual"
+                            style={{ width: `${calculateLeavePercentage(member.leaveBalance.annual.used, member.leaveBalance.annual.total)}%` }}
+                          ></div>
+                        </div>
+                        <span className="leave-remaining">
+                          {member.leaveBalance.annual.total - member.leaveBalance.annual.used} days remaining
+                        </span>
+                      </div>
+
+                      <div className="leave-item">
+                        <div className="leave-header">
+                          <span className="leave-type">Casual Leave</span>
+                          <span className="leave-count">
+                            {member.leaveBalance.casual.used} / {member.leaveBalance.casual.total}
+                          </span>
+                        </div>
+                        <div className="leave-bar">
+                          <div 
+                            className="leave-bar-fill casual"
+                            style={{ width: `${calculateLeavePercentage(member.leaveBalance.casual.used, member.leaveBalance.casual.total)}%` }}
+                          ></div>
+                        </div>
+                        <span className="leave-remaining">
+                          {member.leaveBalance.casual.total - member.leaveBalance.casual.used} days remaining
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="expanded-section">
+                      <h4 className="section-title">📈 Statistics</h4>
+                      <div className="stats-compact">
+                        <div className="stat-box">
+                          <div className="stat-number">
+                            {member.leaveBalance.annual.used + member.leaveBalance.casual.used}
+                          </div>
+                          <div className="stat-text">Total Used</div>
+                        </div>
+                        <div className="stat-box">
+                          <div className="stat-number">
                             {(member.leaveBalance.annual.total - member.leaveBalance.annual.used) + 
-                             (member.leaveBalance.casual.total - member.leaveBalance.casual.used)} days
-                          </span>
+                             (member.leaveBalance.casual.total - member.leaveBalance.casual.used)}
+                          </div>
+                          <div className="stat-text">Remaining</div>
                         </div>
-                        <div className="stat-item">
-                          <span className="stat-label">Annual Utilization:</span>
-                          <span className="stat-value">
-                            {calculateLeavePercentage(member.leaveBalance.annual.used, member.leaveBalance.annual.total)}%
-                          </span>
-                        </div>
-                        <div className="stat-item">
-                          <span className="stat-label">Casual Utilization:</span>
-                          <span className="stat-value">
-                            {calculateLeavePercentage(member.leaveBalance.casual.used, member.leaveBalance.casual.total)}%
-                          </span>
+                        <div className="stat-box">
+                          <div className="stat-number">
+                            {calculateLeavePercentage(
+                              member.leaveBalance.annual.used + member.leaveBalance.casual.used,
+                              member.leaveBalance.annual.total + member.leaveBalance.casual.total
+                            )}%
+                          </div>
+                          <div className="stat-text">Utilized</div>
                         </div>
                       </div>
                     </div>

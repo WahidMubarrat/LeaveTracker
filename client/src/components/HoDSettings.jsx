@@ -14,8 +14,8 @@ const HoDSettings = () => {
   const departmentConfig = [
     { code: 'CSE', name: 'Computer Science & Engineering', color: '#2196F3', textColor: '#fff' },
     { code: 'EEE', name: 'Electrical & Electronic Engineering', color: '#FFD700', textColor: '#000' },
-    { code: 'Civil', name: 'Civil Engineering', color: '#4CAF50', textColor: '#fff' },
-    { code: 'Mechanical', name: 'Mechanical Engineering', color: '#f44336', textColor: '#fff' },
+    { code: 'CEE', name: 'Civil & Environmental Engineering', color: '#4CAF50', textColor: '#fff' },
+    { code: 'MPE', name: 'Mechanical & Production Engineering', color: '#f44336', textColor: '#fff' },
     { code: 'BTM', name: 'Business & Technology Management', color: '#9C27B0', textColor: '#fff' },
     { code: 'TVE', name: 'Technical & Vocational Education', color: '#FF9800', textColor: '#fff' }
   ];

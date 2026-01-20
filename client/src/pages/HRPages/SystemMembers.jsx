@@ -15,8 +15,8 @@ const SystemMembers = () => {
     { id: 5, name: 'Tareque Mohmud Chowdhury', email: 'tareque@iut-dhaka.edu', department: 'CSE', designation: 'Lecturer', status: 'Active', roles: ['Employee'] },
     { id: 6, name: 'Dr. Azhar Mahmud', email: 'azhar@iut-dhaka.edu', department: 'EEE', designation: 'Professor', status: 'Active', roles: ['Employee', 'HoD'] },
     { id: 7, name: 'Rashid Ahmed', email: 'rashid@iut-dhaka.edu', department: 'EEE', designation: 'Assistant Professor', status: 'Active', roles: ['Employee'] },
-    { id: 8, name: 'Dr. Sanjida Rahman', email: 'sanjida@iut-dhaka.edu', department: 'Civil', designation: 'Associate Professor', status: 'Active', roles: ['Employee'] },
-    { id: 9, name: 'Kamal Hossain', email: 'kamal@iut-dhaka.edu', department: 'Mechanical', designation: 'Lecturer', status: 'On Leave', roles: ['Employee'] },
+    { id: 8, name: 'Dr. Sanjida Rahman', email: 'sanjida@iut-dhaka.edu', department: 'CEE', designation: 'Associate Professor', status: 'Active', roles: ['Employee'] },
+    { id: 9, name: 'Kamal Hossain', email: 'kamal@iut-dhaka.edu', department: 'MPE', designation: 'Lecturer', status: 'On Leave', roles: ['Employee'] },
     { id: 10, name: 'Fatima Khan', email: 'fatima@iut-dhaka.edu', department: 'BTM', designation: 'Assistant Professor', status: 'Active', roles: ['Employee'] },
   ];
 
@@ -52,8 +52,8 @@ const SystemMembers = () => {
               <option value="All">All Departments</option>
               <option value="CSE">CSE</option>
               <option value="EEE">EEE</option>
-              <option value="Civil">Civil</option>
-              <option value="Mechanical">Mechanical</option>
+              <option value="CEE">CEE</option>
+              <option value="MPE">MPE</option>
               <option value="BTM">BTM</option>
               <option value="TVE">TVE</option>
             </select>
