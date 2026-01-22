@@ -1,40 +1,118 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import HoDLayout from '../../components/HoDLayout';
 import RoleToggle from '../../components/RoleToggle';
 import Status from '../../components/Status';
 import '../../styles/HoDDepartmentMembers.css';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
 const HoDDepartmentMembers = () => {
-  const [members, setMembers] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMember, setSelectedMember] = useState(null);
 
-  useEffect(() => {
-    fetchDepartmentMembers();
-  }, []);
-
-  const fetchDepartmentMembers = async () => {
-    try {
-      setLoading(true);
-      
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/users/department-members`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await response.json();
-      setMembers(data.members || []);
-    } catch (error) {
-      console.error('Error fetching members:', error);
-      setMembers([]);
-    } finally {
-      setLoading(false);
+  // Dummy data
+  const dummyMembers = [
+    { 
+      _id: '1', 
+      name: 'Dr. Md. Hasanul Kabir', 
+      email: 'hasanul@iut-dhaka.edu', 
+      designation: 'Professor',
+      profilePic: null,
+      leaveBalance: { annual: { total: 20, used: 5 }, casual: { total: 10, used: 2 } },
+      currentStatus: 'On Duty',
+      returnDate: null
+    },
+    { 
+      _id: '2', 
+      name: 'Dr. Muhammad Mahbub Alam', 
+      email: 'mma@iut-dhaka.edu', 
+      designation: 'Associate Professor',
+      profilePic: null,
+      leaveBalance: { annual: { total: 20, used: 8 }, casual: { total: 10, used: 3 } },
+      currentStatus: 'On Leave',
+      returnDate: '2026-01-20'
+    },
+    { 
+      _id: '3', 
+      name: 'Abu Raihan Mostofa Kamal', 
+      email: 'raihan.kamal@iut-dhaka.edu', 
+      designation: 'Assistant Professor',
+      profilePic: null,
+      leaveBalance: { annual: { total: 20, used: 3 }, casual: { total: 10, used: 1 } },
+      currentStatus: 'On Duty',
+      returnDate: null
+    },
+    { 
+      _id: '4', 
+      name: 'Dr. Kamrul Hasan', 
+      email: 'hasank@iut-dhaka.edu', 
+      designation: 'Professor',
+      profilePic: null,
+      leaveBalance: { annual: { total: 20, used: 12 }, casual: { total: 10, used: 5 } },
+      currentStatus: 'On Duty',
+      returnDate: null
+    },
+    { 
+      _id: '5', 
+      name: 'Tareque Mohmud Chowdhury', 
+      email: 'tareque@iut-dhaka.edu', 
+      designation: 'Lecturer',
+      profilePic: null,
+      leaveBalance: { annual: { total: 20, used: 6 }, casual: { total: 10, used: 2 } },
+      currentStatus: 'On Duty',
+      returnDate: null
+    },
+    { 
+      _id: '6', 
+      name: 'Shohel Ahmed', 
+      email: 'a.shohel@iut-dhaka.edu', 
+      designation: 'Lecturer',
+      profilePic: null,
+      leaveBalance: { annual: { total: 20, used: 4 }, casual: { total: 10, used: 1 } },
+      currentStatus: 'On Duty',
+      returnDate: null
+    },
+    { 
+      _id: '7', 
+      name: 'Dr. Md Moniruzzaman', 
+      email: 'milton@iut-dhaka.edu', 
+      designation: 'Associate Professor',
+      profilePic: null,
+      leaveBalance: { annual: { total: 20, used: 7 }, casual: { total: 10, used: 3 } },
+      currentStatus: 'On Duty',
+      returnDate: null
+    },
+    { 
+      _id: '8', 
+      name: 'Lutfun Nahar Lota', 
+      email: 'lota@iut-dhaka.edu', 
+      designation: 'Lecturer',
+      profilePic: null,
+      leaveBalance: { annual: { total: 20, used: 9 }, casual: { total: 10, used: 4 } },
+      currentStatus: 'On Duty',
+      returnDate: null
+    },
+    { 
+      _id: '9', 
+      name: 'Ashraful Alam Khan', 
+      email: 'ashraful@iut-dhaka.edu', 
+      designation: 'Assistant Professor',
+      profilePic: null,
+      leaveBalance: { annual: { total: 20, used: 2 }, casual: { total: 10, used: 0 } },
+      currentStatus: 'On Leave',
+      returnDate: '2026-01-19'
+    },
+    { 
+      _id: '10', 
+      name: 'Faisal Hussain', 
+      email: 'faisalhussain@iut-dhaka.edu', 
+      designation: 'Lecturer',
+      profilePic: null,
+      leaveBalance: { annual: { total: 20, used: 5 }, casual: { total: 10, used: 2 } },
+      currentStatus: 'On Duty',
+      returnDate: null
     }
-  };
+  ];
 
-  const filteredMembers = members.filter(member =>
+  const filteredMembers = dummyMembers.filter(member =>
     member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     member.designation.toLowerCase().includes(searchTerm.toLowerCase())
@@ -72,14 +150,16 @@ const HoDDepartmentMembers = () => {
           <div className="members-stats">
             <div className="stat-badge">
               <span className="stat-label">Total Members:</span>
-              <span className="stat-count">{members.length}</span>
+              <span className="stat-count">{dummyMembers.length}</span>
+            </div>
+            <div className="stat-badge">
+              <span className="stat-label">On Leave:</span>
+              <span className="stat-count">{dummyMembers.filter(m => m.currentStatus === 'On Leave').length}</span>
             </div>
           </div>
         </div>
 
-        {loading ? (
-          <div className="loading-state">Loading members...</div>
-        ) : filteredMembers.length === 0 ? (
+        {filteredMembers.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">👥</div>
             <h3>No members found</h3>
@@ -88,8 +168,12 @@ const HoDDepartmentMembers = () => {
         ) : (
           <div className="members-grid">
             {filteredMembers.map(member => (
-              <div key={member._id} className="member-card">
-                <div className="member-header">
+              <div 
+                key={member._id} 
+                className={`member-card ${selectedMember?._id === member._id ? 'expanded' : ''}`}
+                onClick={() => handleViewDetails(member)}
+              >
+                <div className="member-compact-view">
                   <div className="member-avatar">
                     {member.profilePic ? (
                       <img src={member.profilePic} alt={member.name} />
@@ -99,88 +183,92 @@ const HoDDepartmentMembers = () => {
                       </span>
                     )}
                   </div>
-                  <div className="member-basic-info">
+                  <div className="member-info-compact">
                     <h3>{member.name}</h3>
                     <p className="member-designation">{member.designation}</p>
-                    <p className="member-email">{member.email}</p>
-                    <Status currentStatus={member.currentStatus || 'OnDuty'} />
+                    <Status 
+                      currentStatus={member.currentStatus || 'OnDuty'} 
+                      returnDate={member.returnDate}
+                    />
+                  </div>
+                  <div className="expand-icon">
+                    {selectedMember?._id === member._id ? '▲' : '▼'}
                   </div>
                 </div>
-
-                <div className="member-leave-summary">
-                  <div className="leave-stat">
-                    <div className="leave-stat-header">
-                      <span className="leave-type">Annual Leave</span>
-                      <span className="leave-numbers">
-                        {member.usedLeave.annual} / {member.leaveQuota.annual}
-                      </span>
-                    </div>
-                    <div className="leave-progress-bar">
-                      <div 
-                        className="leave-progress-fill annual"
-                        style={{ width: `${calculateLeavePercentage(member.usedLeave.annual, member.leaveQuota.annual)}%` }}
-                      ></div>
-                    </div>
-                    <span className="leave-remaining">
-                      {member.leaveQuota.annual - member.usedLeave.annual} remaining
-                    </span>
-                  </div>
-
-                  <div className="leave-stat">
-                    <div className="leave-stat-header">
-                      <span className="leave-type">Sick Leave</span>
-                      <span className="leave-numbers">
-                        {member.usedLeave.sick} / {member.leaveQuota.sick}
-                      </span>
-                    </div>
-                    <div className="leave-progress-bar">
-                      <div 
-                        className="leave-progress-fill sick"
-                        style={{ width: `${calculateLeavePercentage(member.usedLeave.sick, member.leaveQuota.sick)}%` }}
-                      ></div>
-                    </div>
-                    <span className="leave-remaining">
-                      {member.leaveQuota.sick - member.usedLeave.sick} remaining
-                    </span>
-                  </div>
-                </div>
-
-                <button
-                  className="view-details-btn"
-                  onClick={() => handleViewDetails(member)}
-                >
-                  {selectedMember?._id === member._id ? 'Hide Details' : 'View Details'}
-                </button>
 
                 {selectedMember?._id === member._id && (
-                  <div className="member-details-expanded">
-                    <div className="detail-section">
-                      <h4>Leave Statistics</h4>
-                      <div className="stats-grid">
-                        <div className="stat-item">
-                          <span className="stat-label">Total Leave Used:</span>
-                          <span className="stat-value">
-                            {member.usedLeave.annual + member.usedLeave.sick} days
+                  <div className="member-expanded-view">
+                    <div className="expanded-section">
+                      <div className="info-row">
+                        <span className="info-label">📧 Email</span>
+                        <span className="info-value">{member.email}</span>
+                      </div>
+                    </div>
+
+                    <div className="expanded-section">
+                      <h4 className="section-title">📊 Leave Balance</h4>
+                      
+                      <div className="leave-item">
+                        <div className="leave-header">
+                          <span className="leave-type">Annual Leave</span>
+                          <span className="leave-count">
+                            {member.leaveBalance.annual.used} / {member.leaveBalance.annual.total}
                           </span>
                         </div>
-                        <div className="stat-item">
-                          <span className="stat-label">Total Remaining:</span>
-                          <span className="stat-value">
-                            {(member.leaveQuota.annual - member.usedLeave.annual) + 
-                             (member.leaveQuota.sick - member.usedLeave.sick)} days
+                        <div className="leave-bar">
+                          <div 
+                            className="leave-bar-fill annual"
+                            style={{ width: `${calculateLeavePercentage(member.leaveBalance.annual.used, member.leaveBalance.annual.total)}%` }}
+                          ></div>
+                        </div>
+                        <span className="leave-remaining">
+                          {member.leaveBalance.annual.total - member.leaveBalance.annual.used} days remaining
+                        </span>
+                      </div>
+
+                      <div className="leave-item">
+                        <div className="leave-header">
+                          <span className="leave-type">Casual Leave</span>
+                          <span className="leave-count">
+                            {member.leaveBalance.casual.used} / {member.leaveBalance.casual.total}
                           </span>
                         </div>
-                        <div className="stat-item">
-                          <span className="stat-label">Annual Utilization:</span>
-                          <span className="stat-value">
-                            {calculateLeavePercentage(member.usedLeave.annual, member.leaveQuota.annual)}%
-                          </span>
+                        <div className="leave-bar">
+                          <div 
+                            className="leave-bar-fill casual"
+                            style={{ width: `${calculateLeavePercentage(member.leaveBalance.casual.used, member.leaveBalance.casual.total)}%` }}
+                          ></div>
                         </div>
-                        <div className="stat-item">
-                          <span className="stat-label">Sick Utilization:</span>
-                          <span className="stat-value">
-                            {calculateLeavePercentage(member.usedLeave.sick, member.leaveQuota.sick)}%
-                          </span>
+                        <span className="leave-remaining">
+                          {member.leaveBalance.casual.total - member.leaveBalance.casual.used} days remaining
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="expanded-section">
+                      <h4 className="section-title">📈 Statistics</h4>
+                      <div className="stats-compact">
+                        <div className="stat-box">
+                          <div className="stat-number">
+                            {member.leaveBalance.annual.used + member.leaveBalance.casual.used}
+                          </div>
+                          <div className="stat-text">Total Used</div>
+                        </div>
+                        <div className="stat-box">
+                          <div className="stat-number">
+                            {(member.leaveBalance.annual.total - member.leaveBalance.annual.used) + 
+                             (member.leaveBalance.casual.total - member.leaveBalance.casual.used)}
+                          </div>
+                          <div className="stat-text">Remaining</div>
+                        </div>
+                        <div className="stat-box">
+                          <div className="stat-number">
+                            {calculateLeavePercentage(
+                              member.leaveBalance.annual.used + member.leaveBalance.casual.used,
+                              member.leaveBalance.annual.total + member.leaveBalance.casual.total
+                            )}%
+                          </div>
+                          <div className="stat-text">Utilized</div>
                         </div>
                       </div>
                     </div>

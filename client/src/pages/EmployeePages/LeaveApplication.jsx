@@ -1,8 +1,9 @@
 import { useState, useEffect, useContext } from 'react';
 import Layout from '../../components/Layout';
 import AlternateSelection from '../../components/AlternateSelection';
+import LeaveDocument from '../../components/LeaveDocument';
 import { AuthContext } from '../../context/AuthContext';
-import { leaveAPI } from '../../services/api';
+import { leaveAPI, vacationAPI } from '../../services/api';
 import '../../styles/LeaveApplication.css';
 
 const LeaveApplication = () => {
@@ -20,10 +21,12 @@ const LeaveApplication = () => {
     reason: '',
     backupEmployeeId: '',
     alternateEmployeeIds: [],
+    leaveDocument: null,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [holidays, setHolidays] = useState([]);
 
   useEffect(() => {
     if (user) {
@@ -36,6 +39,90 @@ const LeaveApplication = () => {
     }
   }, [user]);
 
+  // Fetch holidays when dates change
+  useEffect(() => {
+    const fetchHolidays = async () => {
+      if (formData.startDate && formData.endDate) {
+        try {
+          const response = await vacationAPI.getInRange(formData.startDate, formData.endDate);
+          const fetchedHolidays = response.data.holidays || [];
+          setHolidays(fetchedHolidays);
+          
+          // Recalculate days after fetching holidays
+          const startDate = new Date(formData.startDate);
+          const endDate = new Date(formData.endDate);
+          
+          if (endDate >= startDate) {
+            const weekdays = calculateWeekdays(startDate, endDate, fetchedHolidays);
+            setFormData(prev => ({
+              ...prev,
+              numberOfDays: weekdays.toString(),
+            }));
+          }
+        } catch (err) {
+          console.error('Error fetching holidays:', err);
+          setHolidays([]);
+          // Still calculate without holidays if fetch fails
+          if (formData.startDate && formData.endDate) {
+            const startDate = new Date(formData.startDate);
+            const endDate = new Date(formData.endDate);
+            if (endDate >= startDate) {
+              const weekdays = calculateWeekdays(startDate, endDate, []);
+              setFormData(prev => ({
+                ...prev,
+                numberOfDays: weekdays.toString(),
+              }));
+            }
+          }
+        }
+      } else {
+        setHolidays([]);
+      }
+    };
+
+    fetchHolidays();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.startDate, formData.endDate]);
+
+  // Helper function to check if a date falls within a holiday period
+  const isHoliday = (date, holidaysList) => {
+    if (!holidaysList || holidaysList.length === 0) return false;
+    
+    const checkDate = new Date(date);
+    checkDate.setHours(0, 0, 0, 0);
+    
+    return holidaysList.some(holiday => {
+      const holidayStartDate = new Date(holiday.date);
+      holidayStartDate.setHours(0, 0, 0, 0);
+      const holidayEndDate = new Date(holidayStartDate);
+      holidayEndDate.setDate(holidayEndDate.getDate() + holiday.numberOfDays - 1);
+      holidayEndDate.setHours(23, 59, 59, 999);
+      
+      return checkDate >= holidayStartDate && checkDate <= holidayEndDate;
+    });
+  };
+
+  // Helper function to calculate weekdays excluding weekends and holidays
+  const calculateWeekdays = (startDate, endDate, holidaysList = []) => {
+    let count = 0;
+    const current = new Date(startDate);
+    current.setHours(0, 0, 0, 0);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+    
+    while (current <= end) {
+      const dayOfWeek = current.getDay();
+      // 0 = Sunday, 6 = Saturday
+      // Only count weekdays that are not holidays
+      if (dayOfWeek !== 0 && dayOfWeek !== 6 && !isHoliday(current, holidaysList)) {
+        count++;
+      }
+      current.setDate(current.getDate() + 1);
+    }
+    
+    return count;
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -43,7 +130,7 @@ const LeaveApplication = () => {
       [name]: value,
     }));
 
-    // Auto-calculate days when dates change
+    // Auto-calculate weekdays when dates change (before holidays are fetched)
     if (name === 'startDate' || name === 'endDate') {
       const start = name === 'startDate' ? value : formData.startDate;
       const end = name === 'endDate' ? value : formData.endDate;
@@ -51,12 +138,13 @@ const LeaveApplication = () => {
       if (start && end) {
         const startDate = new Date(start);
         const endDate = new Date(end);
-        const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
         
-        if (days > 0) {
+        if (endDate >= startDate) {
+          // Calculate weekdays excluding weekends and holidays (using current holidays)
+          const weekdays = calculateWeekdays(startDate, endDate, holidays);
           setFormData(prev => ({
             ...prev,
-            numberOfDays: days.toString(),
+            numberOfDays: weekdays.toString(),
           }));
         }
       }
@@ -84,7 +172,33 @@ const LeaveApplication = () => {
     setLoading(true);
 
     try {
-      const response = await leaveAPI.applyLeave(formData);
+      // Create FormData for file upload
+      const submitData = new FormData();
+      submitData.append('applicationDate', formData.applicationDate);
+      submitData.append('applicantName', formData.applicantName);
+      submitData.append('departmentName', formData.departmentName);
+      submitData.append('applicantDesignation', formData.applicantDesignation);
+      submitData.append('type', formData.type);
+      submitData.append('startDate', formData.startDate);
+      submitData.append('endDate', formData.endDate);
+      submitData.append('numberOfDays', formData.numberOfDays);
+      submitData.append('reason', formData.reason);
+      
+      if (formData.backupEmployeeId) {
+        submitData.append('backupEmployeeId', formData.backupEmployeeId);
+      }
+      
+      // Append alternate employee IDs as JSON string
+      if (formData.alternateEmployeeIds && formData.alternateEmployeeIds.length > 0) {
+        submitData.append('alternateEmployeeIds', JSON.stringify(formData.alternateEmployeeIds));
+      }
+      
+      // Append leave document file if provided
+      if (formData.leaveDocument) {
+        submitData.append('leaveDocument', formData.leaveDocument);
+      }
+
+      const response = await leaveAPI.applyLeave(submitData);
       setSuccess('Leave application submitted successfully!');
       
       // Reset form
@@ -100,6 +214,7 @@ const LeaveApplication = () => {
         reason: '',
         backupEmployeeId: '',
         alternateEmployeeIds: [],
+        leaveDocument: null,
       });
     } catch (error) {
       setError(error.response?.data?.message || 'Failed to submit leave application');
@@ -121,9 +236,17 @@ const LeaveApplication = () => {
       reason: '',
       backupEmployeeId: '',
       alternateEmployeeIds: [],
+      leaveDocument: null,
     });
     setError('');
     setSuccess('');
+  };
+
+  const handleDocumentChange = (document) => {
+    setFormData(prev => ({
+      ...prev,
+      leaveDocument: document,
+    }));
   };
 
   return (
@@ -149,7 +272,9 @@ const LeaveApplication = () => {
                     id="applicationDate"
                     name="applicationDate"
                     value={formData.applicationDate}
-                    onChange={handleChange}
+                    readOnly
+                    disabled
+                    className="readonly-field"
                     required
                   />
                 </div>
@@ -160,7 +285,9 @@ const LeaveApplication = () => {
                     id="applicantName"
                     name="applicantName"
                     value={formData.applicantName}
-                    onChange={handleChange}
+                    readOnly
+                    disabled
+                    className="readonly-field"
                     placeholder="Your full name"
                     required
                   />
@@ -176,7 +303,9 @@ const LeaveApplication = () => {
                     id="departmentName"
                     name="departmentName"
                     value={formData.departmentName}
-                    onChange={handleChange}
+                    readOnly
+                    disabled
+                    className="readonly-field"
                     placeholder="Your department"
                     required
                   />
@@ -188,7 +317,9 @@ const LeaveApplication = () => {
                     id="applicantDesignation"
                     name="applicantDesignation"
                     value={formData.applicantDesignation}
-                    onChange={handleChange}
+                    readOnly
+                    disabled
+                    className="readonly-field"
                     placeholder="Your designation"
                     required
                   />
@@ -211,13 +342,15 @@ const LeaveApplication = () => {
                   </select>
                 </div>
                 <div className="form-group">
-                  <label htmlFor="numberOfDays">Number of Days *</label>
+                  <label htmlFor="numberOfDays">Number of Weekdays *</label>
                   <input
                     type="number"
                     id="numberOfDays"
                     name="numberOfDays"
                     value={formData.numberOfDays}
-                    onChange={handleChange}
+                    readOnly
+                    disabled
+                    className="readonly-field"
                     min="1"
                     placeholder="Auto-calculated"
                     required
@@ -264,6 +397,14 @@ const LeaveApplication = () => {
                   rows="4"
                   placeholder="Describe the purpose of your leave"
                   required
+                />
+              </div>
+
+              {/* Leave Document */}
+              <div className="form-group">
+                <LeaveDocument
+                  onDocumentChange={handleDocumentChange}
+                  initialDocument={formData.leaveDocument}
                 />
               </div>
 

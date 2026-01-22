@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const LeaveRequest = require("../models/LeaveRequest");
+const { uploadToCloudinary, deleteFromCloudinary } = require("../utils/cloudinaryUpload");
 
 // Get leave statistics for current user
 exports.getUserLeaveStatistics = async (req, res) => {
@@ -44,14 +45,36 @@ exports.getDepartmentMembers = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    const LeaveRequest = require("../models/LeaveRequest");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     const members = await User.find({
       department: currentUser.department,
     })
-      .select('name email designation role roles profilePic currentStatus')
+      .select('name email designation role roles profilePic')
       .sort({ name: 1 })
       .lean();
 
-    res.json({ members });
+    // Check current leave status for each member
+    const membersWithStatus = await Promise.all(
+      members.map(async (member) => {
+        const activeLeave = await LeaveRequest.findOne({
+          employee: member._id,
+          status: "Approved",
+          startDate: { $lte: today },
+          endDate: { $gte: today }
+        }).select('endDate').lean();
+
+        return {
+          ...member,
+          currentStatus: activeLeave ? 'OnLeave' : 'OnDuty',
+          currentLeave: activeLeave || null
+        };
+      })
+    );
+
+    res.json({ members: membersWithStatus });
   } catch (error) {
     console.error("Get department members error:", error);
     res.status(500).json({ message: "Server error" });
@@ -71,13 +94,35 @@ exports.getMembersByDepartmentId = async (req, res) => {
       return res.status(403).json({ message: "Only HR can view department members" });
     }
 
+    const LeaveRequest = require("../models/LeaveRequest");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     const members = await User.find({ department: departmentId })
-      .select("name email designation roles profilePic currentStatus department")
+      .select("name email designation roles profilePic department")
       .populate("department", "name")
       .sort({ name: 1 })
       .lean();
 
-    res.json({ members });
+    // Check current leave status for each member
+    const membersWithStatus = await Promise.all(
+      members.map(async (member) => {
+        const activeLeave = await LeaveRequest.findOne({
+          employee: member._id,
+          status: "Approved",
+          startDate: { $lte: today },
+          endDate: { $gte: today }
+        }).select('endDate').lean();
+
+        return {
+          ...member,
+          currentStatus: activeLeave ? 'OnLeave' : 'OnDuty',
+          currentLeave: activeLeave || null
+        };
+      })
+    );
+
+    res.json({ members: membersWithStatus });
   } catch (error) {
     console.error("Get members by department error:", error);
     res.status(500).json({ message: "Server error" });
@@ -129,12 +174,36 @@ exports.getUserById = async (req, res) => {
 // Update user profile
 exports.updateProfile = async (req, res) => {
   try {
-    const { name, designation, profilePic } = req.body;
+    const { name, designation } = req.body;
     
     const updateData = {};
     if (name) updateData.name = name;
     if (designation) updateData.designation = designation;
-    if (profilePic) updateData.profilePic = profilePic;
+    
+    // Upload new profile picture to Cloudinary if provided
+    if (req.file) {
+      try {
+        // Get current user to retrieve old profile pic URL
+        const currentUser = await User.findById(req.user.id).select('profilePic');
+        
+        // Upload new profile picture
+        const newProfilePicUrl = await uploadToCloudinary(req.file.buffer, 'leave-tracker/profiles');
+        updateData.profilePic = newProfilePicUrl;
+        
+        // Delete old profile picture from Cloudinary if exists
+        if (currentUser.profilePic && currentUser.profilePic.includes('cloudinary')) {
+          try {
+            await deleteFromCloudinary(currentUser.profilePic);
+          } catch (deleteError) {
+            console.error('Failed to delete old profile pic:', deleteError);
+            // Continue anyway - new pic is uploaded
+          }
+        }
+      } catch (uploadError) {
+        console.error('Profile pic upload error:', uploadError);
+        return res.status(500).json({ message: 'Failed to upload profile picture' });
+      }
+    }
 
     const user = await User.findByIdAndUpdate(
       req.user.id,

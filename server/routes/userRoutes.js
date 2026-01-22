@@ -3,6 +3,7 @@ const router = express.Router();
 const userController = require("../controllers/userController");
 const roleController = require("../controllers/roleController");
 const authMiddleware = require("../middleware/authMiddleware");
+const upload = require("../middleware/upload");
 
 // @route   GET /api/users/all-users
 // @desc    Get all users with their roles (HR only)
@@ -39,7 +40,7 @@ router.get("/:id", authMiddleware, userController.getUserById);
 // @route   PUT /api/users/profile
 // @desc    Update user profile
 // @access  Private
-router.put("/profile", authMiddleware, userController.updateProfile);
+router.put("/profile", authMiddleware, upload.single('profilePic'), userController.updateProfile);
 
 // @route   PUT /api/users/change-password
 // @desc    Change user password

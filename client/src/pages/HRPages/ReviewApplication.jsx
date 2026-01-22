@@ -186,7 +186,41 @@ const ReviewApplication = () => {
                       <span className="detail-label">Purpose:</span>
                       <span className="detail-value">{application.reason || 'N/A'}</span>
                     </div>
-                    {application.backupEmployee && (
+                    {application.leaveDocument && (
+                      <div className="detail-row">
+                        <span className="detail-label">Leave Document:</span>
+                        <span className="detail-value">
+                          <img 
+                            src={application.leaveDocument} 
+                            alt="Leave document" 
+                            style={{ maxWidth: '300px', maxHeight: '300px', borderRadius: '8px', marginTop: '0.5rem' }}
+                          />
+                        </span>
+                      </div>
+                    )}
+                    {application.alternateEmployees && application.alternateEmployees.length > 0 ? (
+                      <div className="detail-row">
+                        <span className="detail-label">Alternate Employees:</span>
+                        <span className="detail-value">
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
+                            {application.alternateEmployees.map((alt, index) => (
+                              <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <span>{alt.employee?.name || 'Unknown'}</span>
+                                <span style={{ 
+                                  padding: '0.25rem 0.5rem', 
+                                  borderRadius: '4px', 
+                                  fontSize: '0.85rem',
+                                  backgroundColor: alt.response === 'ok' ? '#d4edda' : alt.response === 'sorry' ? '#f8d7da' : '#fff3cd',
+                                  color: alt.response === 'ok' ? '#155724' : alt.response === 'sorry' ? '#721c24' : '#856404'
+                                }}>
+                                  {alt.response === 'ok' ? '✓ OK' : alt.response === 'sorry' ? '✗ Sorry' : '⏳ Pending'}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </span>
+                      </div>
+                    ) : application.backupEmployee && (
                       <div className="detail-row">
                         <span className="detail-label">Alternate Employee:</span>
                         <span className="detail-value">

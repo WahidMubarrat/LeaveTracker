@@ -27,7 +27,15 @@ api.interceptors.request.use(
 
 // Auth API
 export const authAPI = {
-  register: (userData) => api.post('/auth/register', userData),
+  register: (userData) => {
+    // If userData is FormData, send with multipart/form-data header
+    if (userData instanceof FormData) {
+      return api.post('/auth/register', userData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+    }
+    return api.post('/auth/register', userData);
+  },
   login: (credentials) => api.post('/auth/login', credentials),
   getProfile: () => api.get('/auth/profile'),
 };
@@ -43,7 +51,15 @@ export const userAPI = {
   getDepartmentMembers: () => api.get('/users/department-members'),
   getMembersByDepartment: (departmentId) => api.get(`/users/department/${departmentId}/members`),
   getAlternateOptions: () => api.get('/users/alternate-options'),
-  updateProfile: (data) => api.put('/users/profile', data),
+  updateProfile: (data) => {
+    // If data is FormData, send with multipart/form-data header
+    if (data instanceof FormData) {
+      return api.put('/users/profile', data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+    }
+    return api.put('/users/profile', data);
+  },
   changePassword: (data) => api.put('/users/change-password', data),
   getAllUsers: () => api.get('/users/all-users'),
   updateUserRole: (userId, action) => api.patch(`/users/${userId}/role`, { action }),
@@ -51,7 +67,15 @@ export const userAPI = {
 
 // Leave API
 export const leaveAPI = {
-  applyLeave: (data) => api.post('/leaves/apply', data),
+  applyLeave: (data) => {
+    // If data is FormData, send with multipart/form-data header
+    if (data instanceof FormData) {
+      return api.post('/leaves/apply', data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+    }
+    return api.post('/leaves/apply', data);
+  },
   getMyApplications: () => api.get('/leaves/my-applications'),
   getLeaveHistory: () => api.get('/leaves/history'),
   getPendingApprovals: () => api.get('/leaves/pending-approvals'),
@@ -67,6 +91,20 @@ export const leaveQuotaAPI = {
   updateAll: (data) => api.put('/leave-quota/update-all', data),
   updateUser: (userId, data) => api.put(`/leave-quota/update-user/${userId}`, data),
   resetAll: () => api.post('/leave-quota/reset-all'),
+};
+
+// Vacation/Holiday API
+export const vacationAPI = {
+  getAll: () => api.get('/vacations'),
+  getInRange: (startDate, endDate) => api.get('/vacations/range', { params: { startDate, endDate } }),
+  create: (data) => api.post('/vacations', data),
+  update: (holidayId, data) => api.put(`/vacations/${holidayId}`, data),
+  delete: (holidayId) => api.delete(`/vacations/${holidayId}`),
+};
+
+// HoD Dashboard API
+export const hodDashboardAPI = {
+  getStats: () => api.get('/hod-dashboard/stats'),
 };
 
 export default api;

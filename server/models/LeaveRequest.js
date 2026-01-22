@@ -23,6 +23,7 @@ const leaveRequestSchema = new mongoose.Schema({
   approvedByHR: { type: Boolean, default: false },
   hodRemarks: { type: String, default: "" },
   hrRemarks: { type: String, default: "" },
+  leaveDocument: { type: String, default: null }, // Base64 encoded image or URL
   createdAt: { type: Date, default: Date.now },
 });
 

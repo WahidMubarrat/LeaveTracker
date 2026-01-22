@@ -41,3 +41,16 @@
 .status-text {
   line-height: 1;
 }
+
+.status-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.return-date {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: #666;
+  margin-top: 0.1rem;
+}

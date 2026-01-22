@@ -5,8 +5,8 @@ const Department = require("./models/Department");
 const departments = [
   { name: "CSE" },
   { name: "EEE" },
-  { name: "Civil" },
-  { name: "Mechanical" },
+  { name: "CEE" },
+  { name: "MPE" },
   { name: "BTM" },
   { name: "TVE" },
 ];

@@ -2,11 +2,16 @@ const express = require("express");
 const router = express.Router();
 const leaveController = require("../controllers/leaveController");
 const authMiddleware = require("../middleware/authMiddleware");
+const upload = require("../middleware/upload");
 
 // ================================
 // Apply for leave
 // ================================
 router.post("/apply", authMiddleware, leaveController.applyLeave);
+// @route   POST /api/leaves/apply
+// @desc    Apply for leave
+// @access  Private
+router.post("/apply", authMiddleware, upload.single('leaveDocument'), leaveController.applyLeave);
 
 // ================================
 // Get all leave applications for current user

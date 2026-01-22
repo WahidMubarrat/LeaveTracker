@@ -14,8 +14,8 @@ const HoDSettings = () => {
   const departmentConfig = [
     { code: 'CSE', name: 'Computer Science & Engineering', color: '#2196F3', textColor: '#fff' },
     { code: 'EEE', name: 'Electrical & Electronic Engineering', color: '#FFD700', textColor: '#000' },
-    { code: 'CIVIL', name: 'Civil Engineering', color: '#4CAF50', textColor: '#fff' },
-    { code: 'MECH', name: 'Mechanical Engineering', color: '#f44336', textColor: '#fff' },
+    { code: 'CEE', name: 'Civil & Environmental Engineering', color: '#4CAF50', textColor: '#fff' },
+    { code: 'MPE', name: 'Mechanical & Production Engineering', color: '#f44336', textColor: '#fff' },
     { code: 'BTM', name: 'Business & Technology Management', color: '#9C27B0', textColor: '#fff' },
     { code: 'TVE', name: 'Technical & Vocational Education', color: '#FF9800', textColor: '#fff' }
   ];
@@ -42,14 +42,19 @@ const HoDSettings = () => {
       setError('');
       setSuccess('');
       
-      // Find department by matching name (partial match)
-      const department = departments.find(d => 
-        d.name.toUpperCase().includes(deptConfig.code) || 
-        deptConfig.name.toLowerCase().includes(d.name.toLowerCase())
-      );
+      // Find department by exact code match in the name
+      const department = departments.find(d => {
+        const deptName = d.name.toUpperCase().trim();
+        const configCode = deptConfig.code.toUpperCase().trim();
+        
+        // Match if department name starts with or equals the code
+        return deptName === configCode || 
+               deptName.startsWith(configCode + ' ') ||
+               deptName.startsWith(configCode + '-');
+      });
 
       if (!department) {
-        setError(`Department ${deptConfig.name} not found`);
+        setError(`Department ${deptConfig.name} not found in database`);
         setMembers([]);
         setSelectedDepartment(null);
         return;

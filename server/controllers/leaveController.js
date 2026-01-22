@@ -2,24 +2,35 @@ const LeaveRequest = require("../models/LeaveRequest");
 const LeaveHistoryLog = require("../models/LeaveHistoryLog");
 const AlternateRequest = require("../models/AlternateRequest");
 const User = require("../models/User");
+const Vacation = require("../models/Vacation");
+const { uploadToCloudinary } = require("../utils/cloudinaryUpload");
 
 
 // Apply for leave
 exports.applyLeave = async (req, res) => {
   try {
-    const {
+    let {
       startDate,
       endDate,
       type,
       reason,
       backupEmployeeId,
-      alternateEmployeeIds, // Array of alternate employee IDs
+      alternateEmployeeIds, // Array of alternate employee IDs or JSON string
       applicationDate,
       applicantName,
       departmentName,
       applicantDesignation,
       numberOfDays,
     } = req.body;
+
+    // Parse alternateEmployeeIds if it's a JSON string (from FormData)
+    if (typeof alternateEmployeeIds === 'string') {
+      try {
+        alternateEmployeeIds = JSON.parse(alternateEmployeeIds);
+      } catch (e) {
+        alternateEmployeeIds = [];
+      }
+    }
 
     // Validate required fields
     if (!startDate || !endDate || !type) {
@@ -39,12 +50,84 @@ exports.applyLeave = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Calculate number of days
-    const calculatedDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-    const totalDays = Number(numberOfDays) > 0 ? Number(numberOfDays) : calculatedDays;
+    // Helper function to check if a date falls within a holiday period
+    const isHoliday = (date, holidaysList) => {
+      const checkDate = new Date(date);
+      checkDate.setHours(0, 0, 0, 0);
+      
+      return holidaysList.some(holiday => {
+        const holidayStartDate = new Date(holiday.date);
+        holidayStartDate.setHours(0, 0, 0, 0);
+        const holidayEndDate = new Date(holidayStartDate);
+        holidayEndDate.setDate(holidayEndDate.getDate() + holiday.numberOfDays - 1);
+        holidayEndDate.setHours(23, 59, 59, 999);
+        
+        return checkDate >= holidayStartDate && checkDate <= holidayEndDate;
+      });
+    };
+
+    // Calculate number of weekdays (excluding Saturday, Sunday, and holidays)
+    const calculateWeekdays = async (startDate, endDate) => {
+      // Normalize dates to start/end of day
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+
+      // Fetch holidays that could potentially overlap with the date range
+      // Get holidays that start before or on the end date
+      const allHolidays = await Vacation.find({
+        date: { $lte: end }
+      });
+
+      // Filter holidays that actually overlap with the date range
+      const holidays = allHolidays.filter(holiday => {
+        const holidayStart = new Date(holiday.date);
+        holidayStart.setHours(0, 0, 0, 0);
+        const holidayEnd = new Date(holidayStart);
+        holidayEnd.setDate(holidayEnd.getDate() + holiday.numberOfDays - 1);
+        holidayEnd.setHours(23, 59, 59, 999);
+        
+        // Check if holiday overlaps with the date range
+        return holidayStart <= end && holidayEnd >= start;
+      });
+
+      let count = 0;
+      const current = new Date(start);
+      current.setHours(0, 0, 0, 0);
+      
+      while (current <= end) {
+        const dayOfWeek = current.getDay();
+        // 0 = Sunday, 6 = Saturday
+        // Only count weekdays that are not holidays
+        if (dayOfWeek !== 0 && dayOfWeek !== 6 && !isHoliday(current, holidays)) {
+          count++;
+        }
+        current.setDate(current.getDate() + 1);
+      }
+      
+      return count;
+    };
+
+    const calculatedWeekdays = await calculateWeekdays(start, end);
+    const totalDays = Number(numberOfDays) > 0 ? Number(numberOfDays) : calculatedWeekdays;
+
+    // Validate that the calculated days match (security check)
+    if (Math.abs(totalDays - calculatedWeekdays) > 1) {
+      return res.status(400).json({ 
+        message: `Day calculation mismatch. Expected ${calculatedWeekdays} weekdays, received ${totalDays}` 
+      });
+    }
+
+    // Check casual leave limit (max 2 consecutive days)
+    const leaveType = type.toLowerCase(); // 'annual' or 'casual'
+    if (leaveType === 'casual' && totalDays > 2) {
+      return res.status(400).json({ 
+        message: `Casual leave cannot exceed 2 consecutive days. You are requesting ${totalDays} days. Please apply for Annual Leave instead.` 
+      });
+    }
 
     // Check leave quota based on leave type
-    const leaveType = type.toLowerCase(); // 'annual' or 'casual'
     const quotaKey = leaveType === 'annual' || leaveType === 'casual' ? leaveType : 'annual';
     
     const allocated = currentUser.leaveQuota[quotaKey]?.allocated || 0;
@@ -55,6 +138,17 @@ exports.applyLeave = async (req, res) => {
       return res.status(400).json({ 
         message: `Insufficient ${type} leave quota. Available: ${remaining} days, Requested: ${totalDays} days` 
       });
+    }
+
+    // Upload leave document to Cloudinary if provided
+    let leaveDocumentUrl = null;
+    if (req.file) {
+      try {
+        leaveDocumentUrl = await uploadToCloudinary(req.file.buffer, 'leave-tracker/documents');
+      } catch (uploadError) {
+        console.error('Leave document upload error:', uploadError);
+        return res.status(500).json({ message: 'Failed to upload leave document' });
+      }
     }
 
     // Process alternate employees
@@ -79,6 +173,7 @@ exports.applyLeave = async (req, res) => {
       numberOfDays: totalDays,
       backupEmployee: backupEmployeeId || null, // Keep for backward compatibility
       alternateEmployees: alternateEmployees,
+      leaveDocument: leaveDocumentUrl,
     });
 
     await leaveRequest.save();
