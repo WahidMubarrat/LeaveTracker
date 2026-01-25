@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Layout from '../../components/Layout';
+import { MdFilterList, MdCheckCircle, MdCancel, MdPending, MdCalendarToday, MdEvent } from 'react-icons/md';
 import '../../styles/LeaveHistory.css';
 
 const LeaveHistory = () => {

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import HoDLayout from '../../components/HoDLayout';
 import RoleToggle from '../../components/RoleToggle';
 import Status from '../../components/Status';
+import { MdSearch, MdPerson, MdEmail, MdWork, MdEventAvailable, MdBeachAccess, MdLocalHospital } from 'react-icons/md';
 import '../../styles/HoDDepartmentMembers.css';
 
 const HoDDepartmentMembers = () => {

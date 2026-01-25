@@ -179,6 +179,23 @@
 
 .stat-box-icon {
   font-size: 1.75rem;
+  color: inherit;
+}
+
+.pending-box .stat-box-icon {
+  color: #8b5cf6;
+}
+
+.active-box .stat-box-icon {
+  color: #10b981;
+}
+
+.approved-box .stat-box-icon {
+  color: #3b82f6;
+}
+
+.leave-box .stat-box-icon {
+  color: #f59e0b;
 }
 
 .stat-box-header h3 {

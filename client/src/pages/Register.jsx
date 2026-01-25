@@ -2,6 +2,7 @@ import { useState, useContext, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { departmentAPI } from '../services/api';
+import { MdPerson, MdEmail, MdLock, MdWork, MdBusiness, MdImage, MdPersonAdd } from 'react-icons/md';
 import '../styles/Register.css';
 
 const Register = () => {
@@ -124,7 +125,7 @@ const Register = () => {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="name">Full Name</label>
+            <label htmlFor="name"><MdPerson /> Full Name</label>
             <input
               type="text"
               id="name"
@@ -137,7 +138,7 @@ const Register = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email"><MdEmail /> Email</label>
             <input
               type="email"
               id="email"
@@ -150,7 +151,7 @@ const Register = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="designation">Designation *</label>
+            <label htmlFor="designation"><MdWork /> Designation *</label>
             <select
               id="designation"
               name="designation"
@@ -167,7 +168,7 @@ const Register = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="departmentId">Department *</label>
+            <label htmlFor="departmentId"><MdBusiness /> Department *</label>
             <select
               id="departmentId"
               name="departmentId"
@@ -185,7 +186,7 @@ const Register = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="profilePic">Profile Picture</label>
+            <label htmlFor="profilePic"><MdImage /> Profile Picture</label>
             <input
               type="file"
               id="profilePic"
@@ -200,7 +201,7 @@ const Register = () => {
             )}
           </div>
           <div className="form-group">
-            <label htmlFor="password">Password *</label>
+            <label htmlFor="password"><MdLock /> Password *</label>
             <input
               type="password"
               id="password"
@@ -213,7 +214,7 @@ const Register = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="confirmPassword">Confirm Password *</label>
+            <label htmlFor="confirmPassword"><MdLock /> Confirm Password *</label>
             <input
               type="password"
               id="confirmPassword"
@@ -226,7 +227,7 @@ const Register = () => {
           </div>
 
           <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? 'Creating Account...' : 'Register'}
+            <MdPersonAdd /> {loading ? 'Creating Account...' : 'Register'}
           </button>
         </form>
 

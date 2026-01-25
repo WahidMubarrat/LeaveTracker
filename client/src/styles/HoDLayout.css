@@ -16,6 +16,14 @@
   overflow-x: hidden;
 }
 
+.hod-content > * {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  border: 3px solid #667eea;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+}
+
 @media (max-width: 768px) {
   .hod-content {
     margin-left: 0;
