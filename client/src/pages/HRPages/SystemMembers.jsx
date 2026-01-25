@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import HRLayout from '../../components/HRLayout';
+import { MdSearch, MdPeople, MdBusiness, MdCheckCircle, MdPause } from 'react-icons/md';
 import '../../styles/SystemMembers.css';
 
 const SystemMembers = () => {
@@ -61,28 +62,28 @@ const SystemMembers = () => {
 
           <div className="members-stats">
             <div className="stat-card">
-              <div className="stat-icon">👥</div>
+              <MdPeople className="stat-icon" />
               <div className="stat-info">
                 <h3>{dummyMembers.length}</h3>
                 <p>Total Members</p>
               </div>
             </div>
             <div className="stat-card">
-              <div className="stat-icon">🏢</div>
+              <MdBusiness className="stat-icon" />
               <div className="stat-info">
                 <h3>6</h3>
                 <p>Departments</p>
               </div>
             </div>
             <div className="stat-card">
-              <div className="stat-icon">✅</div>
+              <MdCheckCircle className="stat-icon" />
               <div className="stat-info">
                 <h3>{dummyMembers.filter(m => m.status === 'Active').length}</h3>
                 <p>Active</p>
               </div>
             </div>
             <div className="stat-card">
-              <div className="stat-icon">⏸️</div>
+              <MdPause className="stat-icon" />
               <div className="stat-info">
                 <h3>{dummyMembers.filter(m => m.status === 'On Leave').length}</h3>
                 <p>On Leave</p>

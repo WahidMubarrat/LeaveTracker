@@ -2,7 +2,12 @@ import { useState, useEffect } from 'react';
 import HoDLayout from '../../components/HoDLayout';
 import RoleToggle from '../../components/RoleToggle';
 import { hodDashboardAPI } from '../../services/api';
+import { MdPending, MdGroup, MdCheckCircle, MdBeachAccess, MdPieChart, MdPeople } from 'react-icons/md';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { Pie } from 'react-chartjs-2';
 import '../../styles/HoDDashboard.css';
+
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 const HoDDashboard = () => {
   const [stats, setStats] = useState({
@@ -162,7 +167,7 @@ const HoDDashboard = () => {
             <div className="additional-stats">
               <div className="stat-box pending-box">
                 <div className="stat-box-header">
-                  <span className="stat-box-icon">⏳</span>
+                  <MdPending className="stat-box-icon" />
                   <h3>Pending Requests</h3>
                 </div>
                 <div className="stat-box-value">{stats.requestStats.pendingRequests}</div>
@@ -179,7 +184,7 @@ const HoDDashboard = () => {
 
               <div className="stat-box active-box">
                 <div className="stat-box-header">
-                  <span className="stat-box-icon">👥</span>
+                  <MdGroup className="stat-box-icon" />
                   <h3>Active Members</h3>
                 </div>
                 <div className="stat-box-value">{stats.memberStats.activeMembers}</div>
@@ -196,7 +201,7 @@ const HoDDashboard = () => {
 
               <div className="stat-box approved-box">
                 <div className="stat-box-header">
-                  <span className="stat-box-icon">✓</span>
+                  <MdCheckCircle className="stat-box-icon" />
                   <h3>Approved This Month</h3>
                 </div>
                 <div className="stat-box-value">{stats.requestStats.acceptedRequests}</div>
@@ -213,7 +218,7 @@ const HoDDashboard = () => {
 
               <div className="stat-box leave-box">
                 <div className="stat-box-header">
-                  <span className="stat-box-icon">🏖️</span>
+                  <MdBeachAccess className="stat-box-icon" />
                   <h3>On Leave Now</h3>
                 </div>
                 <div className="stat-box-value">{stats.memberStats.membersOnLeave}</div>

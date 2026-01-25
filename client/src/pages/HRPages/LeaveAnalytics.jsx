@@ -1,19 +1,19 @@
 import HRLayout from '../../components/HRLayout';
+import { MdAssessment, MdPending, MdCheckCircle, MdCancel, MdBarChart } from 'react-icons/md';
 import '../../styles/LeaveAnalytics.css';
 
 const LeaveAnalytics = () => {
   // Dummy data
   const monthlyStats = {
-    total: 45,
+    total: 40,
     pending: 8,
-    approved: 32,
+    approved: 27,
     declined: 5
   };
 
   const leaveTypeData = [
     { type: 'Annual Leave', count: 28, color: '#4CAF50' },
-    { type: 'Casual Leave', count: 12, color: '#2196F3' },
-    { type: 'Sick Leave', count: 5, color: '#FF9800' }
+    { type: 'Casual Leave', count: 12, color: '#2196F3' }
   ];
 
   const departmentData = [
@@ -28,7 +28,6 @@ const LeaveAnalytics = () => {
   const recentLeaves = [
     { id: 1, name: 'Dr. Md. Hasanul Kabir', dept: 'CSE', type: 'Annual', days: 5, status: 'Approved', date: '2026-01-15' },
     { id: 2, name: 'Rashid Ahmed', dept: 'EEE', type: 'Casual', days: 2, status: 'Pending', date: '2026-01-16' },
-    { id: 3, name: 'Dr. Sanjida Rahman', dept: 'CEE', type: 'Sick', days: 1, status: 'Approved', date: '2026-01-14' },
     { id: 4, name: 'Kamal Hossain', dept: 'MPE', type: 'Annual', days: 7, status: 'Approved', date: '2026-01-12' },
     { id: 5, name: 'Fatima Khan', dept: 'BTM', type: 'Casual', days: 1, status: 'Declined', date: '2026-01-17' }
   ];
@@ -46,7 +45,7 @@ const LeaveAnalytics = () => {
             <div className="analytics-card">
               <div className="card-header">
                 <h3>Total Leaves</h3>
-                <span className="card-icon">📊</span>
+                <MdAssessment className="card-icon" />
               </div>
               <div className="card-value">{monthlyStats.total}</div>
               <p className="card-subtitle">This month</p>
@@ -55,7 +54,7 @@ const LeaveAnalytics = () => {
             <div className="analytics-card">
               <div className="card-header">
                 <h3>Pending</h3>
-                <span className="card-icon">⏳</span>
+                <MdPending className="card-icon" />
               </div>
               <div className="card-value">{monthlyStats.pending}</div>
               <p className="card-subtitle">Awaiting approval</p>
@@ -64,7 +63,7 @@ const LeaveAnalytics = () => {
             <div className="analytics-card">
               <div className="card-header">
                 <h3>Approved</h3>
-                <span className="card-icon">✅</span>
+                <MdCheckCircle className="card-icon" />
               </div>
               <div className="card-value">{monthlyStats.approved}</div>
               <p className="card-subtitle">This month</p>
@@ -73,7 +72,7 @@ const LeaveAnalytics = () => {
             <div className="analytics-card">
               <div className="card-header">
                 <h3>Declined</h3>
-                <span className="card-icon">❌</span>
+                <MdCancel className="card-icon" />
               </div>
               <div className="card-value">{monthlyStats.declined}</div>
               <p className="card-subtitle">This month</p>

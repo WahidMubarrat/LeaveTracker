@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import PropTypes from 'prop-types';
+import { MdLocalHospital } from 'react-icons/md';
 import '../styles/CasualLeave.css';
 
 const CasualLeave = memo(({ total, taken, remaining }) => {
@@ -8,7 +9,7 @@ const CasualLeave = memo(({ total, taken, remaining }) => {
   return (
     <div className="leave-card casual-leave">
       <div className="leave-card-header">
-        <span className="leave-icon">🏥</span>
+        <MdLocalHospital className="leave-icon" />
         <h3>Casual Leave</h3>
       </div>
       

@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import PropTypes from 'prop-types';
+import { MdBeachAccess } from 'react-icons/md';
 import '../styles/AnnualLeave.css';
 
 const AnnualLeave = memo(({ total, taken, remaining }) => {
@@ -8,7 +9,7 @@ const AnnualLeave = memo(({ total, taken, remaining }) => {
   return (
     <div className="leave-card annual-leave">
       <div className="leave-card-header">
-        <span className="leave-icon">🏖️</span>
+        <MdBeachAccess className="leave-icon" />
         <h3>Annual Leave</h3>
       </div>
       

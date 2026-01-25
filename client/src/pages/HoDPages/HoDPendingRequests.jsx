@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import HoDLayout from '../../components/HoDLayout';
 import RoleToggle from '../../components/RoleToggle';
 import { leaveAPI } from '../../services/api';
+import { MdCheckCircle, MdCancel, MdFilterList, MdCalendarToday, MdPerson, MdEvent } from 'react-icons/md';
 import '../../styles/HoDPendingRequests.css';
 
 const HoDPendingRequests = () => {
