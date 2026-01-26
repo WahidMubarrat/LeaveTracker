@@ -188,8 +188,18 @@ const LeaveHistory = () => {
                       {leave.status}
                     </span>
                   </div>
-                  <div className="leave-dates">
-                    {new Date(leave.startDate).toLocaleDateString()} - {new Date(leave.endDate).toLocaleDateString()}
+                  <div className="history-actions">
+                    <div className="leave-dates">
+                      {new Date(leave.startDate).toLocaleDateString()} - {new Date(leave.endDate).toLocaleDateString()}
+                    </div>
+                    <button
+                      type="button"
+                      className="history-delete-btn"
+                      onClick={(e) => e.preventDefault()}
+                      aria-label="Delete (dummy button)"
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
 
