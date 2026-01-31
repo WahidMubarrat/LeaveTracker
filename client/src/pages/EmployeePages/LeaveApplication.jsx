@@ -2,6 +2,7 @@ import { useState, useEffect, useContext } from 'react';
 import Layout from '../../components/Layout';
 import AlternateSelection from '../../components/AlternateSelection';
 import LeaveDocument from '../../components/LeaveDocument';
+import WarningTooltip from '../../components/WarningTooltip';
 import { AuthContext } from '../../context/AuthContext';
 import { leaveAPI, vacationAPI } from '../../services/api';
 import '../../styles/LeaveApplication.css';
@@ -27,6 +28,11 @@ const LeaveApplication = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [holidays, setHolidays] = useState([]);
+  const [leaveBalance, setLeaveBalance] = useState({
+    annual: { allocated: 20, used: 0 },
+    casual: { allocated: 10, used: 0 }
+  });
+  const [balanceWarning, setBalanceWarning] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -36,6 +42,14 @@ const LeaveApplication = () => {
         departmentName: user.department?.name || '',
         applicantDesignation: user.designation || '',
       }));
+      
+      // Set leave balance from user data
+      if (user.leaveQuota) {
+        setLeaveBalance({
+          annual: user.leaveQuota.annual || { allocated: 20, used: 0 },
+          casual: user.leaveQuota.casual || { allocated: 10, used: 0 }
+        });
+      }
     }
   }, [user]);
 
@@ -83,6 +97,38 @@ const LeaveApplication = () => {
     fetchHolidays();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.startDate, formData.endDate]);
+
+  // Check leave balance warning when numberOfDays or type changes
+  useEffect(() => {
+    if (formData.numberOfDays && parseInt(formData.numberOfDays) > 0) {
+      const requestedDays = parseInt(formData.numberOfDays);
+      const leaveType = formData.type.toLowerCase(); // 'casual' or 'annual'
+      
+      // Check casual leave 2-day limit first
+      if (leaveType === 'casual' && requestedDays > 2) {
+        setBalanceWarning(
+          `Casual leave cannot exceed 2 consecutive days. You are requesting ${requestedDays} days. ` +
+          `Please apply for Annual Leave instead.`
+        );
+        return;
+      }
+      
+      // Check leave balance
+      const balance = leaveBalance[leaveType];
+      const remaining = balance.allocated - balance.used;
+      
+      if (requestedDays > remaining) {
+        setBalanceWarning(
+          `You are requesting ${requestedDays} days but only have ${remaining} ${formData.type} leave days remaining. ` +
+          `Your request exceeds available balance by ${requestedDays - remaining} days.`
+        );
+      } else {
+        setBalanceWarning('');
+      }
+    } else {
+      setBalanceWarning('');
+    }
+  }, [formData.numberOfDays, formData.type, leaveBalance]);
 
   // Helper function to check if a date falls within a holiday period
   const isHoliday = (date, holidaysList) => {
@@ -337,24 +383,31 @@ const LeaveApplication = () => {
                     onChange={handleChange}
                     required
                   >
-                    <option value="Casual">Casual Leave</option>
-                    <option value="Annual">Annual Leave</option>
+                    <option value="Casual">
+                      Casual Leave ({leaveBalance.casual.allocated - leaveBalance.casual.used} remaining)
+                    </option>
+                    <option value="Annual">
+                      Annual Leave ({leaveBalance.annual.allocated - leaveBalance.annual.used} remaining)
+                    </option>
                   </select>
                 </div>
                 <div className="form-group">
                   <label htmlFor="numberOfDays">Number of Weekdays *</label>
-                  <input
-                    type="number"
-                    id="numberOfDays"
-                    name="numberOfDays"
-                    value={formData.numberOfDays}
-                    readOnly
-                    disabled
-                    className="readonly-field"
-                    min="1"
-                    placeholder="Auto-calculated"
-                    required
-                  />
+                  <div className="input-with-tooltip">
+                    <input
+                      type="number"
+                      id="numberOfDays"
+                      name="numberOfDays"
+                      value={formData.numberOfDays}
+                      readOnly
+                      disabled
+                      className="readonly-field"
+                      min="1"
+                      placeholder="Auto-calculated"
+                      required
+                    />
+                    <WarningTooltip message={balanceWarning} show={!!balanceWarning} />
+                  </div>
                 </div>
               </div>
 

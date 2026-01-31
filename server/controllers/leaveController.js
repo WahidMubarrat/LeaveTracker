@@ -157,6 +157,10 @@ exports.applyLeave = async (req, res) => {
       response: "pending"
     }));
 
+    // Determine if application should wait for alternate response
+    const hasAlternates = alternateIds.length > 0;
+    const waitingForAlternate = hasAlternates; // If alternates selected, wait for their response
+
     // Create leave request
     const leaveRequest = new LeaveRequest({
       employee: req.user.id,
@@ -172,6 +176,7 @@ exports.applyLeave = async (req, res) => {
       numberOfDays: totalDays,
       backupEmployee: backupEmployeeId || null, // Keep for backward compatibility
       alternateEmployees: alternateEmployees,
+      waitingForAlternate: waitingForAlternate, // Set based on whether alternates were selected
       leaveDocument: leaveDocumentUrl,
     });
 
@@ -262,10 +267,12 @@ exports.getPendingApprovals = async (req, res) => {
 
     if (currentUser.hasRole("HoD")) {
       // HoD sees pending requests in their department
+      // Only show requests that are NOT waiting for alternate response
       query = {
         department: currentUser.department,
         approvedByHoD: false,
-        status: "Pending"
+        status: "Pending",
+        waitingForAlternate: false // Only show if alternates have responded or no alternates selected
       };
     } else if (currentUser.hasRole("HR")) {
       // HR sees requests approved by HoD but not by HR
@@ -488,9 +495,35 @@ exports.respondToAlternateRequest = async (req, res) => {
       leaveRequest.alternateEmployees[alternateIndex].response = response;
       leaveRequest.alternateEmployees[alternateIndex].respondedAt = new Date();
       
-      // If response is "sorry", remove from alternateEmployees array
+      // If response is "sorry", decline the entire leave request
       if (response === "sorry") {
         leaveRequest.alternateEmployees.splice(alternateIndex, 1);
+        leaveRequest.status = "Declined";
+        leaveRequest.waitingForAlternate = false;
+        leaveRequest.hodRemarks = "Declined due to alternate employee refusal";
+        
+        // Create history log for the decline
+        const historyLog = new LeaveHistoryLog({
+          employee: leaveRequest.employee,
+          leaveRequest: leaveRequest._id,
+          action: "Declined by Alternate",
+          performedBy: req.user.id,
+          notes: "Alternate employee declined to cover duties",
+        });
+        await historyLog.save();
+      }
+      
+      // Check if all remaining alternates have responded with "ok"
+      // If at least one alternate has responded "ok", release to HoD
+      if (response === "ok") {
+        const hasOkResponse = leaveRequest.alternateEmployees.some(
+          alt => alt.response === "ok"
+        );
+        
+        if (hasOkResponse) {
+          // At least one alternate has agreed, release application to HoD
+          leaveRequest.waitingForAlternate = false;
+        }
       }
       
       await leaveRequest.save();
