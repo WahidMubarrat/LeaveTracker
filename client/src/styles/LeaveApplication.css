@@ -188,6 +188,12 @@
   background: #e9ecef;
 }
 
+/* Input with tooltip wrapper */
+.input-with-tooltip {
+  position: relative;
+  width: 100%;
+}
+
 @media (max-width: 768px) {
   .application-header h1 {
     font-size: 1.5rem;
