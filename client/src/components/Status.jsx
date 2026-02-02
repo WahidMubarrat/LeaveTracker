@@ -2,7 +2,7 @@ import PropTypes from 'prop-types';
 import '../styles/Status.css';
 
 const Status = ({ currentStatus, returnDate }) => {
-  const isOnLeave = currentStatus === 'OnLeave';
+  const isOnLeave = currentStatus === 'On Leave';
   
   const formatReturnDate = (dateString) => {
     if (!dateString) return null;
@@ -19,7 +19,7 @@ const Status = ({ currentStatus, returnDate }) => {
       <span className="status-indicator"></span>
       <div className="status-content">
         <span className="status-text">
-          {isOnLeave ? 'On Leave' : 'On Duty'}
+          {currentStatus}
         </span>
         {isOnLeave && returnDate && (
           <span className="return-date">
@@ -32,7 +32,7 @@ const Status = ({ currentStatus, returnDate }) => {
 };
 
 Status.propTypes = {
-  currentStatus: PropTypes.oneOf(['OnDuty', 'OnLeave']).isRequired,
+  currentStatus: PropTypes.oneOf(['On Duty', 'On Leave']).isRequired,
   returnDate: PropTypes.string,
 };
 

@@ -10,6 +10,11 @@ const upload = require("../middleware/upload");
 // @access  Private (HR)
 router.get("/all-users", authMiddleware, roleController.getAllUsers);
 
+// @route   GET /api/users/all-grouped
+// @desc    Get all users grouped by department (HR only)
+// @access  Private (HR)
+router.get("/all-grouped", authMiddleware, userController.getAllMembersGroupedByDepartment);
+
 // @route   PATCH /api/users/:userId/role
 // @desc    Assign or remove HoD role (HR only)
 // @access  Private (HR)

@@ -62,6 +62,7 @@ export const userAPI = {
   },
   changePassword: (data) => api.put('/users/change-password', data),
   getAllUsers: () => api.get('/users/all-users'),
+  getAllMembersGrouped: () => api.get('/users/all-grouped'),
   updateUserRole: (userId, action) => api.patch(`/users/${userId}/role`, { action }),
 };
 

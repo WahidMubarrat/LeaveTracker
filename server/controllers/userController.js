@@ -129,6 +129,78 @@ exports.getMembersByDepartmentId = async (req, res) => {
   }
 };
 
+// Get all members grouped by department (HR access)
+exports.getAllMembersGroupedByDepartment = async (req, res) => {
+  try {
+    if (!req.user.roles?.includes("HR")) {
+      return res.status(403).json({ message: "Only HR can view all members" });
+    }
+
+    const LeaveRequest = require("../models/LeaveRequest");
+    const Department = require("../models/Department"); // Ensure Department model is loaded
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // 1. Fetch all departments first to ensure we have the list even for empty departments
+    const departments = await Department.find().sort({ name: 1 }).lean();
+
+    // 2. Fetch all users
+    const users = await User.find()
+      .select("name email designation roles profilePic department")
+      .populate("department", "name")
+      .sort({ name: 1 })
+      .lean();
+
+    // 3. Process users to add status
+    const usersWithStatus = await Promise.all(
+      users.map(async (user) => {
+        const activeLeave = await LeaveRequest.findOne({
+          employee: user._id,
+          status: "Approved",
+          startDate: { $lte: today },
+          endDate: { $gte: today }
+        }).select('endDate').lean();
+
+        return {
+          ...user,
+          currentStatus: activeLeave ? 'OnLeave' : 'OnDuty',
+          returnDate: activeLeave ? activeLeave.endDate : null
+        };
+      })
+    );
+
+    // 4. Group by Department
+    // Structure: [{ departmentId, departmentName, members: [...] }]
+    const groupedData = departments.map(dept => {
+      const deptMembers = usersWithStatus.filter(u => 
+        u.department && u.department._id.toString() === dept._id.toString()
+      );
+      
+      return {
+        departmentId: dept._id,
+        departmentName: dept.name,
+        members: deptMembers
+      };
+    });
+
+    // Also handle users with no department if any exist
+    const noDeptMembers = usersWithStatus.filter(u => !u.department);
+    if (noDeptMembers.length > 0) {
+      groupedData.push({
+        departmentId: 'none',
+        departmentName: 'No Department',
+        members: noDeptMembers
+      });
+    }
+
+    res.json({ departments: groupedData });
+
+  } catch (error) {
+    console.error("Get grouped members error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 // Get alternate selection options (department colleagues except current user)
 exports.getAlternateOptions = async (req, res) => {
   try {

@@ -5,27 +5,39 @@ const LeaveRequest = require('../models/LeaveRequest');
 const getHoDDashboardStats = async (req, res) => {
   try {
     const hodId = req.user.id;
-    
+
     // Get HoD's department
     const hod = await User.findById(hodId).populate('department');
-    
+
     if (!hod || !hod.department) {
       return res.status(404).json({ message: 'Department not found' });
     }
 
     const departmentId = hod.department._id;
 
-    // Get all members in the department (excluding the HoD themselves if needed)
-    const allMembers = await User.find({ 
+    // Get all members in the department
+    // We don't exclude the HoD, as the HoD is also a member of the department
+    const allMembers = await User.find({
       department: departmentId,
       roles: { $ne: 'HR' } // Exclude HR users
     });
 
     const totalMembers = allMembers.length;
 
-    // Count active members (OnDuty) and members on leave
-    const activeMembers = allMembers.filter(member => member.currentStatus === 'OnDuty').length;
-    const membersOnLeave = allMembers.filter(member => member.currentStatus === 'OnLeave').length;
+    // Dynamic calculation of Active vs On Leave
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Find all approved leaves for these members that encompass Today
+    const activeLeavesCount = await LeaveRequest.countDocuments({
+      employee: { $in: allMembers.map(m => m._id) },
+      status: "Approved",
+      startDate: { $lte: today },
+      endDate: { $gte: today }
+    });
+
+    const membersOnLeave = activeLeavesCount;
+    const activeMembers = totalMembers - membersOnLeave;
 
     // Get current month's date range
     const now = new Date();
@@ -33,8 +45,9 @@ const getHoDDashboardStats = async (req, res) => {
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
 
     // Get all leave requests for this department this month
+    // FIXED: Changed 'applicant' to 'employee' to match Schema
     const monthlyRequests = await LeaveRequest.find({
-      applicant: { $in: allMembers.map(m => m._id) },
+      employee: { $in: allMembers.map(m => m._id) },
       applicationDate: { $gte: startOfMonth, $lte: endOfMonth }
     });
 
