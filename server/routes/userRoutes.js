@@ -30,6 +30,11 @@ router.get("/department-members", authMiddleware, userController.getDepartmentMe
 // @access  Private (HR)
 router.get("/department/:departmentId/members", authMiddleware, userController.getMembersByDepartmentId);
 
+// @route   GET /api/users/:userId/active-leave
+// @desc    Get active leave details for a specific user
+// @access  Private
+router.get("/:userId/active-leave", authMiddleware, userController.getActiveLeaveDetails);
+
 router.get("/alternate-options", authMiddleware, userController.getAlternateOptions);
 
 // @route   GET /api/users/leave-statistics

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import PropTypes from 'prop-types';
 import '../styles/LeaveDocument.css';
 
-const LeaveDocument = ({ onDocumentChange, initialDocument }) => {
+const LeaveDocument = ({ onDocumentChange, initialDocument, required = false }) => {
   const [documentFile, setDocumentFile] = useState(null);
   const [preview, setPreview] = useState(initialDocument || null);
 
@@ -48,12 +48,12 @@ const LeaveDocument = ({ onDocumentChange, initialDocument }) => {
   return (
     <div className="leave-document-container">
       <label htmlFor="leaveDocument" className="leave-document-label">
-        Leave Document (Optional)
+        Leave Document {required ? '*' : '(Optional)'}
         <span className="leave-document-hint">
           Upload supporting documents like prescription, medical certificate, etc.
         </span>
       </label>
-      
+
       <div className="leave-document-upload-area">
         {!preview ? (
           <div className="leave-document-upload-placeholder">
@@ -64,6 +64,7 @@ const LeaveDocument = ({ onDocumentChange, initialDocument }) => {
               accept="image/*"
               onChange={handleFileChange}
               className="leave-document-input"
+              required={required}
             />
             <label htmlFor="leaveDocument" className="leave-document-upload-label">
               <span className="upload-icon">📄</span>
@@ -91,6 +92,7 @@ const LeaveDocument = ({ onDocumentChange, initialDocument }) => {
 LeaveDocument.propTypes = {
   onDocumentChange: PropTypes.func.isRequired,
   initialDocument: PropTypes.string,
+  required: PropTypes.bool,
 };
 
 export default LeaveDocument;

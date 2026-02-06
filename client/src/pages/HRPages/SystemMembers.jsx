@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import HRLayout from '../../components/HRLayout';
-import { MdSearch, MdPeople, MdBusiness, MdCheckCircle, MdPause, MdKeyboardArrowDown, MdKeyboardArrowUp } from 'react-icons/md';
+import { MdPeople, MdBusiness, MdPause, MdKeyboardArrowDown, MdKeyboardArrowUp } from 'react-icons/md';
 import Status from '../../components/Status';
+import LeaveDetailsModal from '../../components/LeaveDetailsModal';
 import { userAPI } from '../../services/api';
 import '../../styles/SystemMembers.css';
 
@@ -11,6 +12,7 @@ const SystemMembers = () => {
   const [error, setError] = useState(null);
   const [expandedDepts, setExpandedDepts] = useState({});
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedMember, setSelectedMember] = useState(null);
 
   useEffect(() => {
     fetchMembers();
@@ -44,6 +46,17 @@ const SystemMembers = () => {
       ...prev,
       [deptId]: !prev[deptId]
     }));
+  };
+
+  const handleMemberClick = (member) => {
+    // Only open modal if member is on leave
+    if (member.currentStatus === 'OnLeave') {
+      setSelectedMember(member);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setSelectedMember(null);
   };
 
   // Filter logic
@@ -164,7 +177,11 @@ const SystemMembers = () => {
                               </thead>
                               <tbody>
                                 {dept.members.map(member => (
-                                  <tr key={member._id}>
+                                  <tr
+                                    key={member._id}
+                                    className={`${member.currentStatus === 'OnLeave' ? 'on-leave-row clickable-row' : ''}`}
+                                    onClick={() => handleMemberClick(member)}
+                                  >
                                     <td className="member-name-cell">
                                       <div className="member-avatar-small">
                                         {member.profilePic ? (
@@ -180,10 +197,15 @@ const SystemMembers = () => {
                                     </td>
                                     <td>{member.designation}</td>
                                     <td>
-                                      <Status
-                                        currentStatus={member.currentStatus === 'OnLeave' ? 'On Leave' : 'On Duty'}
-                                        returnDate={member.returnDate}
-                                      />
+                                      <div className="status-with-hint">
+                                        <Status
+                                          currentStatus={member.currentStatus === 'OnLeave' ? 'On Leave' : 'On Duty'}
+                                          returnDate={member.returnDate}
+                                        />
+                                        {member.currentStatus === 'OnLeave' && (
+                                          <span className="click-hint">Click for details</span>
+                                        )}
+                                      </div>
                                     </td>
                                   </tr>
                                 ))}
@@ -200,6 +222,15 @@ const SystemMembers = () => {
           </div>
         </div>
       </div>
+
+      {/* Leave Details Modal */}
+      {selectedMember && (
+        <LeaveDetailsModal
+          userId={selectedMember._id}
+          memberName={selectedMember.name}
+          onClose={handleCloseModal}
+        />
+      )}
     </HRLayout>
   );
 };
