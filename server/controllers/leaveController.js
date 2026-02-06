@@ -39,7 +39,7 @@ exports.applyLeave = async (req, res) => {
     // Validate dates
     const start = new Date(startDate);
     const end = new Date(endDate);
-    
+
     if (end < start) {
       return res.status(400).json({ message: "End date cannot be before start date" });
     }
@@ -53,14 +53,14 @@ exports.applyLeave = async (req, res) => {
     const isHoliday = (date, holidaysList) => {
       const checkDate = new Date(date);
       checkDate.setHours(0, 0, 0, 0);
-      
+
       return holidaysList.some(holiday => {
         const holidayStartDate = new Date(holiday.date);
         holidayStartDate.setHours(0, 0, 0, 0);
         const holidayEndDate = new Date(holidayStartDate);
         holidayEndDate.setDate(holidayEndDate.getDate() + holiday.numberOfDays - 1);
         holidayEndDate.setHours(23, 59, 59, 999);
-        
+
         return checkDate >= holidayStartDate && checkDate <= holidayEndDate;
       });
     };
@@ -86,7 +86,7 @@ exports.applyLeave = async (req, res) => {
         const holidayEnd = new Date(holidayStart);
         holidayEnd.setDate(holidayEnd.getDate() + holiday.numberOfDays - 1);
         holidayEnd.setHours(23, 59, 59, 999);
-        
+
         // Check if holiday overlaps with the date range
         return holidayStart <= end && holidayEnd >= start;
       });
@@ -94,7 +94,7 @@ exports.applyLeave = async (req, res) => {
       let count = 0;
       const current = new Date(start);
       current.setHours(0, 0, 0, 0);
-      
+
       while (current <= end) {
         const dayOfWeek = current.getDay();
         // 0 = Sunday, 6 = Saturday
@@ -104,7 +104,7 @@ exports.applyLeave = async (req, res) => {
         }
         current.setDate(current.getDate() + 1);
       }
-      
+
       return count;
     };
 
@@ -113,30 +113,43 @@ exports.applyLeave = async (req, res) => {
 
     // Validate that the calculated days match (security check)
     if (Math.abs(totalDays - calculatedWeekdays) > 1) {
-      return res.status(400).json({ 
-        message: `Day calculation mismatch. Expected ${calculatedWeekdays} weekdays, received ${totalDays}` 
+      return res.status(400).json({
+        message: `Day calculation mismatch. Expected ${calculatedWeekdays} weekdays, received ${totalDays}`
       });
     }
 
     // Check casual leave limit (max 2 consecutive days)
     const leaveType = type.toLowerCase(); // 'annual' or 'casual'
     if (leaveType === 'casual' && totalDays > 2) {
-      return res.status(400).json({ 
-        message: `Casual leave cannot exceed 2 consecutive days. You are requesting ${totalDays} days. Please apply for Annual Leave instead.` 
+      return res.status(400).json({
+        message: `Casual leave cannot exceed 2 consecutive days. You are requesting ${totalDays} days. Please apply for Annual Leave instead.`
       });
     }
 
     // Check leave quota based on leave type
     const quotaKey = leaveType === 'annual' || leaveType === 'casual' ? leaveType : 'annual';
-    
+
     const allocated = currentUser.leaveQuota[quotaKey]?.allocated || 0;
     const used = currentUser.leaveQuota[quotaKey]?.used || 0;
     const remaining = allocated - used;
 
     if (remaining < totalDays) {
-      return res.status(400).json({ 
-        message: `Insufficient ${type} leave quota. Available: ${remaining} days, Requested: ${totalDays} days` 
+      return res.status(400).json({
+        message: `Insufficient ${type} leave quota. Available: ${remaining} days, Requested: ${totalDays} days`
       });
+    }
+
+    // Validation for Annual Leave (Purpose and Document are mandatory)
+    if (leaveType !== 'casual') {
+      if (!reason || reason.trim() === '') {
+        return res.status(400).json({ message: "Purpose of leave is required for Annual Leave." });
+      }
+      // Note: We check req.file for the document, as it's processed by multer before this controller
+      if (!req.file && !req.body.leaveDocument) {
+        // req.body.leaveDocument handles case where it might be passed differently (though typically req.file)
+        // Adjust based on your exact upload flow; usually req.file is what matters for new uploads
+        return res.status(400).json({ message: "Supporting document is required for Annual Leave." });
+      }
     }
 
     // Upload leave document to Cloudinary if provided
@@ -203,9 +216,9 @@ exports.applyLeave = async (req, res) => {
 
     await historyLog.save();
 
-    res.status(201).json({ 
+    res.status(201).json({
       message: "Leave application submitted successfully",
-      leaveRequest 
+      leaveRequest
     });
   } catch (error) {
     console.error("Apply leave error:", error);
@@ -233,13 +246,13 @@ exports.getMyApplications = async (req, res) => {
 exports.getLeaveHistory = async (req, res) => {
   try {
     const currentUser = await User.findById(req.user.id);
-    
+
     if (!currentUser) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const history = await LeaveRequest.find({ 
-      department: currentUser.department 
+    const history = await LeaveRequest.find({
+      department: currentUser.department
     })
       .populate("employee", "name email profilePic")
       .populate("backupEmployee", "name email")
@@ -258,7 +271,7 @@ exports.getLeaveHistory = async (req, res) => {
 exports.getPendingApprovals = async (req, res) => {
   try {
     const currentUser = await User.findById(req.user.id);
-    
+
     if (!currentUser) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -323,7 +336,7 @@ exports.updateLeaveStatus = async (req, res) => {
         if (leaveRequest.approvedByHoD) {
           return res.status(400).json({ message: "This request has already been processed by HoD" });
         }
-        
+
         leaveRequest.approvedByHoD = true;
         leaveRequest.hodRemarks = remarks || "";
         // Status remains "Pending" until HR reviews
@@ -333,12 +346,12 @@ exports.updateLeaveStatus = async (req, res) => {
         if (!leaveRequest.approvedByHoD) {
           return res.status(400).json({ message: "HoD approval is required before HR can approve" });
         }
-        
+
         // Check if already processed by HR
         if (leaveRequest.approvedByHR) {
           return res.status(400).json({ message: "This request has already been processed by HR" });
         }
-        
+
         leaveRequest.approvedByHR = true;
         leaveRequest.status = "Approved";
         leaveRequest.hrRemarks = remarks || "";
@@ -350,14 +363,14 @@ exports.updateLeaveStatus = async (req, res) => {
           const days = leaveRequest.numberOfDays || Math.ceil((leaveRequest.endDate - leaveRequest.startDate) / (1000 * 60 * 60 * 24)) + 1;
           const leaveType = leaveRequest.type.toLowerCase();
           const quotaKey = leaveType === 'annual' || leaveType === 'casual' ? leaveType : 'annual';
-          
+
           // Increment used days for the specific leave type
           if (employee.leaveQuota[quotaKey]) {
             employee.leaveQuota[quotaKey].used += days;
           }
-          
+
           await employee.save();
-          
+
           // Update employee's leave status
           await employee.updateLeaveStatus();
         }
@@ -373,7 +386,7 @@ exports.updateLeaveStatus = async (req, res) => {
         leaveRequest.status = "Declined";
         leaveRequest.hodRemarks = remarks || "";
         historyAction = "Declined by HoD";
-      } 
+      }
       // If HR declines, completely decline the application
       else if (currentUser.hasRole("HR")) {
         if (!leaveRequest.approvedByHoD) {
@@ -388,7 +401,7 @@ exports.updateLeaveStatus = async (req, res) => {
       } else {
         return res.status(403).json({ message: "Unauthorized" });
       }
-      
+
       // Update employee's leave status (in case they were on leave)
       const employee = await User.findById(leaveRequest.employee);
       if (employee) {
@@ -411,9 +424,9 @@ exports.updateLeaveStatus = async (req, res) => {
 
     await historyLog.save();
 
-    res.json({ 
+    res.json({
       message: `Leave request ${action}d successfully`,
-      leaveRequest 
+      leaveRequest
     });
   } catch (error) {
     console.error("Update leave status error:", error);
@@ -440,7 +453,7 @@ exports.getLeaveRequestLogs = async (req, res) => {
 // Get alternate requests for current user
 exports.getAlternateRequests = async (req, res) => {
   try {
-    const alternateRequests = await AlternateRequest.find({ 
+    const alternateRequests = await AlternateRequest.find({
       alternate: req.user.id,
       status: "pending"
     })
@@ -494,14 +507,14 @@ exports.respondToAlternateRequest = async (req, res) => {
     if (alternateIndex !== -1) {
       leaveRequest.alternateEmployees[alternateIndex].response = response;
       leaveRequest.alternateEmployees[alternateIndex].respondedAt = new Date();
-      
+
       // If response is "sorry", decline the entire leave request
       if (response === "sorry") {
         leaveRequest.alternateEmployees.splice(alternateIndex, 1);
         leaveRequest.status = "Declined";
         leaveRequest.waitingForAlternate = false;
         leaveRequest.hodRemarks = "Declined due to alternate employee refusal";
-        
+
         // Create history log for the decline
         const historyLog = new LeaveHistoryLog({
           employee: leaveRequest.employee,
@@ -512,26 +525,26 @@ exports.respondToAlternateRequest = async (req, res) => {
         });
         await historyLog.save();
       }
-      
+
       // Check if all remaining alternates have responded with "ok"
       // If at least one alternate has responded "ok", release to HoD
       if (response === "ok") {
         const hasOkResponse = leaveRequest.alternateEmployees.some(
           alt => alt.response === "ok"
         );
-        
+
         if (hasOkResponse) {
           // At least one alternate has agreed, release application to HoD
           leaveRequest.waitingForAlternate = false;
         }
       }
-      
+
       await leaveRequest.save();
     }
 
-    res.json({ 
+    res.json({
       message: `Alternate request ${response === "ok" ? "accepted" : "declined"} successfully`,
-      alternateRequest 
+      alternateRequest
     });
   } catch (error) {
     console.error("Respond to alternate request error:", error);

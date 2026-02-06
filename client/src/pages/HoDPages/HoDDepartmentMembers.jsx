@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import HoDLayout from '../../components/HoDLayout';
 import RoleToggle from '../../components/RoleToggle';
 import Status from '../../components/Status';
+import LeaveDetailsModal from '../../components/LeaveDetailsModal';
 import { userAPI } from '../../services/api';
 import '../../styles/HoDDepartmentMembers.css';
 
@@ -10,6 +11,7 @@ const HoDDepartmentMembers = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedMember, setSelectedMember] = useState(null);
 
   useEffect(() => {
     fetchMembers();
@@ -34,6 +36,17 @@ const HoDDepartmentMembers = () => {
     member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     member.designation.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleMemberClick = (member) => {
+    // Only open modal if member is on leave
+    if (member.currentStatus === 'OnLeave') {
+      setSelectedMember(member);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setSelectedMember(null);
+  };
 
   return (
     <HoDLayout>
@@ -81,7 +94,11 @@ const HoDDepartmentMembers = () => {
         ) : (
           <div className="members-grid">
             {filteredMembers.map(member => (
-              <div key={member._id} className="member-card">
+              <div
+                key={member._id}
+                className={`member-card ${member.currentStatus === 'OnLeave' ? 'on-leave clickable' : ''}`}
+                onClick={() => handleMemberClick(member)}
+              >
                 <div className="member-compact-view">
                   <div className="member-avatar">
                     {member.profilePic ? (
@@ -102,12 +119,26 @@ const HoDDepartmentMembers = () => {
                       />
                     </div>
                   </div>
+                  {member.currentStatus === 'OnLeave' && (
+                    <div className="view-details-hint">
+                      <span>View Details</span>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Leave Details Modal */}
+      {selectedMember && (
+        <LeaveDetailsModal
+          userId={selectedMember._id}
+          memberName={selectedMember.name}
+          onClose={handleCloseModal}
+        />
+      )}
     </HoDLayout>
   );
 };

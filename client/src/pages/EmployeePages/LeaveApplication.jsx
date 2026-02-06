@@ -9,7 +9,7 @@ import '../../styles/LeaveApplication.css';
 
 const LeaveApplication = () => {
   const { user } = useContext(AuthContext);
-  
+
   const [formData, setFormData] = useState({
     applicationDate: new Date().toISOString().split('T')[0],
     applicantName: user?.name || '',
@@ -42,7 +42,7 @@ const LeaveApplication = () => {
         departmentName: user.department?.name || '',
         applicantDesignation: user.designation || '',
       }));
-      
+
       // Set leave balance from user data
       if (user.leaveQuota) {
         setLeaveBalance({
@@ -61,11 +61,11 @@ const LeaveApplication = () => {
           const response = await vacationAPI.getInRange(formData.startDate, formData.endDate);
           const fetchedHolidays = response.data.holidays || [];
           setHolidays(fetchedHolidays);
-          
+
           // Recalculate days after fetching holidays
           const startDate = new Date(formData.startDate);
           const endDate = new Date(formData.endDate);
-          
+
           if (endDate >= startDate) {
             const weekdays = calculateWeekdays(startDate, endDate, fetchedHolidays);
             setFormData(prev => ({
@@ -103,7 +103,7 @@ const LeaveApplication = () => {
     if (formData.numberOfDays && parseInt(formData.numberOfDays) > 0) {
       const requestedDays = parseInt(formData.numberOfDays);
       const leaveType = formData.type.toLowerCase(); // 'casual' or 'annual'
-      
+
       // Check casual leave 2-day limit first
       if (leaveType === 'casual' && requestedDays > 2) {
         setBalanceWarning(
@@ -112,11 +112,11 @@ const LeaveApplication = () => {
         );
         return;
       }
-      
+
       // Check leave balance
       const balance = leaveBalance[leaveType];
       const remaining = balance.allocated - balance.used;
-      
+
       if (requestedDays > remaining) {
         setBalanceWarning(
           `You are requesting ${requestedDays} days but only have ${remaining} ${formData.type} leave days remaining. ` +
@@ -133,17 +133,17 @@ const LeaveApplication = () => {
   // Helper function to check if a date falls within a holiday period
   const isHoliday = (date, holidaysList) => {
     if (!holidaysList || holidaysList.length === 0) return false;
-    
+
     const checkDate = new Date(date);
     checkDate.setHours(0, 0, 0, 0);
-    
+
     return holidaysList.some(holiday => {
       const holidayStartDate = new Date(holiday.date);
       holidayStartDate.setHours(0, 0, 0, 0);
       const holidayEndDate = new Date(holidayStartDate);
       holidayEndDate.setDate(holidayEndDate.getDate() + holiday.numberOfDays - 1);
       holidayEndDate.setHours(23, 59, 59, 999);
-      
+
       return checkDate >= holidayStartDate && checkDate <= holidayEndDate;
     });
   };
@@ -155,7 +155,7 @@ const LeaveApplication = () => {
     current.setHours(0, 0, 0, 0);
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
-    
+
     while (current <= end) {
       const dayOfWeek = current.getDay();
       // 0 = Sunday, 6 = Saturday
@@ -165,7 +165,7 @@ const LeaveApplication = () => {
       }
       current.setDate(current.getDate() + 1);
     }
-    
+
     return count;
   };
 
@@ -180,11 +180,11 @@ const LeaveApplication = () => {
     if (name === 'startDate' || name === 'endDate') {
       const start = name === 'startDate' ? value : formData.startDate;
       const end = name === 'endDate' ? value : formData.endDate;
-      
+
       if (start && end) {
         const startDate = new Date(start);
         const endDate = new Date(end);
-        
+
         if (endDate >= startDate) {
           // Calculate weekdays excluding weekends and holidays (using current holidays)
           const weekdays = calculateWeekdays(startDate, endDate, holidays);
@@ -229,16 +229,16 @@ const LeaveApplication = () => {
       submitData.append('endDate', formData.endDate);
       submitData.append('numberOfDays', formData.numberOfDays);
       submitData.append('reason', formData.reason);
-      
+
       if (formData.backupEmployeeId) {
         submitData.append('backupEmployeeId', formData.backupEmployeeId);
       }
-      
+
       // Append alternate employee IDs as JSON string
       if (formData.alternateEmployeeIds && formData.alternateEmployeeIds.length > 0) {
         submitData.append('alternateEmployeeIds', JSON.stringify(formData.alternateEmployeeIds));
       }
-      
+
       // Append leave document file if provided
       if (formData.leaveDocument) {
         submitData.append('leaveDocument', formData.leaveDocument);
@@ -246,7 +246,7 @@ const LeaveApplication = () => {
 
       const response = await leaveAPI.applyLeave(submitData);
       setSuccess('Leave application submitted successfully!');
-      
+
       // Reset form
       setFormData({
         applicationDate: new Date().toISOString().split('T')[0],
@@ -441,7 +441,10 @@ const LeaveApplication = () => {
 
               {/* Purpose of Leave */}
               <div className="form-group">
-                <label htmlFor="reason">Purpose of Leave *</label>
+                <label htmlFor="reason">
+                  Purpose of Leave {formData.type !== 'Casual' && '*'}
+                  {formData.type === 'Casual' && <span className="optional-text"> (Optional)</span>}
+                </label>
                 <textarea
                   id="reason"
                   name="reason"
@@ -449,7 +452,7 @@ const LeaveApplication = () => {
                   onChange={handleChange}
                   rows="4"
                   placeholder="Describe the purpose of your leave"
-                  required
+                  required={formData.type !== 'Casual'}
                 />
               </div>
 
@@ -458,6 +461,7 @@ const LeaveApplication = () => {
                 <LeaveDocument
                   onDocumentChange={handleDocumentChange}
                   initialDocument={formData.leaveDocument}
+                  required={formData.type !== 'Casual'}
                 />
               </div>
 

@@ -7,7 +7,7 @@ exports.getUserLeaveStatistics = async (req, res) => {
   try {
     // Fetch user with leave quota
     const user = await User.findById(req.user.id).select('leaveQuota').lean();
-    
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -40,7 +40,7 @@ exports.getUserLeaveStatistics = async (req, res) => {
 exports.getDepartmentMembers = async (req, res) => {
   try {
     const currentUser = await User.findById(req.user.id);
-    
+
     if (!currentUser) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -172,10 +172,10 @@ exports.getAllMembersGroupedByDepartment = async (req, res) => {
     // 4. Group by Department
     // Structure: [{ departmentId, departmentName, members: [...] }]
     const groupedData = departments.map(dept => {
-      const deptMembers = usersWithStatus.filter(u => 
+      const deptMembers = usersWithStatus.filter(u =>
         u.department && u.department._id.toString() === dept._id.toString()
       );
-      
+
       return {
         departmentId: dept._id,
         departmentName: dept.name,
@@ -247,21 +247,21 @@ exports.getUserById = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const { name, designation } = req.body;
-    
+
     const updateData = {};
     if (name) updateData.name = name;
     if (designation) updateData.designation = designation;
-    
+
     // Upload new profile picture to Cloudinary if provided
     if (req.file) {
       try {
         // Get current user to retrieve old profile pic URL
         const currentUser = await User.findById(req.user.id).select('profilePic');
-        
+
         // Upload new profile picture
         const newProfilePicUrl = await uploadToCloudinary(req.file.buffer, 'leave-tracker/profiles');
         updateData.profilePic = newProfilePicUrl;
-        
+
         // Delete old profile picture from Cloudinary if exists
         if (currentUser.profilePic && currentUser.profilePic.includes('cloudinary')) {
           try {
@@ -289,7 +289,7 @@ exports.updateProfile = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.json({ 
+    res.json({
       message: "Profile updated successfully",
       user: {
         id: user._id,
@@ -306,6 +306,41 @@ exports.updateProfile = async (req, res) => {
     });
   } catch (error) {
     console.error("Update profile error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get active leave details for a specific user
+exports.getActiveLeaveDetails = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Find the active leave for this user
+    const activeLeave = await LeaveRequest.findOne({
+      employee: userId,
+      status: "Approved",
+      startDate: { $lte: today },
+      endDate: { $gte: today }
+    })
+      .populate("employee", "name email designation profilePic")
+      .populate("department", "name")
+      .populate("alternateEmployees.employee", "name email")
+      .lean();
+
+    if (!activeLeave) {
+      return res.status(404).json({ message: "No active leave found for this user" });
+    }
+
+    res.json({ leaveDetails: activeLeave });
+  } catch (error) {
+    console.error("Get active leave details error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -334,7 +369,7 @@ exports.changePassword = async (req, res) => {
 
     // Get user with password
     const user = await User.findById(req.user.id);
-    
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -347,7 +382,7 @@ exports.changePassword = async (req, res) => {
     // Verify current password
     const bcrypt = require("bcryptjs");
     const isMatch = await bcrypt.compare(currentPassword, user.password);
-    
+
     if (!isMatch) {
       return res.status(400).json({ message: "Current password is incorrect" });
     }
