@@ -1,12 +1,15 @@
 .hod-navbar {
   width: 260px;
-  min-height: 100vh;
+  height: 100vh;
   background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
   display: flex;
   flex-direction: column;
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  overflow-y: auto;
 }
 
 .hod-navbar-header {
@@ -99,12 +102,6 @@
 
 @media (max-width: 768px) {
   .hod-navbar {
-    width: 100%;
-    min-height: auto;
-    position: relative;
-  }
-
-  .hod-nav-menu {
-    padding: 0.5rem 0;
+    display: none;
   }
 }

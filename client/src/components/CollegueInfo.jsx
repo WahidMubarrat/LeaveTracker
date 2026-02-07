@@ -74,7 +74,7 @@ const CollegueInfo = ({ onMembersLoaded }) => {
                   <p className="member-designation">{member.designation}</p>
                 )}
                 <Status 
-                  currentStatus={member.currentStatus || 'OnDuty'} 
+                  currentStatus={member.currentStatus === 'OnLeave' ? 'On Leave' : 'On Duty'} 
                   returnDate={member.currentLeave?.endDate}
                 />
                 {member.roles && member.roles.length > 0 && (

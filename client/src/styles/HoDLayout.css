@@ -7,10 +7,10 @@
 }
 
 .hod-content {
-  margin-left: 100px;
+  margin-left: 260px;
   flex: 1;
   padding: 2rem;
-  width: calc(100% - 100px);
+  width: calc(100% - 260px);
   max-width: 100%;
   box-sizing: border-box;
   overflow-x: hidden;

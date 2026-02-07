@@ -21,7 +21,21 @@ const HoDDepartmentMembers = () => {
     try {
       setLoading(true);
       const response = await userAPI.getDepartmentMembers();
-      setMembers(response.data.members || []);
+      // Filter out HR users (users with HR role or role field === 'HR')
+      const departmentMembers = (response.data.members || []).filter(
+        member => {
+          // Check if user has HR in roles array
+          if (member.roles && member.roles.includes('HR')) {
+            return false;
+          }
+          // Check if user has HR as singular role
+          if (member.role === 'HR') {
+            return false;
+          }
+          return true;
+        }
+      );
+      setMembers(departmentMembers);
       setError(null);
     } catch (err) {
       console.error('Error fetching members:', err);
