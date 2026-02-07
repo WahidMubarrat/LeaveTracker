@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import { MdClose, MdCalendarToday, MdPerson, MdDescription, MdAttachFile, MdAccessTime } from 'react-icons/md';
 import { userAPI } from '../services/api';
@@ -11,6 +12,11 @@ const LeaveDetailsModal = ({ userId, memberName, onClose }) => {
 
     useEffect(() => {
         fetchLeaveDetails();
+        // Prevent body scroll when modal is open
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
     }, [userId]);
 
     const fetchLeaveDetails = async () => {
@@ -43,7 +49,7 @@ const LeaveDetailsModal = ({ userId, memberName, onClose }) => {
         }
     };
 
-    return (
+    const modalContent = (
         <div className="leave-modal-overlay" onClick={handleOverlayClick}>
             <div className="leave-modal-container">
                 <div className="leave-modal-header">
@@ -198,6 +204,8 @@ const LeaveDetailsModal = ({ userId, memberName, onClose }) => {
             </div>
         </div>
     );
+
+    return createPortal(modalContent, document.body);
 };
 
 LeaveDetailsModal.propTypes = {

@@ -71,14 +71,14 @@ const ApplicationStatus = () => {
     }
     
     if (application.approvedByHR && application.status === 'Approved') {
-      return { width: '100%', color: '#28a745' }; // Green - fully approved
+      return { width: '100%', color: '#28a745' }; // Green - fully approved (HR approved)
     }
     
     if (application.approvedByHoD) {
-      return { width: '50%', color: '#ffc107' }; // Yellow - half way (HOD approved)
+      return { width: '50%', color: '#ffc107' }; // Yellow - halfway (HoD approved, waiting HR)
     }
     
-    return { width: '0%', color: '#ffc107' }; // No progress - pending
+    return { width: '0%', color: '#e9ecef' }; // Empty - requested, waiting HoD
   };
 
   const formatDate = (dateString) => {
@@ -161,6 +161,9 @@ const ApplicationStatus = () => {
                     ></div>
                   </div>
                   <div className="status-progress-labels">
+                    <span className='progress-label active'>
+                      Requested
+                    </span>
                     <span className={application.approvedByHoD ? 'progress-label active' : 'progress-label'}>
                       HoD
                     </span>
@@ -215,6 +218,9 @@ const ApplicationStatus = () => {
                       ></div>
                     </div>
                     <div className="status-progress-labels">
+                      <span className='progress-label active'>
+                        Requested
+                      </span>
                       <span className={selectedApplication.approvedByHoD ? 'progress-label active' : 'progress-label'}>
                         HoD
                       </span>

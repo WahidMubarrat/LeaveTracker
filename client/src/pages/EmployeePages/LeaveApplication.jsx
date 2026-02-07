@@ -98,6 +98,20 @@ const LeaveApplication = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.startDate, formData.endDate]);
 
+  // Calculate dynamic remaining leaves for each type
+  const getDynamicRemaining = (leaveType) => {
+    const balance = leaveBalance[leaveType.toLowerCase()];
+    const baseRemaining = balance.allocated - balance.used;
+    
+    // If user is currently selecting this leave type and has entered days, subtract them
+    if (formData.type === leaveType && formData.numberOfDays && parseInt(formData.numberOfDays) > 0) {
+      const requestedDays = parseInt(formData.numberOfDays);
+      return Math.max(0, baseRemaining - requestedDays);
+    }
+    
+    return baseRemaining;
+  };
+
   // Check leave balance warning when numberOfDays or type changes
   useEffect(() => {
     if (formData.numberOfDays && parseInt(formData.numberOfDays) > 0) {
@@ -384,10 +398,10 @@ const LeaveApplication = () => {
                     required
                   >
                     <option value="Casual">
-                      Casual Leave ({leaveBalance.casual.allocated - leaveBalance.casual.used} remaining)
+                      Casual Leave ({getDynamicRemaining('Casual')} remaining{formData.type === 'Casual' && formData.numberOfDays ? ` after request` : ''})
                     </option>
                     <option value="Annual">
-                      Annual Leave ({leaveBalance.annual.allocated - leaveBalance.annual.used} remaining)
+                      Annual Leave ({getDynamicRemaining('Annual')} remaining{formData.type === 'Annual' && formData.numberOfDays ? ` after request` : ''})
                     </option>
                   </select>
                 </div>

@@ -51,6 +51,7 @@ exports.getDepartmentMembers = async (req, res) => {
 
     const members = await User.find({
       department: currentUser.department,
+      roles: { $ne: 'HR' }  // Exclude users with HR role
     })
       .select('name email designation role roles profilePic')
       .sort({ name: 1 })
