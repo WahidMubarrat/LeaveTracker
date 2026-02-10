@@ -107,16 +107,19 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  display: inline-block;
+  white-space: nowrap;
 }
 
 .btn-edit {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2563eb;
   color: #ffffff;
 }
 
 .btn-edit:hover {
+  background: #1d4ed8;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
 }
 
 .btn-change-password {

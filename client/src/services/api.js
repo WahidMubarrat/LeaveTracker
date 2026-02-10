@@ -102,6 +102,10 @@ export const vacationAPI = {
   create: (data) => api.post('/vacations', data),
   update: (holidayId, data) => api.put(`/vacations/${holidayId}`, data),
   delete: (holidayId) => api.delete(`/vacations/${holidayId}`),
+  uploadFile: (formData) => api.post('/vacations/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  saveBulk: (holidays) => api.post('/vacations/bulk', { holidays }),
 };
 
 // HoD Dashboard API

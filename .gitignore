@@ -22,3 +22,9 @@ Thumbs.db
 
 # IDE files (VSCode)
 .vscode/
+
+# Unused files (kept locally for potential future use)
+server/eng.traineddata
+server/utils/response.js
+server/utils/validation.js
+client/src/utils/

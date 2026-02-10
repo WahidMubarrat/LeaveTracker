@@ -1,12 +1,16 @@
 const express = require("express");
 const router = express.Router();
-const { 
+const {
   getAllHolidays,
   getHolidaysInRange,
   createHoliday,
   updateHoliday,
   deleteHoliday
 } = require("../controllers/vacationController");
+const {
+  uploadAndExtractHolidays,
+  saveExtractedHolidays
+} = require("../controllers/holidayUploadController");
 const authMiddleware = require("../middleware/authMiddleware");
 const authorize = require("../middleware/authorize");
 
@@ -22,6 +26,12 @@ const authorizeHR = authorize("HR");
 router.post("/", authMiddleware, authorizeHR, createHoliday);
 router.put("/:holidayId", authMiddleware, authorizeHR, updateHoliday);
 router.delete("/:holidayId", authMiddleware, authorizeHR, deleteHoliday);
+
+// Upload and extract holidays from image/PDF (HR only)
+router.post("/upload", authMiddleware, authorizeHR, uploadAndExtractHolidays);
+
+// Save multiple extracted holidays after review (HR only)
+router.post("/bulk", authMiddleware, authorizeHR, saveExtractedHolidays);
 
 module.exports = router;
 
