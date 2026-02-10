@@ -80,6 +80,10 @@ const Login = () => {
             />
           </div>
 
+          <div className="forgot-password-link">
+            <a href="/forgot-password">Forgot Password?</a>
+          </div>
+
           <button type="submit" className="btn-primary" disabled={loading}>
             <MdLogin /> {loading ? 'Logging in...' : 'Login'}
           </button>
