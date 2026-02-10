@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { vacationAPI } from '../services/api';
+import HolidayReviewModal from './HolidayReviewModal';
+import { MdCloudUpload, MdPictureAsPdf } from 'react-icons/md';
 import '../styles/PublicHoliday.css';
 
 const PublicHoliday = () => {
@@ -13,6 +15,15 @@ const PublicHoliday = () => {
     date: '',
     numberOfDays: 1
   });
+
+  // File upload states
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [dragActive, setDragActive] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [extractedHolidays, setExtractedHolidays] = useState([]);
+  const [rawText, setRawText] = useState('');
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     fetchHolidays();
@@ -80,7 +91,7 @@ const PublicHoliday = () => {
         numberOfDays: 1
       });
       setEditingId(null);
-      
+
       // Refresh holidays list
       await fetchHolidays();
 
@@ -109,7 +120,7 @@ const PublicHoliday = () => {
     setEditingId(holiday._id);
     setError('');
     setSuccess('');
-    
+
     // Scroll to form
     document.querySelector('.holiday-form')?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -149,11 +160,142 @@ const PublicHoliday = () => {
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
     });
+  };
+
+  // File upload handlers
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileSelect(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleFileInputChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      handleFileSelect(e.target.files[0]);
+    }
+  };
+
+  const handleFileSelect = (file) => {
+    if (file.type !== 'application/pdf') {
+      setError('Invalid file type. Please upload a PDF file only.');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setError('File size too large. Maximum size is 10MB.');
+      return;
+    }
+
+    setSelectedFile(file);
+    setError('');
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      setError('Please select a file first');
+      return;
+    }
+
+    setUploadLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const formData = new FormData();
+      formData.append('holidayFile', selectedFile);
+
+      const response = await vacationAPI.uploadFile(formData);
+      console.log('Upload response:', response.data);
+      const { holidays: extracted, rawText: text, message } = response.data;
+
+      console.log('Extracted holidays count:', extracted?.length || 0);
+      console.log('Extracted holidays:', extracted);
+
+      if (extracted && extracted.length > 0) {
+        setExtractedHolidays(extracted);
+        setRawText(text || '');
+        setShowReviewModal(true);
+        setSuccess(`${extracted.length} holiday(s) extracted. Please review before saving.`);
+      } else {
+        setError(message || 'No holidays could be extracted from the file.');
+        if (text) {
+          setRawText(text);
+        }
+      }
+    } catch (err) {
+      console.error('Upload error:', err);
+      setError(err.response?.data?.message || 'Failed to process file');
+    } finally {
+      setUploadLoading(false);
+    }
+  };
+
+  const handleSaveExtracted = async (holidaysToSave) => {
+    if (!holidaysToSave || holidaysToSave.length === 0) {
+      setError('No holidays to save');
+      return;
+    }
+
+    setUploadLoading(true);
+    setError('');
+
+    try {
+      const response = await vacationAPI.saveBulk(holidaysToSave);
+      const { results, message } = response.data;
+
+      setShowReviewModal(false);
+      setSelectedFile(null);
+      setExtractedHolidays([]);
+      setRawText('');
+
+      // Build success message
+      let successMsg = message;
+      if (results.skipped.length > 0) {
+        successMsg += ` (${results.skipped.length} skipped - duplicates)`;
+      }
+      setSuccess(successMsg);
+
+      // Refresh holidays list
+      await fetchHolidays();
+
+      setTimeout(() => setSuccess(''), 5000);
+    } catch (err) {
+      console.error('Save error:', err);
+      setError(err.response?.data?.message || 'Failed to save holidays');
+    } finally {
+      setUploadLoading(false);
+    }
+  };
+
+  const clearSelectedFile = () => {
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const getFileIcon = () => {
+    if (!selectedFile) return <MdCloudUpload />;
+    return <MdPictureAsPdf />;
   };
 
   return (
@@ -179,6 +321,89 @@ const PublicHoliday = () => {
         </div>
       )}
 
+      {/* File Upload Section */}
+      <div className="upload-section">
+        <h3>
+          <MdCloudUpload className="section-icon" />
+          Upload Holiday List
+        </h3>
+        <p className="upload-description">
+          Upload a PDF file containing a list of public holidays.
+          We'll extract the dates and names automatically for you to review.
+        </p>
+
+        <div
+          className={`upload-zone ${dragActive ? 'drag-active' : ''} ${selectedFile ? 'has-file' : ''}`}
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
+          onDrop={handleDrop}
+          onClick={() => !selectedFile && fileInputRef.current?.click()}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/pdf"
+            onChange={handleFileInputChange}
+            style={{ display: 'none' }}
+          />
+
+          <div className="upload-content">
+            <div className={`upload-icon ${selectedFile ? 'has-file' : ''}`}>
+              {getFileIcon()}
+            </div>
+
+            {selectedFile ? (
+              <div className="file-info">
+                <span className="file-name">{selectedFile.name}</span>
+                <span className="file-size">
+                  ({(selectedFile.size / 1024).toFixed(1)} KB)
+                </span>
+                <button
+                  className="clear-file"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    clearSelectedFile();
+                  }}
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <div className="upload-text">
+                <span className="primary-text">
+                  Drag & drop a PDF file here, or click to browse
+                </span>
+                <span className="secondary-text">
+                  Supports: PDF files only (max 10MB)
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {selectedFile && (
+          <button
+            className="btn-extract"
+            onClick={handleUpload}
+            disabled={uploadLoading}
+          >
+            {uploadLoading ? (
+              <>
+                <span className="spinner"></span>
+                Extracting Holidays...
+              </>
+            ) : (
+              <>
+                <MdCloudUpload />
+                Extract Holidays
+              </>
+            )}
+          </button>
+        )}
+      </div>
+
+      {/* Manual Entry Form */}
       <div className="holiday-form">
         <h3>{editingId ? 'Edit Holiday' : 'Add New Holiday'}</h3>
         <form onSubmit={handleSubmit}>
@@ -293,9 +518,22 @@ const PublicHoliday = () => {
           </div>
         )}
       </div>
+
+      {/* Review Modal */}
+      <HolidayReviewModal
+        isOpen={showReviewModal}
+        onClose={() => {
+          setShowReviewModal(false);
+          setExtractedHolidays([]);
+          setRawText('');
+        }}
+        holidays={extractedHolidays}
+        onSave={handleSaveExtracted}
+        loading={uploadLoading}
+        rawText={rawText}
+      />
     </div>
   );
 };
 
 export default PublicHoliday;
-

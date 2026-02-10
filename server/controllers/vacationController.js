@@ -209,18 +209,25 @@ exports.updateHoliday = async (req, res) => {
       if (isNaN(holidayDate.getTime())) {
         return res.status(400).json({ message: "Invalid date format" });
       }
-      
-      // Check if another holiday exists on this date (excluding current holiday)
-      const existingHoliday = await Vacation.findOne({ 
-        date: holidayDate,
-        _id: { $ne: holidayId }
+
+      // Normalize to start of local day to avoid timezone drift
+      holidayDate.setHours(0, 0, 0, 0);
+
+      // Check duplicates using inclusive day range (consistent with create)
+      const startOfDay = new Date(holidayDate);
+      const endOfDay = new Date(holidayDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const existingHoliday = await Vacation.findOne({
+        _id: { $ne: holidayId },
+        date: { $gte: startOfDay, $lte: endOfDay }
       });
       if (existingHoliday) {
-        return res.status(400).json({ 
-          message: "A holiday already exists on this date" 
+        return res.status(400).json({
+          message: "A holiday already exists on this date"
         });
       }
-      
+
       holiday.date = holidayDate;
     }
     if (numberOfDays !== undefined) {
