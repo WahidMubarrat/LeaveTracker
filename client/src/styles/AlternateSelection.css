@@ -4,7 +4,7 @@
   width: 100%;
 }
 
-.alternate-selection > label {
+.alternate-selection>label {
   color: #333;
   font-weight: 600;
   margin-bottom: 0.5rem;
@@ -77,4 +77,68 @@
   color: #c33;
   font-size: 0.85rem;
   margin-top: 0.25rem;
+}
+
+.alternate-hint-dates,
+.alternate-empty {
+  padding: 1rem;
+  background: #f9f9f9;
+  border: 1px dashed #ccc;
+  border-radius: 8px;
+  color: #666;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.alternate-item-wrapper {
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid #efefef;
+  padding-bottom: 0.5rem;
+}
+
+.alternate-item-wrapper:last-child {
+  border-bottom: none;
+}
+
+.alternate-checkbox-item.selected {
+  background-color: #f0f7ff;
+  font-weight: 600;
+}
+
+.alternate-date-inputs {
+  display: flex;
+  gap: 1rem;
+  padding: 0.5rem 0.5rem 0.5rem 2.25rem;
+  background: #f8fbff;
+  border-radius: 4px;
+  margin-top: 0.25rem;
+}
+
+.alt-date-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.alt-date-field input {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.coverage-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.coverage-badge {
+  background: #667eea;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
 }

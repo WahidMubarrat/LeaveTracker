@@ -18,12 +18,12 @@ const ApplicationStatus = () => {
       setLoading(true);
       const response = await leaveAPI.getMyApplications();
       const apps = response.data.applications || [];
-      
+
       // Sort by application date - latest first
       const sortedApps = apps.sort((a, b) => {
         return new Date(b.applicationDate) - new Date(a.applicationDate);
       });
-      
+
       setApplications(sortedApps);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to fetch applications');
@@ -37,15 +37,15 @@ const ApplicationStatus = () => {
     if (application.status === 'Declined') {
       return 'Application Declined';
     }
-    
+
     if (application.approvedByHR && application.status === 'Approved') {
       return 'Application Approved';
     }
-    
+
     if (application.approvedByHoD) {
       return 'Approved by HoD';
     }
-    
+
     return 'Pending';
   };
 
@@ -53,15 +53,15 @@ const ApplicationStatus = () => {
     if (application.status === 'Declined') {
       return 'status-declined';
     }
-    
+
     if (application.approvedByHR && application.status === 'Approved') {
       return 'status-approved';
     }
-    
+
     if (application.approvedByHoD) {
       return 'status-pending-hod';
     }
-    
+
     return 'status-pending';
   };
 
@@ -69,15 +69,15 @@ const ApplicationStatus = () => {
     if (application.status === 'Declined') {
       return { width: '100%', color: '#dc3545' }; // Red - fully declined
     }
-    
+
     if (application.approvedByHR && application.status === 'Approved') {
       return { width: '100%', color: '#28a745' }; // Green - fully approved (HR approved)
     }
-    
+
     if (application.approvedByHoD) {
       return { width: '50%', color: '#ffc107' }; // Yellow - halfway (HoD approved, waiting HR)
     }
-    
+
     return { width: '0%', color: '#e9ecef' }; // Empty - requested, waiting HoD
   };
 
@@ -130,8 +130,8 @@ const ApplicationStatus = () => {
         ) : (
           <div className="applications-list">
             {applications.map((application) => (
-              <div 
-                key={application._id} 
+              <div
+                key={application._id}
                 className="application-card"
                 onClick={() => handleCardClick(application)}
                 style={{ cursor: 'pointer' }}
@@ -151,7 +151,7 @@ const ApplicationStatus = () => {
                 {/* Status Progress Bar */}
                 <div className="status-progress-container">
                   <div className="status-progress-bar">
-                    <div 
+                    <div
                       className="status-progress-fill"
                       style={{
                         width: getStatusProgress(application).width,
@@ -183,7 +183,7 @@ const ApplicationStatus = () => {
                     <span className="detail-value">{formatDate(application.applicationDate)}</span>
                   </div>
                 </div>
-                
+
                 <div className="view-details-hint">
                   Click to view full details →
                 </div>
@@ -200,16 +200,16 @@ const ApplicationStatus = () => {
                 <h2>Application Details</h2>
                 <button className="modal-close" onClick={handleCloseModal}>×</button>
               </div>
-              
+
               <div className="modal-body">
                 <div className="modal-status-section">
                   <span className={`modal-status-badge ${getStatusClass(selectedApplication)}`}>
                     {getStatusMessage(selectedApplication)}
                   </span>
-                  
+
                   <div className="status-progress-container">
                     <div className="status-progress-bar">
-                      <div 
+                      <div
                         className="status-progress-fill"
                         style={{
                           width: getStatusProgress(selectedApplication).width,
@@ -236,82 +236,89 @@ const ApplicationStatus = () => {
                     <span className="modal-detail-label">Leave Type</span>
                     <span className="modal-detail-value">{selectedApplication.type} Leave</span>
                   </div>
-                  
+
                   <div className="modal-detail-item">
                     <span className="modal-detail-label">Application Date</span>
                     <span className="modal-detail-value">{formatDate(selectedApplication.applicationDate)}</span>
                   </div>
-                  
+
                   <div className="modal-detail-item">
                     <span className="modal-detail-label">Start Date</span>
                     <span className="modal-detail-value">{formatDate(selectedApplication.startDate)}</span>
                   </div>
-                  
+
                   <div className="modal-detail-item">
                     <span className="modal-detail-label">End Date</span>
                     <span className="modal-detail-value">{formatDate(selectedApplication.endDate)}</span>
                   </div>
-                  
+
                   <div className="modal-detail-item">
                     <span className="modal-detail-label">Number of Days</span>
                     <span className="modal-detail-value">{selectedApplication.numberOfDays} day(s)</span>
                   </div>
-                  
+
                   <div className="modal-detail-item">
                     <span className="modal-detail-label">Department</span>
                     <span className="modal-detail-value">
                       {selectedApplication.departmentName || selectedApplication.department?.name || 'N/A'}
                     </span>
                   </div>
-                  
+
                   <div className="modal-detail-item">
                     <span className="modal-detail-label">Designation</span>
                     <span className="modal-detail-value">{selectedApplication.applicantDesignation || 'N/A'}</span>
                   </div>
-                  
+
                   <div className="modal-detail-item full-width">
                     <span className="modal-detail-label">Reason</span>
                     <span className="modal-detail-value">{selectedApplication.reason || 'N/A'}</span>
                   </div>
-                  
+
                   {selectedApplication.alternateEmployees && selectedApplication.alternateEmployees.length > 0 && (
                     <div className="modal-detail-item full-width">
                       <span className="modal-detail-label">Alternate Employees</span>
                       <div className="modal-alternate-list">
                         {selectedApplication.alternateEmployees.map((alt, index) => (
                           <div key={index} className="modal-alternate-item">
-                            <span className="alternate-name">{alt.employee?.name || 'Unknown'}</span>
-                            <span className={`alternate-response ${alt.response}`}>
-                              {alt.response === 'ok' && '✓ OK'}
-                              {alt.response === 'sorry' && '✗ Sorry'}
-                              {alt.response === 'pending' && '⏳ Pending'}
-                            </span>
+                            <div className="alternate-main-info">
+                              <span className="alternate-name">{alt.employee?.name || 'Unknown'}</span>
+                              <span className={`alternate-response ${alt.response}`}>
+                                {alt.response === 'ok' && '✓ OK'}
+                                {alt.response === 'sorry' && '✗ Sorry'}
+                                {alt.response === 'pending' && '⏳ Pending'}
+                              </span>
+                            </div>
+                            {alt.startDate && alt.endDate && (
+                              <div className="alternate-dates-info">
+                                Coverage: {formatDate(alt.startDate)} - {formatDate(alt.endDate)}
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
-                  
+
                   {selectedApplication.leaveDocument && (
                     <div className="modal-detail-item full-width">
                       <span className="modal-detail-label">Leave Document</span>
                       <div className="modal-document-preview">
-                        <img 
-                          src={selectedApplication.leaveDocument} 
-                          alt="Leave document" 
+                        <img
+                          src={selectedApplication.leaveDocument}
+                          alt="Leave document"
                           style={{ maxWidth: '100%', borderRadius: '8px', marginTop: '8px' }}
                         />
                       </div>
                     </div>
                   )}
-                  
+
                   {selectedApplication.hodRemarks && (
                     <div className="modal-detail-item full-width remarks-section">
                       <span className="modal-detail-label">HoD Remarks</span>
                       <span className="modal-detail-value remarks-text">{selectedApplication.hodRemarks}</span>
                     </div>
                   )}
-                  
+
                   {selectedApplication.hrRemarks && (
                     <div className="modal-detail-item full-width remarks-section">
                       <span className="modal-detail-label">HR Remarks</span>
@@ -320,7 +327,7 @@ const ApplicationStatus = () => {
                   )}
                 </div>
               </div>
-              
+
               <div className="modal-footer">
                 <button className="btn-close-modal" onClick={handleCloseModal}>Close</button>
               </div>

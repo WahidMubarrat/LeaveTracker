@@ -13,10 +13,12 @@ const leaveRequestSchema = new mongoose.Schema({
   type: { type: String, enum: ["Annual", "Casual"], required: true },
   reason: { type: String },
   backupEmployee: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Keep for backward compatibility
-  alternateEmployees: [{ 
+  alternateEmployees: [{
     employee: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     response: { type: String, enum: ["pending", "ok", "sorry"], default: "pending" },
-    respondedAt: { type: Date }
+    respondedAt: { type: Date },
+    startDate: { type: Date },
+    endDate: { type: Date }
   }],
   status: { type: String, enum: ["Pending", "Approved", "Declined"], default: "Pending" },
   waitingForAlternate: { type: Boolean, default: false }, // True if waiting for alternate to respond "ok"

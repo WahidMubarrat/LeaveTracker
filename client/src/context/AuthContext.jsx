@@ -4,7 +4,18 @@ import { authAPI } from '../services/api';
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    // Restore user from localStorage on initial load
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        return JSON.parse(storedUser);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
@@ -19,7 +30,10 @@ export const AuthProvider = ({ children }) => {
   const fetchUserProfile = async () => {
     try {
       const response = await authAPI.getProfile();
-      setUser(response.data.user);
+      const userData = response.data.user;
+      setUser(userData);
+      // Update localStorage with fresh user data
+      localStorage.setItem('user', JSON.stringify(userData));
     } catch (error) {
       console.error('Failed to fetch profile:', error);
       logout();
@@ -33,6 +47,7 @@ export const AuthProvider = ({ children }) => {
       const response = await authAPI.login(credentials);
       const { token, user } = response.data;
       localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
       setToken(token);
       setUser(user);
       return { success: true, user };
@@ -49,6 +64,7 @@ export const AuthProvider = ({ children }) => {
       const response = await authAPI.register(userData);
       const { token, user } = response.data;
       localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
       setToken(token);
       setUser(user);
       return { success: true };
@@ -62,6 +78,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setToken(null);
     setUser(null);
   };

@@ -205,19 +205,52 @@ exports.getAllMembersGroupedByDepartment = async (req, res) => {
 // Get alternate selection options (department colleagues except current user)
 exports.getAlternateOptions = async (req, res) => {
   try {
-    const currentUser = await User.findById(req.user.id).select('department');
+    const { startDate, endDate } = req.query;
+    const currentUser = await User.findById(req.user.id).select('department designation');
 
     if (!currentUser) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const members = await User.find({
+    const designations = ["Lecturer", "Assistant Professor", "Associate Professor", "Professor"];
+    const applicantDesignationIndex = designations.indexOf(currentUser.designation);
+
+    // Initial query: same department, not the current user
+    const query = {
       department: currentUser.department,
       _id: { $ne: currentUser._id }
-    })
+    };
+
+    // Filter by designation: equal or higher
+    if (applicantDesignationIndex !== -1) {
+      const eligibleDesignations = designations.slice(applicantDesignationIndex);
+      query.designation = { $in: eligibleDesignations };
+    }
+
+    let members = await User.find(query)
       .select('name designation role email profilePic')
       .sort({ name: 1 })
       .lean();
+
+    // Filter by availability if dates are provided
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+
+      const membersWithAvailability = await Promise.all(members.map(async (member) => {
+        const overlappingLeave = await LeaveRequest.findOne({
+          employee: member._id,
+          status: "Approved",
+          $or: [
+            { startDate: { $lte: end }, endDate: { $gte: start } }
+          ]
+        }).lean();
+
+        return overlappingLeave ? null : member;
+      }));
+
+      members = membersWithAvailability.filter(m => m !== null);
+    }
 
     res.json({ members });
   } catch (error) {

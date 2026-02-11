@@ -20,6 +20,7 @@ const LeaveApplication = () => {
     endDate: '',
     numberOfDays: '',
     reason: '',
+    predefinedPurposes: [], // New state for checkboxes
     backupEmployeeId: '',
     alternateEmployeeIds: [],
     leaveDocument: null,
@@ -33,6 +34,25 @@ const LeaveApplication = () => {
     casual: { allocated: 10, used: 0 }
   });
   const [balanceWarning, setBalanceWarning] = useState('');
+
+  // Helper to check if medical or conference is selected
+  const isDocMandatory = () => {
+    if (formData.type === 'Casual') return false;
+    return formData.predefinedPurposes.includes('Medical') || formData.predefinedPurposes.includes('Conference');
+  };
+
+  // Helper for purpose toggle
+  const handlePurposeToggle = (purpose) => {
+    setFormData(prev => {
+      const current = prev.predefinedPurposes;
+      const isSelected = current.includes(purpose);
+      const newPurposes = isSelected
+        ? current.filter(p => p !== purpose)
+        : [...current, purpose];
+
+      return { ...prev, predefinedPurposes: newPurposes };
+    });
+  };
 
   useEffect(() => {
     if (user) {
@@ -102,13 +122,13 @@ const LeaveApplication = () => {
   const getDynamicRemaining = (leaveType) => {
     const balance = leaveBalance[leaveType.toLowerCase()];
     const baseRemaining = balance.allocated - balance.used;
-    
+
     // If user is currently selecting this leave type and has entered days, subtract them
     if (formData.type === leaveType && formData.numberOfDays && parseInt(formData.numberOfDays) > 0) {
       const requestedDays = parseInt(formData.numberOfDays);
       return Math.max(0, baseRemaining - requestedDays);
     }
-    
+
     return baseRemaining;
   };
 
@@ -229,6 +249,18 @@ const LeaveApplication = () => {
       return;
     }
 
+    // Validate Annual Leave Purpose
+    if (formData.type === 'Annual' && formData.predefinedPurposes.length === 0 && !formData.reason.trim()) {
+      setError('Please select a purpose or provide a description of your leave.');
+      return;
+    }
+
+    // Validate Mandatory Document
+    if (isDocMandatory() && !formData.leaveDocument) {
+      setError('A supporting document is mandatory for Medical and Conference leave.');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -242,7 +274,14 @@ const LeaveApplication = () => {
       submitData.append('startDate', formData.startDate);
       submitData.append('endDate', formData.endDate);
       submitData.append('numberOfDays', formData.numberOfDays);
-      submitData.append('reason', formData.reason);
+
+      // Combine purposes for the backend 'reason' field
+      const combinedReason = [
+        ...formData.predefinedPurposes,
+        ...(formData.reason.trim() ? [formData.reason] : [])
+      ].join(', ');
+
+      submitData.append('reason', combinedReason);
 
       if (formData.backupEmployeeId) {
         submitData.append('backupEmployeeId', formData.backupEmployeeId);
@@ -274,6 +313,7 @@ const LeaveApplication = () => {
         reason: '',
         backupEmployeeId: '',
         alternateEmployeeIds: [],
+        predefinedPurposes: [],
         leaveDocument: null,
       });
     } catch (error) {
@@ -296,6 +336,7 @@ const LeaveApplication = () => {
       reason: '',
       backupEmployeeId: '',
       alternateEmployeeIds: [],
+      predefinedPurposes: [],
       leaveDocument: null,
     });
     setError('');
@@ -453,20 +494,43 @@ const LeaveApplication = () => {
                 </div>
               </div>
 
-              {/* Purpose of Leave */}
+              {/* Purpose of Leave Selection for Annual Leave */}
+              {formData.type === 'Annual' && (
+                <div className="form-group">
+                  <label>Purpose of Leave *</label>
+                  <div className="purpose-checkbox-group">
+                    {['Medical', 'Conference', 'Personal'].map(purpose => (
+                      <label key={purpose} className="purpose-checkbox-item">
+                        <input
+                          type="checkbox"
+                          checked={formData.predefinedPurposes.includes(purpose)}
+                          onChange={() => handlePurposeToggle(purpose)}
+                        />
+                        <span>{purpose}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Specific Reasons / Description */}
               <div className="form-group">
                 <label htmlFor="reason">
-                  Purpose of Leave {formData.type !== 'Casual' && '*'}
-                  {formData.type === 'Casual' && <span className="optional-text"> (Optional)</span>}
+                  Description / Specific Reasons
+                  {formData.type === 'Annual' ? (
+                    formData.predefinedPurposes.length === 0 ? ' *' : ' (Optional)'
+                  ) : formData.type === 'Casual' ? ' (Optional)' : ' *'}
                 </label>
                 <textarea
                   id="reason"
                   name="reason"
                   value={formData.reason}
                   onChange={handleChange}
-                  rows="4"
-                  placeholder="Describe the purpose of your leave"
-                  required={formData.type !== 'Casual'}
+                  rows="3"
+                  placeholder={formData.type === 'Annual' && formData.predefinedPurposes.length > 0
+                    ? "Add more details (optional)"
+                    : "Describe the purpose of your leave"}
+                  required={formData.type !== 'Casual' && formData.predefinedPurposes.length === 0}
                 />
               </div>
 
@@ -475,7 +539,7 @@ const LeaveApplication = () => {
                 <LeaveDocument
                   onDocumentChange={handleDocumentChange}
                   initialDocument={formData.leaveDocument}
-                  required={formData.type !== 'Casual'}
+                  required={isDocMandatory()}
                 />
               </div>
 
@@ -484,6 +548,8 @@ const LeaveApplication = () => {
                 <AlternateSelection
                   selectedAlternates={formData.alternateEmployeeIds}
                   onSelectionChange={handleAlternateSelectionChange}
+                  leaveStartDate={formData.startDate}
+                  leaveEndDate={formData.endDate}
                   required={false}
                 />
               </div>

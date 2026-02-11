@@ -31,9 +31,9 @@ const AlternateRequests = () => {
     try {
       setRespondingTo(alternateRequestId);
       await leaveAPI.respondToAlternateRequest(alternateRequestId, response);
-      
+
       // Remove the responded request from the list
-      setAlternateRequests(prev => 
+      setAlternateRequests(prev =>
         prev.filter(req => req._id !== alternateRequestId)
       );
     } catch (err) {
@@ -100,16 +100,16 @@ const AlternateRequests = () => {
                 </div>
 
                 <div className="alternate-request-details">
-                  <div className="detail-row">
-                    <span className="detail-label">From:</span>
-                    <span className="detail-value">
-                      {formatDate(request.leaveRequest?.startDate)}
+                  <div className="detail-row coverage-row">
+                    <span className="detail-label">Coverage Period:</span>
+                    <span className="detail-value highlight">
+                      {formatDate(request.startDate)} - {formatDate(request.endDate)}
                     </span>
                   </div>
                   <div className="detail-row">
-                    <span className="detail-label">To:</span>
+                    <span className="detail-label">Applicant's Total Leave:</span>
                     <span className="detail-value">
-                      {formatDate(request.leaveRequest?.endDate)}
+                      {formatDate(request.leaveRequest?.startDate)} to {formatDate(request.leaveRequest?.endDate)}
                     </span>
                   </div>
                   <div className="detail-row">
