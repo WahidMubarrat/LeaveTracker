@@ -50,7 +50,7 @@ export const userAPI = {
   getLeaveStatistics: () => api.get('/users/leave-statistics'),
   getDepartmentMembers: () => api.get('/users/department-members'),
   getMembersByDepartment: (departmentId) => api.get(`/users/department/${departmentId}/members`),
-  getAlternateOptions: () => api.get('/users/alternate-options'),
+  getAlternateOptions: (startDate, endDate) => api.get('/users/alternate-options', { params: { startDate, endDate } }),
   updateProfile: (data) => {
     // If data is FormData, send with multipart/form-data header
     if (data instanceof FormData) {

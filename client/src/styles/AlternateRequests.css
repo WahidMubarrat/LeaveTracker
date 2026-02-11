@@ -94,6 +94,20 @@
   margin-left: 1rem;
 }
 
+.coverage-row {
+  background-color: #f0fdf4;
+  margin: 0 -0.5rem;
+  padding: 0.75rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #dcfce7;
+}
+
+.detail-value.highlight {
+  color: #059669;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
 .alternate-request-actions {
   display: flex;
   gap: 1rem;

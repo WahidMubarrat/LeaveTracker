@@ -56,7 +56,7 @@
   margin-bottom: 1.5rem;
 }
 
-.form-row > .form-group {
+.form-row>.form-group {
   flex: 1 1 50% !important;
   min-width: 0 !important;
   max-width: 50% !important;
@@ -216,4 +216,34 @@
   .btn-secondary {
     width: 100%;
   }
+}
+
+.purpose-checkbox-group {
+  display: flex;
+  gap: 1.5rem;
+  background: #f8fbff;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #e0e7ff;
+}
+
+.purpose-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  color: #4a5568;
+  transition: color 0.2s ease;
+}
+
+.purpose-checkbox-item:hover {
+  color: #667eea;
+}
+
+.purpose-checkbox-item input[type="checkbox"] {
+  width: 18px !important;
+  height: 18px !important;
+  cursor: pointer;
+  accent-color: #667eea;
 }

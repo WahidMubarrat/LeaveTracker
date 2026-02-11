@@ -1,26 +1,28 @@
 const mongoose = require("mongoose");
 
 const alternateRequestSchema = new mongoose.Schema({
-  leaveRequest: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: "LeaveRequest", 
-    required: true 
+  leaveRequest: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "LeaveRequest",
+    required: true
   },
-  applicant: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: "User", 
-    required: true 
+  applicant: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true
   },
-  alternate: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: "User", 
-    required: true 
+  alternate: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true
   },
-  status: { 
-    type: String, 
-    enum: ["pending", "accepted", "declined"], 
-    default: "pending" 
+  status: {
+    type: String,
+    enum: ["pending", "accepted", "declined"],
+    default: "pending"
   },
+  startDate: { type: Date },
+  endDate: { type: Date },
   respondedAt: { type: Date },
   createdAt: { type: Date, default: Date.now },
 });

@@ -20,7 +20,20 @@ exports.applyLeave = async (req, res) => {
       departmentName,
       applicantDesignation,
       numberOfDays,
+      predefinedPurposes, // New field for checkbox purposes
     } = req.body;
+
+    // Parse predefinedPurposes if it's a JSON string (from FormData)
+    let purposes = [];
+    if (typeof predefinedPurposes === 'string') {
+      try {
+        purposes = JSON.parse(predefinedPurposes);
+      } catch (e) {
+        purposes = [];
+      }
+    } else if (Array.isArray(predefinedPurposes)) {
+      purposes = predefinedPurposes;
+    }
 
     // Parse alternateEmployeeIds if it's a JSON string (from FormData)
     if (typeof alternateEmployeeIds === 'string') {
@@ -139,16 +152,21 @@ exports.applyLeave = async (req, res) => {
       });
     }
 
-    // Validation for Annual Leave (Purpose and Document are mandatory)
+    // Validation for Annual Leave (Purpose and Document requirements)
     if (leaveType !== 'casual') {
       if (!reason || reason.trim() === '') {
         return res.status(400).json({ message: "Purpose of leave is required for Annual Leave." });
       }
-      // Note: We check req.file for the document, as it's processed by multer before this controller
-      if (!req.file && !req.body.leaveDocument) {
-        // req.body.leaveDocument handles case where it might be passed differently (though typically req.file)
-        // Adjust based on your exact upload flow; usually req.file is what matters for new uploads
-        return res.status(400).json({ message: "Supporting document is required for Annual Leave." });
+
+      // Document is mandatory ONLY for Medical and Conference purposes
+      const needsDocument = purposes.includes('Medical') || purposes.includes('Conference');
+
+      if (needsDocument) {
+        if (!req.file && !req.body.leaveDocument) {
+          return res.status(400).json({
+            message: `Supporting document is mandatory for ${purposes.filter(p => p === 'Medical' || p === 'Conference').join(' & ')} leave.`
+          });
+        }
       }
     }
 
@@ -164,15 +182,28 @@ exports.applyLeave = async (req, res) => {
     }
 
     // Process alternate employees
-    const alternateIds = alternateEmployeeIds || (backupEmployeeId ? [backupEmployeeId] : []);
-    const alternateEmployees = alternateIds.map(id => ({
-      employee: id,
-      response: "pending"
-    }));
+    // Expecting alternateEmployeeIds to be an array of objects: { employeeId, startDate, endDate }
+    let alternateEmployees = [];
+    if (Array.isArray(alternateEmployeeIds)) {
+      alternateEmployees = alternateEmployeeIds.map(alt => ({
+        employee: alt.employeeId,
+        startDate: new Date(alt.startDate),
+        endDate: new Date(alt.endDate),
+        response: "pending"
+      }));
+    } else if (backupEmployeeId) {
+      // Backward compatibility
+      alternateEmployees = [{
+        employee: backupEmployeeId,
+        startDate: start,
+        endDate: end,
+        response: "pending"
+      }];
+    }
 
     // Determine if application should wait for alternate response
-    const hasAlternates = alternateIds.length > 0;
-    const waitingForAlternate = hasAlternates; // If alternates selected, wait for their response
+    const hasAlternates = alternateEmployees.length > 0;
+    const waitingForAlternate = hasAlternates;
 
     // Create leave request
     const leaveRequest = new LeaveRequest({
@@ -187,20 +218,22 @@ exports.applyLeave = async (req, res) => {
       type,
       reason,
       numberOfDays: totalDays,
-      backupEmployee: backupEmployeeId || null, // Keep for backward compatibility
+      backupEmployee: backupEmployeeId || null,
       alternateEmployees: alternateEmployees,
-      waitingForAlternate: waitingForAlternate, // Set based on whether alternates were selected
+      waitingForAlternate: waitingForAlternate,
       leaveDocument: leaveDocumentUrl,
     });
 
     await leaveRequest.save();
 
     // Create alternate requests for each alternate employee
-    if (alternateIds.length > 0) {
-      const alternateRequests = alternateIds.map(altId => ({
+    if (alternateEmployees.length > 0) {
+      const alternateRequests = alternateEmployees.map(alt => ({
         leaveRequest: leaveRequest._id,
         applicant: req.user.id,
-        alternate: altId,
+        alternate: alt.employee,
+        startDate: alt.startDate,
+        endDate: alt.endDate,
         status: "pending"
       }));
 
