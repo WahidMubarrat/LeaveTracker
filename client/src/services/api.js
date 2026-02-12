@@ -113,4 +113,9 @@ export const hodDashboardAPI = {
   getStats: () => api.get('/hod-dashboard/stats'),
 };
 
+// HR Dashboard API
+export const hrDashboardAPI = {
+  getStats: () => api.get('/hr-dashboard/stats'),
+};
+
 export default api;

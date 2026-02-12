@@ -100,19 +100,25 @@
 .btn-change-password,
 .btn-save,
 .btn-cancel {
-  padding: 10px 20px;
+  padding: 10px 24px;
+  width: auto;
+  min-width: fit-content;
   border: none;
   border-radius: 8px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  display: inline-block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   white-space: nowrap;
+  box-sizing: border-box;
+  min-height: 40px;
 }
 
 .btn-edit {
-  background: #2563eb;
+  background: #007bff;
   color: #ffffff;
 }
 

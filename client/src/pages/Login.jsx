@@ -32,7 +32,7 @@ const Login = () => {
     if (result.success) {
       // Redirect based on highest priority role (HR > HoD > Employee)
       if (result.user.roles.includes('HR')) {
-        navigate('/hr/system-settings');
+        navigate('/hr/dashboard');
       } else if (result.user.roles.includes('HoD')) {
         navigate('/hod/dashboard');
       } else {

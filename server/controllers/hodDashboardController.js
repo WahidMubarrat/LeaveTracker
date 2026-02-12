@@ -54,7 +54,14 @@ const getHoDDashboardStats = async (req, res) => {
     const totalRequests = monthlyRequests.length;
     const acceptedRequests = monthlyRequests.filter(leave => leave.status === 'Approved').length;
     const declinedRequests = monthlyRequests.filter(leave => leave.status === 'Declined').length;
-    const pendingRequests = monthlyRequests.filter(leave => leave.status === 'Pending').length;
+    // Fix: Count ONLY pending requests that are waiting for THIS HoD's approval
+    // (Status is Pending, not approved by HoD, and NOT waiting for alternate response)
+    const pendingRequests = await LeaveRequest.countDocuments({
+      department: departmentId,
+      status: "Pending",
+      approvedByHoD: false,
+      waitingForAlternate: false
+    });
 
     res.json({
       memberStats: {

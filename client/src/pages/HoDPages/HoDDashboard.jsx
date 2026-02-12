@@ -2,12 +2,8 @@ import { useState, useEffect } from 'react';
 import HoDLayout from '../../components/HoDLayout';
 import RoleToggle from '../../components/RoleToggle';
 import { hodDashboardAPI } from '../../services/api';
-import { MdPending, MdGroup, MdCheckCircle, MdBeachAccess, MdPieChart, MdPeople } from 'react-icons/md';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import { Pie } from 'react-chartjs-2';
+import { MdPending, MdGroup, MdCheckCircle, MdBeachAccess } from 'react-icons/md';
 import '../../styles/HoDDashboard.css';
-
-ChartJS.register(ArcElement, Tooltip, Legend);
 
 const HoDDashboard = () => {
   const [stats, setStats] = useState({
@@ -52,9 +48,9 @@ const HoDDashboard = () => {
     const total = stats.memberStats.totalMembers;
     const active = stats.memberStats.activeMembers;
     const onLeave = stats.memberStats.membersOnLeave;
-    
+
     if (total === 0) return { activePercent: 0, leavePercent: 0 };
-    
+
     return {
       activePercent: (active / total) * 100,
       leavePercent: (onLeave / total) * 100
@@ -66,9 +62,9 @@ const HoDDashboard = () => {
     const accepted = stats.requestStats.acceptedRequests;
     const declined = stats.requestStats.declinedRequests;
     const pending = stats.requestStats.pendingRequests;
-    
+
     if (total === 0) return { acceptedPercent: 0, declinedPercent: 0, pendingPercent: 0 };
-    
+
     return {
       acceptedPercent: (accepted / total) * 100,
       declinedPercent: (declined / total) * 100,
@@ -93,13 +89,13 @@ const HoDDashboard = () => {
           <div className="dashboard-loading">Loading statistics...</div>
         ) : (
           <>
-            {/* Pie Charts Row */}
+            {/* 1. PIE CHARTS FIRST */}
             <div className="pie-charts-container">
               {/* Members Pie Chart */}
               <div className="pie-chart-section">
                 <h2 className="chart-title">Department Members</h2>
                 <div className="pie-chart-wrapper">
-                  <div 
+                  <div
                     className="pie-chart"
                     style={{
                       background: `conic-gradient(
@@ -130,7 +126,7 @@ const HoDDashboard = () => {
               <div className="pie-chart-section">
                 <h2 className="chart-title">This Month's Requests</h2>
                 <div className="pie-chart-wrapper">
-                  <div 
+                  <div
                     className="pie-chart"
                     style={{
                       background: `conic-gradient(
@@ -163,7 +159,7 @@ const HoDDashboard = () => {
               </div>
             </div>
 
-            {/* Additional Stats */}
+            {/* 2. SUMMARY CARDS SECOND */}
             <div className="additional-stats">
               <div className="stat-box pending-box">
                 <div className="stat-box-header">
@@ -172,13 +168,13 @@ const HoDDashboard = () => {
                 </div>
                 <div className="stat-box-value">{stats.requestStats.pendingRequests}</div>
                 <div className="stat-box-bar">
-                  <div 
+                  <div
                     className="stat-box-bar-fill pending-fill"
-                    style={{ width: `${calculatePercentage(stats.requestStats.pendingRequests, stats.requestStats.totalRequests)}%` }}
+                    style={{ width: '100%' }}
                   ></div>
                 </div>
                 <div className="stat-box-footer">
-                  {calculatePercentage(stats.requestStats.pendingRequests, stats.requestStats.totalRequests)}% of total requests
+                  Awaiting your approval
                 </div>
               </div>
 
@@ -189,7 +185,7 @@ const HoDDashboard = () => {
                 </div>
                 <div className="stat-box-value">{stats.memberStats.activeMembers}</div>
                 <div className="stat-box-bar">
-                  <div 
+                  <div
                     className="stat-box-bar-fill active-fill"
                     style={{ width: `${calculatePercentage(stats.memberStats.activeMembers, stats.memberStats.totalMembers)}%` }}
                   ></div>
@@ -206,7 +202,7 @@ const HoDDashboard = () => {
                 </div>
                 <div className="stat-box-value">{stats.requestStats.acceptedRequests}</div>
                 <div className="stat-box-bar">
-                  <div 
+                  <div
                     className="stat-box-bar-fill approved-fill"
                     style={{ width: `${calculatePercentage(stats.requestStats.acceptedRequests, stats.requestStats.totalRequests)}%` }}
                   ></div>
@@ -223,7 +219,7 @@ const HoDDashboard = () => {
                 </div>
                 <div className="stat-box-value">{stats.memberStats.membersOnLeave}</div>
                 <div className="stat-box-bar">
-                  <div 
+                  <div
                     className="stat-box-bar-fill leave-fill"
                     style={{ width: `${calculatePercentage(stats.memberStats.membersOnLeave, stats.memberStats.totalMembers)}%` }}
                   ></div>
