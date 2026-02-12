@@ -13,6 +13,7 @@ import SystemSettings from './pages/HRPages/SystemSettings';
 import HRReviewApplication from './pages/HRPages/ReviewApplication';
 import SystemMembers from './pages/HRPages/SystemMembers';
 import HRLeaveAnalytics from './pages/HRPages/LeaveAnalytics';
+import HRDashboard from './pages/HRPages/HRDashboard';
 import HoDDashboard from './pages/HoDPages/HoDDashboard';
 import HoDPendingRequests from './pages/HoDPages/HoDPendingRequests';
 import HoDDepartmentMembers from './pages/HoDPages/HoDDepartmentMembers';
@@ -78,6 +79,14 @@ function App() {
             }
           />
           {/* HR Routes */}
+          <Route
+            path="/hr/dashboard"
+            element={
+              <RoleBasedRoute allowedRoles={['HR']}>
+                <HRDashboard />
+              </RoleBasedRoute>
+            }
+          />
           <Route
             path="/hr/system-settings"
             element={

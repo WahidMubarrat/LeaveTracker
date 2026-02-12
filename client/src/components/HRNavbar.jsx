@@ -23,32 +23,40 @@ const HRNavbar = () => {
       </div>
 
       <nav className="hr-nav-menu">
-        <NavLink 
-          to="/hr/system-settings" 
+        <NavLink
+          to="/hr/dashboard"
+          className={({ isActive }) => isActive ? 'hr-nav-link active' : 'hr-nav-link'}
+        >
+          <span className="hr-nav-icon">📊</span>
+          <span className="hr-nav-text">Dashboard</span>
+        </NavLink>
+
+        <NavLink
+          to="/hr/system-settings"
           className={({ isActive }) => isActive ? 'hr-nav-link active' : 'hr-nav-link'}
         >
           <span className="hr-nav-icon">⚙️</span>
           <span className="hr-nav-text">System Settings</span>
         </NavLink>
 
-        <NavLink 
-          to="/hr/review-application" 
+        <NavLink
+          to="/hr/review-application"
           className={({ isActive }) => isActive ? 'hr-nav-link active' : 'hr-nav-link'}
         >
           <span className="hr-nav-icon">📋</span>
           <span className="hr-nav-text">Review Application</span>
         </NavLink>
 
-        <NavLink 
-          to="/hr/system-members" 
+        <NavLink
+          to="/hr/system-members"
           className={({ isActive }) => isActive ? 'hr-nav-link active' : 'hr-nav-link'}
         >
           <span className="hr-nav-icon">👥</span>
           <span className="hr-nav-text">System Members</span>
         </NavLink>
 
-        <NavLink 
-          to="/hr/leave-analytics" 
+        <NavLink
+          to="/hr/leave-analytics"
           className={({ isActive }) => isActive ? 'hr-nav-link active' : 'hr-nav-link'}
         >
           <span className="hr-nav-icon">📊</span>

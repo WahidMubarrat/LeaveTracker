@@ -11,6 +11,7 @@ const leaveRoutes = require("./routes/leaveRoutes");
 const leaveQuotaRoutes = require("./routes/leaveQuotaRoutes");
 const vacationRoutes = require("./routes/vacationRoutes");
 const hodDashboardRoutes = require("./routes/hodDashboardRoutes");
+const hrDashboardRoutes = require("./routes/hrDashboardRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -38,6 +39,7 @@ app.use("/api/leaves", leaveRoutes);
 app.use("/api/leave-quota", leaveQuotaRoutes);
 app.use("/api/vacations", vacationRoutes);
 app.use("/api/hod-dashboard", hodDashboardRoutes);
+app.use("/api/hr-dashboard", hrDashboardRoutes);
 
 // Health check route
 app.get("/", (req, res) => {
@@ -48,7 +50,7 @@ app.get("/", (req, res) => {
 app.use((err, req, res, next) => {
   console.error('Error caught by middleware:');
   console.error(err.stack);
-  res.status(500).json({ 
+  res.status(500).json({
     message: "Something went wrong!",
     error: process.env.NODE_ENV === 'development' ? err.message : undefined
   });

@@ -184,16 +184,6 @@ exports.getAllMembersGroupedByDepartment = async (req, res) => {
       };
     });
 
-    // Also handle users with no department if any exist
-    const noDeptMembers = usersWithStatus.filter(u => !u.department);
-    if (noDeptMembers.length > 0) {
-      groupedData.push({
-        departmentId: 'none',
-        departmentName: 'No Department',
-        members: noDeptMembers
-      });
-    }
-
     res.json({ departments: groupedData });
 
   } catch (error) {
