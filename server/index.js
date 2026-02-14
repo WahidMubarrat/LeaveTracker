@@ -12,6 +12,7 @@ const leaveQuotaRoutes = require("./routes/leaveQuotaRoutes");
 const vacationRoutes = require("./routes/vacationRoutes");
 const hodDashboardRoutes = require("./routes/hodDashboardRoutes");
 const hrDashboardRoutes = require("./routes/hrDashboardRoutes");
+const analyticsRoutes = require("./routes/analyticsRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -40,6 +41,7 @@ app.use("/api/leave-quota", leaveQuotaRoutes);
 app.use("/api/vacations", vacationRoutes);
 app.use("/api/hod-dashboard", hodDashboardRoutes);
 app.use("/api/hr-dashboard", hrDashboardRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 // Health check route
 app.get("/", (req, res) => {

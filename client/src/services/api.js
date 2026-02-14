@@ -118,4 +118,10 @@ export const hrDashboardAPI = {
   getStats: () => api.get('/hr-dashboard/stats'),
 };
 
+// Analytics API
+export const analyticsAPI = {
+  getHoDAnalytics: (params) => api.get('/analytics/hod', { params }),
+  getHRAnalytics: (params) => api.get('/analytics/hr', { params }),
+};
+
 export default api;

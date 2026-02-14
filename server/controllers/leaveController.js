@@ -4,6 +4,12 @@ const AlternateRequest = require("../models/AlternateRequest");
 const User = require("../models/User");
 const Vacation = require("../models/Vacation");
 const { uploadToCloudinary } = require("../utils/cloudinaryUpload");
+const {
+  sendAlternateRequestEmail,
+  sendApplicationStatusEmail,
+  sendHoDReviewEmail,
+  sendHRReviewEmail
+} = require("../utils/emailService");
 
 // Apply for leave
 exports.applyLeave = async (req, res) => {
@@ -238,6 +244,51 @@ exports.applyLeave = async (req, res) => {
       }));
 
       await AlternateRequest.insertMany(alternateRequests);
+
+      // Send email notifications to alternate employees
+      for (const alt of alternateEmployees) {
+        try {
+          const alternateUser = await User.findById(alt.employee);
+          if (alternateUser && alternateUser.email) {
+            await sendAlternateRequestEmail(
+              alternateUser.email,
+              alternateUser.name,
+              currentUser.name,
+              alt.startDate,
+              alt.endDate,
+              type
+            );
+          }
+        } catch (emailError) {
+          console.error('Failed to send alternate request email:', emailError);
+          // Don't fail the request if email fails
+        }
+      }
+    } else {
+      // No alternates selected, notify HoD immediately
+      try {
+        // Find HoD of the department
+        const hodUser = await User.findOne({
+          department: currentUser.department,
+          roles: 'HoD'
+        });
+
+        if (hodUser && hodUser.email) {
+          await sendHoDReviewEmail(
+            hodUser.email,
+            hodUser.name,
+            currentUser.name,
+            currentUser.designation,
+            start,
+            end,
+            type,
+            totalDays
+          );
+        }
+      } catch (emailError) {
+        console.error('Failed to send HoD notification email:', emailError);
+        // Don't fail the request if email fails
+      }
     }
 
     // Create history log
@@ -374,6 +425,29 @@ exports.updateLeaveStatus = async (req, res) => {
         leaveRequest.hodRemarks = remarks || "";
         // Status remains "Pending" until HR reviews
         historyAction = "Approved by HoD";
+
+        // Send email notification to HR
+        try {
+          const hrUser = await User.findOne({ roles: 'HR' });
+          const applicant = await User.findById(leaveRequest.employee).populate('department', 'name');
+
+          if (hrUser && hrUser.email && applicant) {
+            await sendHRReviewEmail(
+              hrUser.email,
+              hrUser.name,
+              applicant.name,
+              applicant.designation,
+              applicant.department?.name || leaveRequest.departmentName,
+              leaveRequest.startDate,
+              leaveRequest.endDate,
+              leaveRequest.type,
+              leaveRequest.numberOfDays
+            );
+          }
+        } catch (emailError) {
+          console.error('Failed to send HR notification email:', emailError);
+          // Don't fail the approval if email fails
+        }
       } else if (currentUser.hasRole("HR")) {
         // Check if HoD has approved first
         if (!leaveRequest.approvedByHoD) {
@@ -406,6 +480,24 @@ exports.updateLeaveStatus = async (req, res) => {
 
           // Update employee's leave status
           await employee.updateLeaveStatus();
+
+          // Send approval email to employee
+          try {
+            if (employee.email) {
+              await sendApplicationStatusEmail(
+                employee.email,
+                employee.name,
+                'Approved',
+                leaveRequest.startDate,
+                leaveRequest.endDate,
+                leaveRequest.type,
+                remarks || ''
+              );
+            }
+          } catch (emailError) {
+            console.error('Failed to send approval email to employee:', emailError);
+            // Don't fail the approval if email fails
+          }
         }
       } else {
         return res.status(403).json({ message: "Unauthorized" });
@@ -433,6 +525,25 @@ exports.updateLeaveStatus = async (req, res) => {
         historyAction = "Declined by HR";
       } else {
         return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      // Send decline email to employee
+      try {
+        const employee = await User.findById(leaveRequest.employee);
+        if (employee && employee.email) {
+          await sendApplicationStatusEmail(
+            employee.email,
+            employee.name,
+            'Declined',
+            leaveRequest.startDate,
+            leaveRequest.endDate,
+            leaveRequest.type,
+            remarks || ''
+          );
+        }
+      } catch (emailError) {
+        console.error('Failed to send decline email to employee:', emailError);
+        // Don't fail the decline if email fails
       }
 
       // Update employee's leave status (in case they were on leave)
@@ -569,6 +680,33 @@ exports.respondToAlternateRequest = async (req, res) => {
         if (hasOkResponse) {
           // At least one alternate has agreed, release application to HoD
           leaveRequest.waitingForAlternate = false;
+
+          // Send email notification to HoD
+          try {
+            const applicant = await User.findById(leaveRequest.employee).populate('department');
+            if (applicant) {
+              const hodUser = await User.findOne({
+                department: applicant.department,
+                roles: 'HoD'
+              });
+
+              if (hodUser && hodUser.email) {
+                await sendHoDReviewEmail(
+                  hodUser.email,
+                  hodUser.name,
+                  applicant.name,
+                  applicant.designation,
+                  leaveRequest.startDate,
+                  leaveRequest.endDate,
+                  leaveRequest.type,
+                  leaveRequest.numberOfDays
+                );
+              }
+            }
+          } catch (emailError) {
+            console.error('Failed to send HoD notification email:', emailError);
+            // Don't fail the response if email fails
+          }
         }
       }
 

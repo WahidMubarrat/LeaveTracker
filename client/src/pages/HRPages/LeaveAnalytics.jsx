@@ -1,172 +1,440 @@
+import { useState, useEffect } from 'react';
 import HRLayout from '../../components/HRLayout';
-import { MdAssessment, MdPending, MdCheckCircle, MdCancel, MdBarChart } from 'react-icons/md';
-import '../../styles/LeaveAnalytics.css';
+import StatsCard from '../../components/StatsCard';
+import BarChart from '../../components/BarChart';
+import { analyticsAPI, departmentAPI } from '../../services/api';
+import { MdAssessment, MdCheckCircle, MdCancel, MdPending, MdBusiness, MdPeople, MdExpandMore, MdBarChart, MdTrendingUp, MdGroup, MdHistory } from 'react-icons/md';
+import '../../styles/Analytics.css';
 
-const LeaveAnalytics = () => {
-  // Dummy data
-  const monthlyStats = {
-    total: 40,
-    pending: 8,
-    approved: 27,
-    declined: 5
+const CollapsibleSection = ({ title, icon: Icon, children, defaultOpen = false }) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <div className="collapsible-section">
+      <div
+        className={`collapsible-header ${isOpen ? 'active' : ''}`}
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <h3 className="collapsible-title">
+          <Icon className="section-icon" />
+          {title}
+        </h3>
+        <MdExpandMore className="collapsible-icon" />
+      </div>
+      <div className={`collapsible-content ${isOpen ? '' : 'collapsed'}`}>
+        {children}
+      </div>
+    </div>
+  );
+};
+
+const HRAnalytics = () => {
+  const [period, setPeriod] = useState('monthly');
+  const [year, setYear] = useState(new Date().getFullYear());
+  const [month, setMonth] = useState(new Date().getMonth() + 1);
+  const [departmentId, setDepartmentId] = useState('all');
+  const [departments, setDepartments] = useState([]);
+  const [analytics, setAnalytics] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetchDepartments();
+  }, []);
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, [period, year, month, departmentId]);
+
+  const fetchDepartments = async () => {
+    try {
+      const response = await departmentAPI.getAll();
+      setDepartments(response.data.departments || []);
+    } catch (err) {
+      console.error('Error fetching departments:', err);
+    }
   };
 
-  const leaveTypeData = [
-    { type: 'Annual Leave', count: 28, color: '#4CAF50' },
-    { type: 'Casual Leave', count: 12, color: '#2196F3' }
-  ];
+  const fetchAnalytics = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const params = { period, year, departmentId };
+      if (period === 'monthly') {
+        params.month = month;
+      }
+      const response = await analyticsAPI.getHRAnalytics(params);
+      setAnalytics(response.data);
+    } catch (err) {
+      console.error('Error fetching analytics:', err);
+      setError('Failed to load analytics data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const departmentData = [
-    { dept: 'CSE', leaves: 18, members: 60 },
-    { dept: 'EEE', leaves: 10, members: 25 },
-    { dept: 'CEE', leaves: 7, members: 20 },
-    { dept: 'MPE', leaves: 6, members: 18 },
-    { dept: 'BTM', leaves: 3, members: 12 },
-    { dept: 'TVE', leaves: 1, members: 8 }
-  ];
+  const handlePeriodChange = (newPeriod) => {
+    setPeriod(newPeriod);
+  };
 
-  const recentLeaves = [
-    { id: 1, name: 'Dr. Md. Hasanul Kabir', dept: 'CSE', type: 'Annual', days: 5, status: 'Approved', date: '2026-01-15' },
-    { id: 2, name: 'Rashid Ahmed', dept: 'EEE', type: 'Casual', days: 2, status: 'Pending', date: '2026-01-16' },
-    { id: 4, name: 'Kamal Hossain', dept: 'MPE', type: 'Annual', days: 7, status: 'Approved', date: '2026-01-12' },
-    { id: 5, name: 'Fatima Khan', dept: 'BTM', type: 'Casual', days: 1, status: 'Declined', date: '2026-01-17' }
-  ];
+  const handleYearChange = (direction) => {
+    setYear(prev => prev + direction);
+  };
+
+  const handleMonthChange = (direction) => {
+    let newMonth = month + direction;
+    let newYear = year;
+
+    if (newMonth > 12) {
+      newMonth = 1;
+      newYear += 1;
+    } else if (newMonth < 1) {
+      newMonth = 12;
+      newYear -= 1;
+    }
+
+    setMonth(newMonth);
+    setYear(newYear);
+  };
+
+  const getMonthName = (monthNum) => {
+    const date = new Date(year, monthNum - 1);
+    return date.toLocaleString('default', { month: 'long' });
+  };
+
+  const prepareMonthlyChartData = () => {
+    if (!analytics || !analytics.monthlyBreakdown) return [];
+
+    return analytics.monthlyBreakdown.map(month => ({
+      label: month.monthName,
+      values: [
+        { type: 'approved', count: month.approved },
+        { type: 'declined', count: month.declined },
+        { type: 'pending', count: month.pending }
+      ]
+    }));
+  };
+
+  const prepareDepartmentChartData = () => {
+    if (!analytics || !analytics.departmentStats) return [];
+
+    return analytics.departmentStats.slice(0, 6).map(dept => ({
+      label: dept.departmentName,
+      values: [
+        { type: 'approved', count: dept.approved },
+        { type: 'declined', count: dept.declined },
+        { type: 'pending', count: dept.pending }
+      ]
+    }));
+  };
+
+  const getMaxChartValue = () => {
+    if (!analytics) return 10;
+
+    if (analytics.monthlyBreakdown) {
+      return Math.max(
+        ...analytics.monthlyBreakdown.map(m => Math.max(m.approved, m.declined, m.pending)),
+        10
+      );
+    }
+
+    if (analytics.departmentStats) {
+      return Math.max(
+        ...analytics.departmentStats.map(d => Math.max(d.approved, d.declined, d.pending)),
+        10
+      );
+    }
+
+    return 10;
+  };
+
+  if (loading) {
+    return (
+      <HRLayout>
+        <div className="analytics-container">
+          <div className="analytics-loading">Loading analytics...</div>
+        </div>
+      </HRLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <HRLayout>
+        <div className="analytics-container">
+          <div className="analytics-error">{error}</div>
+        </div>
+      </HRLayout>
+    );
+  }
 
   return (
     <HRLayout>
-      <div className="leave-analytics-container">
-        <div className="page-header">
-          <h1>Leave Analytics</h1>
-          <p className="page-subtitle">View leave trends and statistics</p>
+      <div className="analytics-container">
+        {/* Header */}
+        <div className="analytics-header">
+          <div>
+            <h1>Leave Analytics</h1>
+            <p className="analytics-subtitle">
+              {departmentId === 'all' ? 'All Departments' : departments.find(d => d._id === departmentId)?.name} - {period === 'monthly' ? getMonthName(month) : 'Yearly'} {year}
+            </p>
+          </div>
         </div>
 
-        <div className="analytics-content">
-          <div className="analytics-cards">
-            <div className="analytics-card">
-              <div className="card-header">
-                <h3>Total Leaves</h3>
-                <MdAssessment className="card-icon" />
-              </div>
-              <div className="card-value">{monthlyStats.total}</div>
-              <p className="card-subtitle">This month</p>
-            </div>
-
-            <div className="analytics-card">
-              <div className="card-header">
-                <h3>Pending</h3>
-                <MdPending className="card-icon" />
-              </div>
-              <div className="card-value">{monthlyStats.pending}</div>
-              <p className="card-subtitle">Awaiting approval</p>
-            </div>
-
-            <div className="analytics-card">
-              <div className="card-header">
-                <h3>Approved</h3>
-                <MdCheckCircle className="card-icon" />
-              </div>
-              <div className="card-value">{monthlyStats.approved}</div>
-              <p className="card-subtitle">This month</p>
-            </div>
-
-            <div className="analytics-card">
-              <div className="card-header">
-                <h3>Declined</h3>
-                <MdCancel className="card-icon" />
-              </div>
-              <div className="card-value">{monthlyStats.declined}</div>
-              <p className="card-subtitle">This month</p>
-            </div>
+        {/* Controls */}
+        <div className="analytics-controls">
+          <div className="period-toggle">
+            <button
+              className={`period-btn ${period === 'monthly' ? 'active' : ''}`}
+              onClick={() => handlePeriodChange('monthly')}
+            >
+              Monthly
+            </button>
+            <button
+              className={`period-btn ${period === 'yearly' ? 'active' : ''}`}
+              onClick={() => handlePeriodChange('yearly')}
+            >
+              Yearly
+            </button>
           </div>
 
+          <div className="department-filter">
+            <label htmlFor="department-select">Department:</label>
+            <select
+              id="department-select"
+              value={departmentId}
+              onChange={(e) => setDepartmentId(e.target.value)}
+              className="department-select"
+            >
+              <option value="all">All Departments</option>
+              {departments.map(dept => (
+                <option key={dept._id} value={dept._id}>{dept.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="date-controls">
+            {period === 'monthly' && (
+              <div className="month-selector">
+                <button onClick={() => handleMonthChange(-1)} className="nav-btn">←</button>
+                <span className="date-display">{getMonthName(month)} {year}</span>
+                <button onClick={() => handleMonthChange(1)} className="nav-btn">→</button>
+              </div>
+            )}
+            {period === 'yearly' && (
+              <div className="year-selector">
+                <button onClick={() => handleYearChange(-1)} className="nav-btn">←</button>
+                <span className="date-display">{year}</span>
+                <button onClick={() => handleYearChange(1)} className="nav-btn">→</button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Collapsible Stats */}
+        <CollapsibleSection title="Key Statistics" icon={MdBarChart}>
+          <div className="stats-grid">
+            <StatsCard
+              icon={MdAssessment}
+              title="Total Requests"
+              value={analytics?.stats.totalRequests || 0}
+              subtitle={period === 'monthly' ? 'This month' : 'This year'}
+              color="blue"
+            />
+            <StatsCard
+              icon={MdCheckCircle}
+              title="Approved"
+              value={analytics?.stats.approved || 0}
+              subtitle={`${analytics?.stats.approvedDays || 0} days`}
+              color="green"
+            />
+            <StatsCard
+              icon={MdCancel}
+              title="Declined"
+              value={analytics?.stats.declined || 0}
+              subtitle={period === 'monthly' ? 'This month' : 'This year'}
+              color="red"
+            />
+            <StatsCard
+              icon={MdPending}
+              title="Pending"
+              value={analytics?.stats.pending || 0}
+              subtitle="Awaiting approval"
+              color="purple"
+            />
+          </div>
+        </CollapsibleSection>
+
+        {/* Collapsible Charts */}
+        <CollapsibleSection title="Data Visualizations" icon={MdTrendingUp}>
           <div className="charts-section">
-            <div className="chart-card">
-              <h3>Leave Distribution by Type</h3>
-              <div className="chart-bars">
-                {leaveTypeData.map((item, idx) => (
-                  <div key={idx} className="bar-item">
-                    <div className="bar-info">
-                      <span className="bar-label">{item.type}</span>
-                      <span className="bar-value">{item.count}</span>
-                    </div>
-                    <div className="bar-container">
-                      <div 
-                        className="bar-fill" 
-                        style={{ 
-                          width: `${(item.count / monthlyStats.total) * 100}%`,
-                          backgroundColor: item.color 
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            {/* Monthly Breakdown or Department Comparison */}
+            {period === 'yearly' && analytics?.monthlyBreakdown && (
+              <BarChart
+                data={prepareMonthlyChartData()}
+                maxValue={getMaxChartValue()}
+                title="Month-wise Breakdown"
+              />
+            )}
 
+            {/* Department-wise Comparison (only for all departments view) */}
+            {departmentId === 'all' && analytics?.departmentStats && analytics.departmentStats.length > 0 && (
+              <BarChart
+                data={prepareDepartmentChartData()}
+                maxValue={getMaxChartValue()}
+                title="Department-wise Comparison (Top 6)"
+              />
+            )}
+
+            {/* Leave Type Distribution */}
             <div className="chart-card">
-              <h3>Department-wise Leave Statistics</h3>
-              <div className="dept-stats">
-                {departmentData.map((dept, idx) => (
-                  <div key={idx} className="dept-stat-row">
-                    <div className="dept-stat-name">
-                      <span className={`dept-badge-small dept-${dept.dept.toLowerCase()}`}>
-                        {dept.dept}
-                      </span>
-                    </div>
-                    <div className="dept-stat-bar">
-                      <div 
-                        className="dept-stat-fill"
-                        style={{ width: `${(dept.leaves / dept.members) * 100}%` }}
-                      ></div>
-                    </div>
-                    <div className="dept-stat-count">
-                      {dept.leaves}/{dept.members}
-                    </div>
+              <h3 className="chart-title">Leave Type Distribution</h3>
+              <div className="type-stats">
+                <div className="type-stat-item">
+                  <div className="type-stat-header">
+                    <span className="type-stat-label">Annual Leave</span>
+                    <span className="type-stat-value">{analytics?.stats.annual || 0}</span>
                   </div>
-                ))}
+                  <div className="type-stat-bar">
+                    <div
+                      className="type-stat-fill annual"
+                      style={{ width: `${(analytics?.stats.annual / (analytics?.stats.totalRequests || 1)) * 100}%` }}
+                    ></div>
+                  </div>
+                </div>
+                <div className="type-stat-item">
+                  <div className="type-stat-header">
+                    <span className="type-stat-label">Casual Leave</span>
+                    <span className="type-stat-value">{analytics?.stats.casual || 0}</span>
+                  </div>
+                  <div className="type-stat-bar">
+                    <div
+                      className="type-stat-fill casual"
+                      style={{ width: `${(analytics?.stats.casual / (analytics?.stats.totalRequests || 1)) * 100}%` }}
+                    ></div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
+        </CollapsibleSection>
 
-          <div className="recent-leaves-section">
-            <h3>Recent Leave Applications</h3>
-            <table className="recent-leaves-table">
-              <thead>
-                <tr>
-                  <th>Employee</th>
-                  <th>Department</th>
-                  <th>Leave Type</th>
-                  <th>Days</th>
-                  <th>Date</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentLeaves.map(leave => (
-                  <tr key={leave.id}>
-                    <td>{leave.name}</td>
-                    <td>
-                      <span className={`dept-badge-small dept-${leave.dept.toLowerCase()}`}>
-                        {leave.dept}
-                      </span>
-                    </td>
-                    <td>{leave.type}</td>
-                    <td>{leave.days} days</td>
-                    <td>{new Date(leave.date).toLocaleDateString()}</td>
-                    <td>
-                      <span className={`status-badge-small status-${leave.status.toLowerCase()}`}>
-                        {leave.status}
-                      </span>
-                    </td>
+        {/* Collapsible Department Stats */}
+        {departmentId === 'all' && analytics?.departmentStats && analytics.departmentStats.length > 0 && (
+          <CollapsibleSection title="Department-wise Statistics" icon={MdBusiness}>
+            <div className="table-container">
+              <table className="analytics-table">
+                <thead>
+                  <tr>
+                    <th>Department</th>
+                    <th>Members</th>
+                    <th>Total Requests</th>
+                    <th>Approved</th>
+                    <th>Declined</th>
+                    <th>Pending</th>
+                    <th>Total Days</th>
+                    <th>Avg Days/Member</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                </thead>
+                <tbody>
+                  {analytics.departmentStats.map((dept, idx) => (
+                    <tr key={idx}>
+                      <td><strong>{dept.departmentName}</strong></td>
+                      <td>{dept.totalMembers}</td>
+                      <td>{dept.totalRequests}</td>
+                      <td className="text-green">{dept.approved}</td>
+                      <td className="text-red">{dept.declined}</td>
+                      <td className="text-purple">{dept.pending}</td>
+                      <td>{dept.totalDays}</td>
+                      <td className="highlight">{dept.averageDaysPerMember}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CollapsibleSection>
+        )}
+
+        {/* Collapsible Top Employees */}
+        <CollapsibleSection title="Top Employees by Leave Days" icon={MdGroup}>
+          {analytics?.topEmployees && analytics.topEmployees.length > 0 ? (
+            <div className="table-container">
+              <table className="analytics-table">
+                <thead>
+                  <tr>
+                    <th>Employee</th>
+                    <th>Department</th>
+                    <th>Designation</th>
+                    <th>Total Requests</th>
+                    <th>Approved Requests</th>
+                    <th>Total Days</th>
+                    <th>Approved Days</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {analytics.topEmployees.map((emp, idx) => (
+                    <tr key={idx}>
+                      <td>{emp.name}</td>
+                      <td>{emp.department}</td>
+                      <td>{emp.designation}</td>
+                      <td>{emp.totalRequests}</td>
+                      <td>{emp.approvedRequests}</td>
+                      <td>{emp.totalDays}</td>
+                      <td className="highlight">{emp.approvedDays}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="no-data">No employee data available for this period.</p>
+          )}
+        </CollapsibleSection>
+
+        {/* Collapsible Recent Requests */}
+        <CollapsibleSection title="Recent Leave Requests" icon={MdHistory}>
+          {analytics?.recentRequests && analytics.recentRequests.length > 0 ? (
+            <div className="table-container">
+              <table className="analytics-table">
+                <thead>
+                  <tr>
+                    <th>Employee</th>
+                    <th>Department</th>
+                    <th>Designation</th>
+                    <th>Type</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Days</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {analytics.recentRequests.map((req, idx) => (
+                    <tr key={idx}>
+                      <td>{req.employeeName}</td>
+                      <td>{req.department}</td>
+                      <td>{req.designation}</td>
+                      <td>{req.type}</td>
+                      <td>{new Date(req.startDate).toLocaleDateString()}</td>
+                      <td>{new Date(req.endDate).toLocaleDateString()}</td>
+                      <td>{req.numberOfDays}</td>
+                      <td>
+                        <span className={`status-badge status-${req.status.toLowerCase()}`}>
+                          {req.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="no-data">No recent requests found for this period.</p>
+          )}
+        </CollapsibleSection>
       </div>
     </HRLayout>
   );
 };
 
-export default LeaveAnalytics;
+export default HRAnalytics;

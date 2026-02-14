@@ -17,6 +17,7 @@ import HRDashboard from './pages/HRPages/HRDashboard';
 import HoDDashboard from './pages/HoDPages/HoDDashboard';
 import HoDPendingRequests from './pages/HoDPages/HoDPendingRequests';
 import HoDDepartmentMembers from './pages/HoDPages/HoDDepartmentMembers';
+import HoDAnalytics from './pages/HoDPages/HoDAnalytics';
 import ProtectedRoute from './components/ProtectedRoute';
 import RoleBasedRoute from './components/RoleBasedRoute';
 import './App.css';
@@ -141,6 +142,14 @@ function App() {
             element={
               <RoleBasedRoute allowedRoles={['HoD']}>
                 <HoDDepartmentMembers />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="/hod/analytics"
+            element={
+              <RoleBasedRoute allowedRoles={['HoD']}>
+                <HoDAnalytics />
               </RoleBasedRoute>
             }
           />
