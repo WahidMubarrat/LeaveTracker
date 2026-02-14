@@ -23,28 +23,36 @@ const HoDNavbar = () => {
       </div>
 
       <nav className="hod-nav-menu">
-        <NavLink 
-          to="/hod/dashboard" 
+        <NavLink
+          to="/hod/dashboard"
           className={({ isActive }) => isActive ? 'hod-nav-link active' : 'hod-nav-link'}
         >
           <span className="hod-nav-icon">📊</span>
           <span className="hod-nav-text">Dashboard</span>
         </NavLink>
 
-        <NavLink 
-          to="/hod/pending-requests" 
+        <NavLink
+          to="/hod/pending-requests"
           className={({ isActive }) => isActive ? 'hod-nav-link active' : 'hod-nav-link'}
         >
           <span className="hod-nav-icon">📋</span>
           <span className="hod-nav-text">Pending Requests</span>
         </NavLink>
 
-        <NavLink 
-          to="/hod/department-members" 
+        <NavLink
+          to="/hod/department-members"
           className={({ isActive }) => isActive ? 'hod-nav-link active' : 'hod-nav-link'}
         >
           <span className="hod-nav-icon">👥</span>
           <span className="hod-nav-text">Department Members</span>
+        </NavLink>
+
+        <NavLink
+          to="/hod/analytics"
+          className={({ isActive }) => isActive ? 'hod-nav-link active' : 'hod-nav-link'}
+        >
+          <span className="hod-nav-icon">📈</span>
+          <span className="hod-nav-text">Analytics</span>
         </NavLink>
       </nav>
 
