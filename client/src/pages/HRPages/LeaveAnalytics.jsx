@@ -3,30 +3,11 @@ import HRLayout from '../../components/HRLayout';
 import StatsCard from '../../components/StatsCard';
 import BarChart from '../../components/BarChart';
 import { analyticsAPI, departmentAPI } from '../../services/api';
-import { MdAssessment, MdCheckCircle, MdCancel, MdPending, MdBusiness, MdPeople, MdExpandMore, MdBarChart, MdTrendingUp, MdGroup, MdHistory } from 'react-icons/md';
+import { MdAssessment, MdCheckCircle, MdCancel, MdPending, MdBusiness, MdBarChart, MdTrendingUp, MdGroup, MdHistory, MdExpandMore } from 'react-icons/md';
 import '../../styles/Analytics.css';
 
-const CollapsibleSection = ({ title, icon: Icon, children, defaultOpen = false }) => {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-
-  return (
-    <div className="collapsible-section">
-      <div
-        className={`collapsible-header ${isOpen ? 'active' : ''}`}
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <h3 className="collapsible-title">
-          <Icon className="section-icon" />
-          {title}
-        </h3>
-        <MdExpandMore className="collapsible-icon" />
-      </div>
-      <div className={`collapsible-content ${isOpen ? '' : 'collapsed'}`}>
-        {children}
-      </div>
-    </div>
-  );
-};
+import CollapsibleSection from '../../components/CollapsibleSection';
+import StatusGanttBar from '../../components/StatusGanttBar';
 
 const HRAnalytics = () => {
   const [period, setPeriod] = useState('monthly');
@@ -128,26 +109,6 @@ const HRAnalytics = () => {
     }));
   };
 
-  const getMaxChartValue = () => {
-    if (!analytics) return 10;
-
-    if (analytics.monthlyBreakdown) {
-      return Math.max(
-        ...analytics.monthlyBreakdown.map(m => Math.max(m.approved, m.declined, m.pending)),
-        10
-      );
-    }
-
-    if (analytics.departmentStats) {
-      return Math.max(
-        ...analytics.departmentStats.map(d => Math.max(d.approved, d.declined, d.pending)),
-        10
-      );
-    }
-
-    return 10;
-  };
-
   if (loading) {
     return (
       <HRLayout>
@@ -231,48 +192,50 @@ const HRAnalytics = () => {
           </div>
         </div>
 
-        {/* Collapsible Stats */}
-        <CollapsibleSection title="Key Statistics" icon={MdBarChart}>
+        {/* Collapsible Key Statistics */}
+        <CollapsibleSection title="Key Statistics" icon={MdBarChart} defaultOpen={true}>
           <div className="stats-grid">
             <StatsCard
               icon={MdAssessment}
               title="Total Requests"
               value={analytics?.stats.totalRequests || 0}
-              subtitle={period === 'monthly' ? 'This month' : 'This year'}
+              subtitle={`${analytics?.stats.totalDays || 0} total days`}
               color="blue"
             />
             <StatsCard
               icon={MdCheckCircle}
               title="Approved"
               value={analytics?.stats.approved || 0}
-              subtitle={`${analytics?.stats.approvedDays || 0} days`}
+              subtitle={`${analytics?.stats.approvedDays || 0} approved days`}
               color="green"
             />
             <StatsCard
               icon={MdCancel}
               title="Declined"
               value={analytics?.stats.declined || 0}
-              subtitle={period === 'monthly' ? 'This month' : 'This year'}
+              subtitle={`${analytics?.stats.declinedDays || 0} declined days`}
               color="red"
             />
             <StatsCard
               icon={MdPending}
               title="Pending"
               value={analytics?.stats.pending || 0}
-              subtitle="Awaiting approval"
+              subtitle={`${analytics?.stats.pendingWithHoD || 0} with HoD`}
               color="purple"
             />
           </div>
+
+          {/* Status Distribution Bar (Gantt-style) based on Days */}
+          <StatusGanttBar stats={analytics?.stats} />
         </CollapsibleSection>
 
-        {/* Collapsible Charts */}
-        <CollapsibleSection title="Data Visualizations" icon={MdTrendingUp}>
+        {/* Collapsible Data Visualizations */}
+        <CollapsibleSection title="Data Visualizations" icon={MdTrendingUp} defaultOpen={true}>
           <div className="charts-section">
             {/* Monthly Breakdown or Department Comparison */}
             {period === 'yearly' && analytics?.monthlyBreakdown && (
               <BarChart
                 data={prepareMonthlyChartData()}
-                maxValue={getMaxChartValue()}
                 title="Month-wise Breakdown"
               />
             )}
@@ -281,45 +244,14 @@ const HRAnalytics = () => {
             {departmentId === 'all' && analytics?.departmentStats && analytics.departmentStats.length > 0 && (
               <BarChart
                 data={prepareDepartmentChartData()}
-                maxValue={getMaxChartValue()}
                 title="Department-wise Comparison (Top 6)"
               />
             )}
 
-            {/* Leave Type Distribution */}
-            <div className="chart-card">
-              <h3 className="chart-title">Leave Type Distribution</h3>
-              <div className="type-stats">
-                <div className="type-stat-item">
-                  <div className="type-stat-header">
-                    <span className="type-stat-label">Annual Leave</span>
-                    <span className="type-stat-value">{analytics?.stats.annual || 0}</span>
-                  </div>
-                  <div className="type-stat-bar">
-                    <div
-                      className="type-stat-fill annual"
-                      style={{ width: `${(analytics?.stats.annual / (analytics?.stats.totalRequests || 1)) * 100}%` }}
-                    ></div>
-                  </div>
-                </div>
-                <div className="type-stat-item">
-                  <div className="type-stat-header">
-                    <span className="type-stat-label">Casual Leave</span>
-                    <span className="type-stat-value">{analytics?.stats.casual || 0}</span>
-                  </div>
-                  <div className="type-stat-bar">
-                    <div
-                      className="type-stat-fill casual"
-                      style={{ width: `${(analytics?.stats.casual / (analytics?.stats.totalRequests || 1)) * 100}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </CollapsibleSection>
 
-        {/* Collapsible Department Stats */}
+        {/* Collapsible Department Statistics Table */}
         {departmentId === 'all' && analytics?.departmentStats && analytics.departmentStats.length > 0 && (
           <CollapsibleSection title="Department-wise Statistics" icon={MdBusiness}>
             <div className="table-container">
@@ -331,7 +263,8 @@ const HRAnalytics = () => {
                     <th>Total Requests</th>
                     <th>Approved</th>
                     <th>Declined</th>
-                    <th>Pending</th>
+                    <th>Pending (HR)</th>
+                    <th>With HoD</th>
                     <th>Total Days</th>
                     <th>Avg Days/Member</th>
                   </tr>
@@ -345,6 +278,7 @@ const HRAnalytics = () => {
                       <td className="text-green">{dept.approved}</td>
                       <td className="text-red">{dept.declined}</td>
                       <td className="text-purple">{dept.pending}</td>
+                      <td className="text-orange">{dept.pendingWithHoD}</td>
                       <td>{dept.totalDays}</td>
                       <td className="highlight">{dept.averageDaysPerMember}</td>
                     </tr>

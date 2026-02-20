@@ -63,6 +63,17 @@ const getHoDDashboardStats = async (req, res) => {
       waitingForAlternate: false
     });
 
+    // Get the most recent application that this HoD needs to act on
+    const latestPendingRequest = await LeaveRequest.findOne({
+      department: departmentId,
+      status: "Pending",
+      approvedByHoD: false,
+      waitingForAlternate: false
+    })
+      .sort({ createdAt: -1 })
+      .populate('employee', 'name designation')
+      .populate('department', 'name');
+
     res.json({
       memberStats: {
         totalMembers,
@@ -74,7 +85,8 @@ const getHoDDashboardStats = async (req, res) => {
         acceptedRequests,
         declinedRequests,
         pendingRequests
-      }
+      },
+      latestPendingRequest
     });
   } catch (error) {
     console.error('Error fetching HoD dashboard stats:', error);

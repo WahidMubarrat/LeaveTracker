@@ -32,9 +32,24 @@ exports.updateUserRole = async (req, res) => {
     if (action === "add") {
       // Add HoD role if not already present
       if (!user.roles.includes("HoD")) {
+        // Check if an HoD already exists for this department
+        if (user.department) {
+          const existingHoD = await User.findOne({
+            department: user.department._id,
+            roles: "HoD",
+            _id: { $ne: userId }
+          });
+
+          if (existingHoD) {
+            return res.status(400).json({
+              message: `This department already has a HoD (${existingHoD.name}). Please remove the existing HoD first before assigning a new one.`
+            });
+          }
+        }
+
         user.roles.push("HoD");
         await user.save();
-        return res.json({ 
+        return res.json({
           message: `${user.name} is now a Head of Department`,
           user: {
             id: user._id,
@@ -56,7 +71,7 @@ exports.updateUserRole = async (req, res) => {
           user.roles = ["Employee"];
         }
         await user.save();
-        return res.json({ 
+        return res.json({
           message: `HoD role removed from ${user.name}`,
           user: {
             id: user._id,

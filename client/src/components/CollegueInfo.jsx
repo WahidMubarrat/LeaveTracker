@@ -54,41 +54,57 @@ const CollegueInfo = ({ onMembersLoaded }) => {
       {error && <div className="members-error">{error}</div>}
 
       {members.length > 0 ? (
-        <div className="members-grid">
-          {members.map((member) => (
-            <div key={member._id} className="member-card">
-              <div className="member-image-wrapper">
-                {member.profilePic ? (
-                  <img src={member.profilePic} alt={member.name} className="member-image" />
-                ) : (
-                  <div className="member-image-placeholder">
-                    {member.name?.charAt(0).toUpperCase()}
-                  </div>
-                )}
-              </div>
-
-              <div className="member-info">
-                <h3 className="member-name">{member.name}</h3>
-                <p className="member-email">{member.email}</p>
-                {member.designation && (
-                  <p className="member-designation">{member.designation}</p>
-                )}
-                <Status 
-                  currentStatus={member.currentStatus === 'OnLeave' ? 'On Leave' : 'On Duty'} 
-                  returnDate={member.currentLeave?.endDate}
-                />
-                {member.roles && member.roles.length > 0 && (
-                  <div className="member-roles">
-                    {member.roles.map((role, index) => (
-                      <span key={index} className={`member-role-badge ${role.toLowerCase()}`}>
-                        {role}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
+        <div className="members-list-wrapper">
+          <div className="members-table-wrapper">
+            <table className="members-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Designation</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {members
+                  .sort((a, b) => {
+                    const aIsHoD = a.roles?.includes('HoD');
+                    const bIsHoD = b.roles?.includes('HoD');
+                    if (aIsHoD && !bIsHoD) return -1;
+                    if (!aIsHoD && bIsHoD) return 1;
+                    return 0;
+                  })
+                  .map((member) => (
+                    <tr key={member._id} className={member.currentStatus === 'OnLeave' ? 'on-leave-row' : ''}>
+                      <td className="member-name-cell">
+                        <div className="member-avatar-small">
+                          {member.profilePic ? (
+                            <img src={member.profilePic} alt={member.name} />
+                          ) : (
+                            <span>{member.name?.charAt(0).toUpperCase()}</span>
+                          )}
+                        </div>
+                        <div className="member-details-text">
+                          <div className="name-box">
+                            <span className="name-text">{member.name}</span>
+                            {member.roles?.includes('HoD') && (
+                              <span className="hod-indicator-badge">HoD</span>
+                            )}
+                          </div>
+                          <span className="email-text">{member.email}</span>
+                        </div>
+                      </td>
+                      <td>{member.designation || 'N/A'}</td>
+                      <td>
+                        <Status
+                          currentStatus={member.currentStatus === 'OnLeave' ? 'On Leave' : 'On Duty'}
+                          returnDate={member.currentLeave?.endDate}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : (
         !error && (

@@ -1,6 +1,7 @@
 const LeaveRequest = require("../models/LeaveRequest");
 const User = require("../models/User");
 const Department = require("../models/Department");
+const { calculateOverlapDays } = require("../utils/leaveUtils");
 
 /**
  * Get HoD analytics data (monthly and yearly for their department)
@@ -21,66 +22,80 @@ const getHoDAnalytics = async (req, res) => {
         let startDate, endDate;
 
         if (period === 'monthly') {
-            // Monthly analytics
             startDate = new Date(currentYear, currentMonth - 1, 1);
             endDate = new Date(currentYear, currentMonth, 0, 23, 59, 59, 999);
         } else {
-            // Yearly analytics
             startDate = new Date(currentYear, 0, 1);
             endDate = new Date(currentYear, 11, 31, 23, 59, 59, 999);
         }
 
-        // Get all leave requests for the department in the period
         const leaveRequests = await LeaveRequest.find({
             department: departmentId,
-            applicationDate: { $gte: startDate, $lte: endDate }
+            startDate: { $lte: endDate },
+            endDate: { $gte: startDate }
         }).populate('employee', 'name email designation');
 
-        // Calculate statistics
+        // Calculate statistics with accurate overlap days
         const stats = {
             totalRequests: leaveRequests.length,
             approved: leaveRequests.filter(req => req.status === 'Approved').length,
             declined: leaveRequests.filter(req => req.status === 'Declined').length,
-            pending: leaveRequests.filter(req => req.status === 'Pending').length,
-
-            // Leave type breakdown
+            // For HoD, pending means awaiting their approval and not waiting for alternate
+            pending: leaveRequests.filter(req =>
+                req.status === 'Pending' && req.approvedByHoD === false && req.waitingForAlternate === false
+            ).length,
+            totalDays: 0,
+            approvedDays: 0,
+            declinedDays: 0,
+            pendingDays: 0,
             annual: leaveRequests.filter(req => req.type.toLowerCase() === 'annual').length,
             casual: leaveRequests.filter(req => req.type.toLowerCase() === 'casual').length,
-
-            // Total days
-            totalDays: leaveRequests.reduce((sum, req) => sum + (req.numberOfDays || 0), 0),
-            approvedDays: leaveRequests
-                .filter(req => req.status === 'Approved')
-                .reduce((sum, req) => sum + (req.numberOfDays || 0), 0),
         };
+
+        for (const req of leaveRequests) {
+            const overlap = await calculateOverlapDays(req.startDate, req.endDate, startDate, endDate);
+            stats.totalDays += overlap;
+            if (req.status === 'Approved') stats.approvedDays += overlap;
+            else if (req.status === 'Declined') stats.declinedDays += overlap;
+            else if (req.status === 'Pending' && req.approvedByHoD === false && req.waitingForAlternate === false) {
+                stats.pendingDays += overlap;
+            }
+        }
 
         // Monthly breakdown for yearly view
         let monthlyBreakdown = [];
         if (period === 'yearly') {
-            monthlyBreakdown = Array.from({ length: 12 }, (_, i) => {
+            for (let i = 0; i < 12; i++) {
                 const monthStart = new Date(currentYear, i, 1);
                 const monthEnd = new Date(currentYear, i + 1, 0, 23, 59, 59, 999);
 
                 const monthRequests = leaveRequests.filter(req => {
-                    const appDate = new Date(req.applicationDate);
-                    return appDate >= monthStart && appDate <= monthEnd;
+                    const reqStart = new Date(req.startDate);
+                    const reqEnd = new Date(req.endDate);
+                    return reqStart <= monthEnd && reqEnd >= monthStart;
                 });
 
-                return {
+                let monthDaysCount = 0;
+                for (const r of monthRequests) {
+                    monthDaysCount += await calculateOverlapDays(r.startDate, r.endDate, monthStart, monthEnd);
+                }
+
+                monthlyBreakdown.push({
                     month: i + 1,
                     monthName: monthStart.toLocaleString('default', { month: 'short' }),
                     total: monthRequests.length,
                     approved: monthRequests.filter(r => r.status === 'Approved').length,
                     declined: monthRequests.filter(r => r.status === 'Declined').length,
-                    pending: monthRequests.filter(r => r.status === 'Pending').length,
-                    days: monthRequests.reduce((sum, r) => sum + (r.numberOfDays || 0), 0)
-                };
-            });
+                    pending: monthRequests.filter(r =>
+                        r.status === 'Pending' && r.approvedByHoD === false && r.waitingForAlternate === false
+                    ).length,
+                    days: monthDaysCount
+                });
+            }
         }
 
-        // Employee-wise breakdown
         const employeeStats = {};
-        leaveRequests.forEach(req => {
+        for (const req of leaveRequests) {
             const empId = req.employee._id.toString();
             if (!employeeStats[empId]) {
                 employeeStats[empId] = {
@@ -93,13 +108,14 @@ const getHoDAnalytics = async (req, res) => {
                     approvedDays: 0
                 };
             }
+            const overlap = await calculateOverlapDays(req.startDate, req.endDate, startDate, endDate);
             employeeStats[empId].totalRequests++;
-            employeeStats[empId].totalDays += req.numberOfDays || 0;
+            employeeStats[empId].totalDays += overlap;
             if (req.status === 'Approved') {
                 employeeStats[empId].approvedRequests++;
-                employeeStats[empId].approvedDays += req.numberOfDays || 0;
+                employeeStats[empId].approvedDays += overlap;
             }
-        });
+        }
 
         const topEmployees = Object.values(employeeStats)
             .sort((a, b) => b.approvedDays - a.approvedDays)
@@ -114,7 +130,7 @@ const getHoDAnalytics = async (req, res) => {
             monthlyBreakdown,
             topEmployees,
             recentRequests: leaveRequests
-                .sort((a, b) => new Date(b.applicationDate) - new Date(a.applicationDate))
+                .sort((a, b) => new Date(b.startDate) - new Date(a.startDate))
                 .slice(0, 10)
                 .map(req => ({
                     id: req._id,
@@ -159,64 +175,79 @@ const getHRAnalytics = async (req, res) => {
             endDate = new Date(currentYear, 11, 31, 23, 59, 59, 999);
         }
 
-        // Build query
         const query = {
-            applicationDate: { $gte: startDate, $lte: endDate }
+            startDate: { $lte: endDate },
+            endDate: { $gte: startDate }
         };
 
-        // If specific department requested
         if (departmentId && departmentId !== 'all') {
             query.department = departmentId;
         }
 
-        // Get all leave requests
         const leaveRequests = await LeaveRequest.find(query)
             .populate('employee', 'name email designation')
             .populate('department', 'name');
 
-        // Calculate overall statistics
         const stats = {
             totalRequests: leaveRequests.length,
             approved: leaveRequests.filter(req => req.status === 'Approved').length,
             declined: leaveRequests.filter(req => req.status === 'Declined').length,
-            pending: leaveRequests.filter(req => req.status === 'Pending').length,
-
-            // Leave type breakdown
+            // For HR, pending means approved by HoD but not yet by HR
+            pending: leaveRequests.filter(req =>
+                req.status === 'Pending' && req.approvedByHoD === true
+            ).length,
+            // Track requests still with HoD for visibility
+            pendingWithHoD: leaveRequests.filter(req =>
+                req.status === 'Pending' && req.approvedByHoD === false
+            ).length,
+            totalDays: 0,
+            approvedDays: 0,
+            declinedDays: 0,
+            pendingDays: 0,
             annual: leaveRequests.filter(req => req.type.toLowerCase() === 'annual').length,
             casual: leaveRequests.filter(req => req.type.toLowerCase() === 'casual').length,
-
-            // Total days
-            totalDays: leaveRequests.reduce((sum, req) => sum + (req.numberOfDays || 0), 0),
-            approvedDays: leaveRequests
-                .filter(req => req.status === 'Approved')
-                .reduce((sum, req) => sum + (req.numberOfDays || 0), 0),
         };
 
-        // Monthly breakdown for yearly view
+        for (const req of leaveRequests) {
+            const overlap = await calculateOverlapDays(req.startDate, req.endDate, startDate, endDate);
+            stats.totalDays += overlap;
+            if (req.status === 'Approved') stats.approvedDays += overlap;
+            else if (req.status === 'Declined') stats.declinedDays += overlap;
+            else if (req.status === 'Pending' && req.approvedByHoD === true) {
+                stats.pendingDays += overlap;
+            }
+        }
+
         let monthlyBreakdown = [];
         if (period === 'yearly') {
-            monthlyBreakdown = Array.from({ length: 12 }, (_, i) => {
+            for (let i = 0; i < 12; i++) {
                 const monthStart = new Date(currentYear, i, 1);
                 const monthEnd = new Date(currentYear, i + 1, 0, 23, 59, 59, 999);
 
                 const monthRequests = leaveRequests.filter(req => {
-                    const appDate = new Date(req.applicationDate);
-                    return appDate >= monthStart && appDate <= monthEnd;
+                    const reqStart = new Date(req.startDate);
+                    const reqEnd = new Date(req.endDate);
+                    return reqStart <= monthEnd && reqEnd >= monthStart;
                 });
 
-                return {
+                let monthDaysCount = 0;
+                for (const r of monthRequests) {
+                    monthDaysCount += await calculateOverlapDays(r.startDate, r.endDate, monthStart, monthEnd);
+                }
+
+                monthlyBreakdown.push({
                     month: i + 1,
                     monthName: monthStart.toLocaleString('default', { month: 'short' }),
                     total: monthRequests.length,
                     approved: monthRequests.filter(r => r.status === 'Approved').length,
                     declined: monthRequests.filter(r => r.status === 'Declined').length,
-                    pending: monthRequests.filter(r => r.status === 'Pending').length,
-                    days: monthRequests.reduce((sum, r) => sum + (r.numberOfDays || 0), 0)
-                };
-            });
+                    pending: monthRequests.filter(r => r.status === 'Pending' && r.approvedByHoD === true).length,
+                    pendingWithHoD: monthRequests.filter(r => r.status === 'Pending' && r.approvedByHoD === false).length,
+                    days: monthDaysCount
+                });
+            }
         }
 
-        // Department-wise breakdown
         const departments = await Department.find({});
         const departmentStats = await Promise.all(
             departments.map(async (dept) => {
@@ -225,6 +256,14 @@ const getHRAnalytics = async (req, res) => {
                 );
 
                 const deptMembers = await User.countDocuments({ department: dept._id });
+                let deptTotalDays = 0;
+                let deptApprovedDays = 0;
+
+                for (const r of deptRequests) {
+                    const overlap = await calculateOverlapDays(r.startDate, r.endDate, startDate, endDate);
+                    deptTotalDays += overlap;
+                    if (r.status === 'Approved') deptApprovedDays += overlap;
+                }
 
                 return {
                     departmentId: dept._id,
@@ -233,21 +272,20 @@ const getHRAnalytics = async (req, res) => {
                     totalRequests: deptRequests.length,
                     approved: deptRequests.filter(r => r.status === 'Approved').length,
                     declined: deptRequests.filter(r => r.status === 'Declined').length,
-                    pending: deptRequests.filter(r => r.status === 'Pending').length,
-                    totalDays: deptRequests.reduce((sum, r) => sum + (r.numberOfDays || 0), 0),
-                    approvedDays: deptRequests
-                        .filter(r => r.status === 'Approved')
-                        .reduce((sum, r) => sum + (r.numberOfDays || 0), 0),
+                    // For HR, pending by department strictly means awaiting HR action
+                    pending: deptRequests.filter(r => r.status === 'Pending' && r.approvedByHoD === true).length,
+                    pendingWithHoD: deptRequests.filter(r => r.status === 'Pending' && r.approvedByHoD === false).length,
+                    totalDays: deptTotalDays,
+                    approvedDays: deptApprovedDays,
                     averageDaysPerMember: deptMembers > 0
-                        ? (deptRequests.reduce((sum, r) => sum + (r.numberOfDays || 0), 0) / deptMembers).toFixed(2)
+                        ? (deptTotalDays / deptMembers).toFixed(2)
                         : 0
                 };
             })
         );
 
-        // Employee-wise breakdown (top 10)
         const employeeStats = {};
-        leaveRequests.forEach(req => {
+        for (const req of leaveRequests) {
             const empId = req.employee._id.toString();
             if (!employeeStats[empId]) {
                 employeeStats[empId] = {
@@ -261,13 +299,14 @@ const getHRAnalytics = async (req, res) => {
                     approvedDays: 0
                 };
             }
+            const overlap = await calculateOverlapDays(req.startDate, req.endDate, startDate, endDate);
             employeeStats[empId].totalRequests++;
-            employeeStats[empId].totalDays += req.numberOfDays || 0;
+            employeeStats[empId].totalDays += overlap;
             if (req.status === 'Approved') {
                 employeeStats[empId].approvedRequests++;
-                employeeStats[empId].approvedDays += req.numberOfDays || 0;
+                employeeStats[empId].approvedDays += overlap;
             }
-        });
+        }
 
         const topEmployees = Object.values(employeeStats)
             .sort((a, b) => b.approvedDays - a.approvedDays)
@@ -283,7 +322,7 @@ const getHRAnalytics = async (req, res) => {
             departmentStats: departmentStats.sort((a, b) => b.totalRequests - a.totalRequests),
             topEmployees,
             recentRequests: leaveRequests
-                .sort((a, b) => new Date(b.applicationDate) - new Date(a.applicationDate))
+                .sort((a, b) => new Date(b.startDate) - new Date(a.startDate))
                 .slice(0, 10)
                 .map(req => ({
                     id: req._id,

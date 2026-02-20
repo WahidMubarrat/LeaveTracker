@@ -8,7 +8,6 @@ import '../../styles/HoDPendingRequests.css';
 const HoDPendingRequests = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('pending'); // all, pending, approved, declined
   const [processingRequestId, setProcessingRequestId] = useState(null);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [remarks, setRemarks] = useState('');
@@ -47,13 +46,13 @@ const HoDPendingRequests = () => {
     try {
       setProcessingRequestId(selectedRequest._id);
       setError('');
-      
+
       await leaveAPI.updateLeaveStatus(selectedRequest._id, actionType, remarks);
-      
+
       setShowModal(false);
       setSelectedRequest(null);
       setRemarks('');
-      
+
       // Refresh the list
       await fetchPendingRequests();
     } catch (err) {
@@ -63,14 +62,6 @@ const HoDPendingRequests = () => {
       setProcessingRequestId(null);
     }
   };
-
-  const filteredRequests = requests.filter(req => {
-    if (filter === 'all') return true;
-    if (filter === 'pending') return !req.approvedByHoD && req.status === 'Pending';
-    if (filter === 'approved') return req.approvedByHoD && req.status === 'Pending';
-    if (filter === 'declined') return req.status === 'Declined';
-    return true;
-  });
 
   const getStatusClass = (request) => {
     if (request.status === 'Declined') return 'status-declined';
@@ -105,162 +96,135 @@ const HoDPendingRequests = () => {
 
         {error && <div className="error-message">{error}</div>}
 
-        <div className="requests-controls">
-          <div className="filter-tabs">
-            <button 
-              className={filter === 'all' ? 'filter-tab active' : 'filter-tab'}
-              onClick={() => setFilter('all')}
-            >
-              All ({requests.length})
-            </button>
-            <button 
-              className={filter === 'pending' ? 'filter-tab active' : 'filter-tab'}
-              onClick={() => setFilter('pending')}
-            >
-              Pending ({requests.filter(r => !r.approvedByHoD && r.status === 'Pending').length})
-            </button>
-            <button 
-              className={filter === 'approved' ? 'filter-tab active' : 'filter-tab'}
-              onClick={() => setFilter('approved')}
-            >
-              Approved ({requests.filter(r => r.approvedByHoD && r.status === 'Pending').length})
-            </button>
-            <button 
-              className={filter === 'declined' ? 'filter-tab active' : 'filter-tab'}
-              onClick={() => setFilter('declined')}
-            >
-              Declined ({requests.filter(r => r.status === 'Declined').length})
-            </button>
-          </div>
-        </div>
-
         {loading ? (
           <div className="loading-state">Loading requests...</div>
-        ) : filteredRequests.length === 0 ? (
+        ) : requests.filter(req => !req.approvedByHoD && req.status === 'Pending').length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">📋</div>
-            <h3>No requests found</h3>
-            <p>There are no leave requests matching your current filter.</p>
+            <h3>No pending requests</h3>
+            <p>You have no leave requests awaiting your approval at the moment.</p>
           </div>
         ) : (
           <div className="requests-grid">
-            {filteredRequests.map(request => (
-              <div key={request._id} className="request-card">
-                <div className="request-header">
-                  <div className="employee-info">
-                    <h3>{request.employee?.name || request.applicantName || 'N/A'}</h3>
-                    <p className="employee-email">{request.employee?.email || 'N/A'}</p>
-                  </div>
-                  <span className={`request-status ${getStatusClass(request)}`}>
-                    {getStatusText(request)}
-                  </span>
-                </div>
-
-                <div className="request-details">
-                  <div className="detail-row">
-                    <span className="detail-label">Designation:</span>
-                    <span className="detail-value">{request.applicantDesignation || 'N/A'}</span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Department:</span>
-                    <span className="detail-value">
-                      {request.departmentName || request.department?.name || 'N/A'}
+            {requests
+              .filter(req => !req.approvedByHoD && req.status === 'Pending')
+              .map(request => (
+                <div key={request._id} className="request-card">
+                  <div className="request-header">
+                    <div className="employee-info">
+                      <h3>{request.employee?.name || request.applicantName || 'N/A'}</h3>
+                      <p className="employee-email">{request.employee?.email || 'N/A'}</p>
+                    </div>
+                    <span className={`request-status ${getStatusClass(request)}`}>
+                      {getStatusText(request)}
                     </span>
                   </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Leave Type:</span>
-                    <span className="detail-value">{request.type || 'N/A'}</span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Number of Days:</span>
-                    <span className="detail-value">{request.numberOfDays || 'N/A'} day(s)</span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Start Date:</span>
-                    <span className="detail-value">{formatDate(request.startDate)}</span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">End Date:</span>
-                    <span className="detail-value">{formatDate(request.endDate)}</span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Purpose:</span>
-                    <span className="detail-value">{request.reason || 'N/A'}</span>
-                  </div>
-                  {request.leaveDocument && (
+
+                  <div className="request-details">
                     <div className="detail-row">
-                      <span className="detail-label">Leave Document:</span>
+                      <span className="detail-label">Designation:</span>
+                      <span className="detail-value">{request.applicantDesignation || 'N/A'}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Department:</span>
                       <span className="detail-value">
-                        <img 
-                          src={request.leaveDocument} 
-                          alt="Leave document" 
-                          style={{ maxWidth: '300px', maxHeight: '300px', borderRadius: '8px', marginTop: '0.5rem' }}
-                        />
+                        {request.departmentName || request.department?.name || 'N/A'}
                       </span>
                     </div>
-                  )}
-                  {request.alternateEmployees && request.alternateEmployees.length > 0 ? (
                     <div className="detail-row">
-                      <span className="detail-label">Alternate Employees:</span>
-                      <span className="detail-value">
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
-                          {request.alternateEmployees.map((alt, index) => (
-                            <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                              <span>{alt.employee?.name || 'Unknown'}</span>
-                              <span style={{ 
-                                padding: '0.25rem 0.5rem', 
-                                borderRadius: '4px', 
-                                fontSize: '0.85rem',
-                                backgroundColor: alt.response === 'ok' ? '#d4edda' : alt.response === 'sorry' ? '#f8d7da' : '#fff3cd',
-                                color: alt.response === 'ok' ? '#155724' : alt.response === 'sorry' ? '#721c24' : '#856404'
-                              }}>
-                                {alt.response === 'ok' ? '✓ OK' : alt.response === 'sorry' ? '✗ Sorry' : '⏳ Pending'}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </span>
+                      <span className="detail-label">Leave Type:</span>
+                      <span className="detail-value">{request.type || 'N/A'}</span>
                     </div>
-                  ) : request.backupEmployee && (
                     <div className="detail-row">
-                      <span className="detail-label">Alternate Employee:</span>
-                      <span className="detail-value">
-                        {request.backupEmployee.name || 'N/A'}
-                      </span>
+                      <span className="detail-label">Number of Days:</span>
+                      <span className="detail-value">{request.numberOfDays || 'N/A'} day(s)</span>
                     </div>
-                  )}
-                  <div className="detail-row">
-                    <span className="detail-label">Application Date:</span>
-                    <span className="detail-value">{formatDate(request.applicationDate)}</span>
+                    <div className="detail-row">
+                      <span className="detail-label">Start Date:</span>
+                      <span className="detail-value">{formatDate(request.startDate)}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">End Date:</span>
+                      <span className="detail-value">{formatDate(request.endDate)}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Purpose:</span>
+                      <span className="detail-value">{request.reason || 'N/A'}</span>
+                    </div>
+                    {request.leaveDocument && (
+                      <div className="detail-row">
+                        <span className="detail-label">Leave Document:</span>
+                        <span className="detail-value">
+                          <img
+                            src={request.leaveDocument}
+                            alt="Leave document"
+                            style={{ maxWidth: '300px', maxHeight: '300px', borderRadius: '8px', marginTop: '0.5rem' }}
+                          />
+                        </span>
+                      </div>
+                    )}
+                    {request.alternateEmployees && request.alternateEmployees.length > 0 ? (
+                      <div className="detail-row">
+                        <span className="detail-label">Alternate Employees:</span>
+                        <span className="detail-value">
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
+                            {request.alternateEmployees.map((alt, index) => (
+                              <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <span>{alt.employee?.name || 'Unknown'}</span>
+                                <span style={{
+                                  padding: '0.25rem 0.5rem',
+                                  borderRadius: '4px',
+                                  fontSize: '0.85rem',
+                                  backgroundColor: alt.response === 'ok' ? '#d4edda' : alt.response === 'sorry' ? '#f8d7da' : '#fff3cd',
+                                  color: alt.response === 'ok' ? '#155724' : alt.response === 'sorry' ? '#721c24' : '#856404'
+                                }}>
+                                  {alt.response === 'ok' ? '✓ OK' : alt.response === 'sorry' ? '✗ Sorry' : '⏳ Pending'}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </span>
+                      </div>
+                    ) : request.backupEmployee && (
+                      <div className="detail-row">
+                        <span className="detail-label">Alternate Employee:</span>
+                        <span className="detail-value">
+                          {request.backupEmployee.name || 'N/A'}
+                        </span>
+                      </div>
+                    )}
+                    <div className="detail-row">
+                      <span className="detail-label">Application Date:</span>
+                      <span className="detail-value">{formatDate(request.applicationDate)}</span>
+                    </div>
+                    {request.hodRemarks && (
+                      <div className="detail-row remarks">
+                        <span className="detail-label">Your Remarks:</span>
+                        <span className="detail-value">{request.hodRemarks}</span>
+                      </div>
+                    )}
                   </div>
-                  {request.hodRemarks && (
-                    <div className="detail-row remarks">
-                      <span className="detail-label">Your Remarks:</span>
-                      <span className="detail-value">{request.hodRemarks}</span>
+
+                  {!request.approvedByHoD && request.status === 'Pending' && (
+                    <div className="request-actions">
+                      <button
+                        className="approve-btn"
+                        onClick={() => handleActionClick(request, 'approve')}
+                        disabled={processingRequestId === request._id}
+                      >
+                        {processingRequestId === request._id ? 'Processing...' : '✓ Approve'}
+                      </button>
+                      <button
+                        className="reject-btn"
+                        onClick={() => handleActionClick(request, 'decline')}
+                        disabled={processingRequestId === request._id}
+                      >
+                        {processingRequestId === request._id ? 'Processing...' : '✗ Decline'}
+                      </button>
                     </div>
                   )}
                 </div>
-
-                {!request.approvedByHoD && request.status === 'Pending' && (
-                  <div className="request-actions">
-                    <button
-                      className="approve-btn"
-                      onClick={() => handleActionClick(request, 'approve')}
-                      disabled={processingRequestId === request._id}
-                    >
-                      {processingRequestId === request._id ? 'Processing...' : '✓ Approve'}
-                    </button>
-                    <button
-                      className="reject-btn"
-                      onClick={() => handleActionClick(request, 'decline')}
-                      disabled={processingRequestId === request._id}
-                    >
-                      {processingRequestId === request._id ? 'Processing...' : '✗ Decline'}
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
+              ))}
           </div>
         )}
 
