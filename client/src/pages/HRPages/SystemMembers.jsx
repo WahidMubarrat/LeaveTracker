@@ -25,12 +25,8 @@ const SystemMembers = () => {
       const depts = response.data.departments || [];
       setDepartments(depts);
 
-      // Initially expand all departments
-      const initialExpanded = {};
-      depts.forEach(d => {
-        initialExpanded[d.departmentId] = true;
-      });
-      setExpandedDepts(initialExpanded);
+      // Initially all departments are closed
+      setExpandedDepts({});
 
       setError(null);
     } catch (err) {
@@ -59,29 +55,47 @@ const SystemMembers = () => {
     setSelectedMember(null);
   };
 
-  // Filter logic
+  // Helper to sort members: HoD first
+  const sortMembers = (members) => {
+    return [...members].sort((a, b) => {
+      const aIsHoD = a.roles?.includes('HoD');
+      const bIsHoD = b.roles?.includes('HoD');
+      if (aIsHoD && !bIsHoD) return -1;
+      if (!aIsHoD && bIsHoD) return 1;
+      return 0;
+    });
+  };
+
+  // Filter and sort logic
   const filteredDepartments = departments.map(dept => {
-    // If search term is empty, return dept as is
-    if (!searchTerm) return dept;
+    const sortedMembers = sortMembers(dept.members);
+
+    // If search term is empty, return dept with sorted members
+    if (!searchTerm) {
+      return { ...dept, members: sortedMembers };
+    }
 
     // Filter members based on search
-    const filteredMembers = dept.members.filter(member =>
+    const filteredMembers = sortedMembers.filter(member =>
       member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       member.designation.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     // If members match, return dept with filtered members
-    // OR if department name matches, return all members
+    // OR if department name matches, return all sorted members
     if (dept.departmentName.toLowerCase().includes(searchTerm.toLowerCase())) {
-      return dept;
+      return { ...dept, members: sortedMembers };
     }
 
     return {
       ...dept,
       members: filteredMembers
     };
-  }).filter(dept => dept.members.length > 0 || dept.departmentName.toLowerCase().includes(searchTerm.toLowerCase()));
+  }).filter(dept => {
+    if (!searchTerm) return true;
+    return dept.members.length > 0 || dept.departmentName.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   // Stats calculation
   const totalMembers = departments.reduce((acc, dept) => acc + dept.members.length, 0);
@@ -191,7 +205,12 @@ const SystemMembers = () => {
                                         )}
                                       </div>
                                       <div className="member-details-text">
-                                        <span className="name-text">{member.name}</span>
+                                        <div className="name-box">
+                                          <span className="name-text">{member.name}</span>
+                                          {member.roles?.includes('HoD') && (
+                                            <span className="hod-indicator-badge">HoD</span>
+                                          )}
+                                        </div>
                                         <span className="email-text">{member.email}</span>
                                       </div>
                                     </td>

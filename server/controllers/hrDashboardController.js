@@ -30,22 +30,6 @@ const getHRDashboardStats = async (req, res) => {
     const membersOnLeave = activeLeaves.length;
     const activeMembers = totalMembers - membersOnLeave;
 
-    // Calculate department-wise stats
-    const departmentStats = allDepartments.map(dept => {
-      const deptMembers = allMembers.filter(m => m.department && m.department._id.toString() === dept._id.toString());
-      const deptOnLeave = activeLeaves.filter(leave =>
-        deptMembers.some(m => m._id.toString() === leave.employee.toString())
-      ).length;
-
-      return {
-        _id: dept._id,
-        name: dept.name,
-        totalMembers: deptMembers.length,
-        onLeave: deptOnLeave,
-        active: deptMembers.length - deptOnLeave
-      };
-    });
-
     // Get current month's date range
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -61,18 +45,20 @@ const getHRDashboardStats = async (req, res) => {
     const declinedRequests = monthlyRequests.filter(leave => leave.status === 'Declined').length;
 
     // Fix: Count ONLY pending requests that are waiting for HR approval
-    // (Approved by HoD, but NOT yet by HR, and status is still Pending)
     const pendingRequests = await LeaveRequest.countDocuments({
       status: 'Pending',
       approvedByHoD: true,
       approvedByHR: false
     });
 
-    // Get 5 most recent applications globally
-    const recentApplications = await LeaveRequest.find()
+    // Get the most recent application that HR needs to act on
+    const latestPendingRequest = await LeaveRequest.findOne({
+      status: 'Pending',
+      approvedByHoD: true,
+      approvedByHR: false
+    })
       .sort({ createdAt: -1 })
-      .limit(5)
-      .populate('employee', 'name')
+      .populate('employee', 'name designation')
       .populate('department', 'name');
 
     res.json({
@@ -88,8 +74,7 @@ const getHRDashboardStats = async (req, res) => {
         declinedRequests,
         pendingRequests
       },
-      departmentStats,
-      recentApplications
+      latestPendingRequest
     });
   } catch (error) {
     console.error('Error fetching HR dashboard stats:', error);

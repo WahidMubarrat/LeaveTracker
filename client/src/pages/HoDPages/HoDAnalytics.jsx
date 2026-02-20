@@ -6,27 +6,8 @@ import { analyticsAPI } from '../../services/api';
 import { MdAssessment, MdCheckCircle, MdCancel, MdPending, MdExpandMore, MdBarChart, MdTrendingUp, MdGroup, MdHistory } from 'react-icons/md';
 import '../../styles/Analytics.css';
 
-const CollapsibleSection = ({ title, icon: Icon, children, defaultOpen = false }) => {
-    const [isOpen, setIsOpen] = useState(defaultOpen);
-
-    return (
-        <div className="collapsible-section">
-            <div
-                className={`collapsible-header ${isOpen ? 'active' : ''}`}
-                onClick={() => setIsOpen(!isOpen)}
-            >
-                <h3 className="collapsible-title">
-                    <Icon className="section-icon" />
-                    {title}
-                </h3>
-                <MdExpandMore className="collapsible-icon" />
-            </div>
-            <div className={`collapsible-content ${isOpen ? '' : 'collapsed'}`}>
-                {children}
-            </div>
-        </div>
-    );
-};
+import CollapsibleSection from '../../components/CollapsibleSection';
+import StatusGanttBar from '../../components/StatusGanttBar';
 
 const HoDAnalytics = () => {
     const [period, setPeriod] = useState('monthly');
@@ -100,14 +81,6 @@ const HoDAnalytics = () => {
         }));
     };
 
-    const getMaxChartValue = () => {
-        if (!analytics || !analytics.monthlyBreakdown) return 10;
-
-        return Math.max(
-            ...analytics.monthlyBreakdown.map(m => Math.max(m.approved, m.declined, m.pending)),
-            10
-        );
-    };
 
     if (loading) {
         return (
@@ -178,37 +151,40 @@ const HoDAnalytics = () => {
                 </div>
 
                 {/* Collapsible Stats */}
-                <CollapsibleSection title="Key Statistics" icon={MdBarChart}>
+                <CollapsibleSection title="Key Statistics" icon={MdBarChart} defaultOpen={true}>
                     <div className="stats-grid">
                         <StatsCard
                             icon={MdAssessment}
                             title="Total Requests"
                             value={analytics?.stats.totalRequests || 0}
-                            subtitle={period === 'monthly' ? 'This month' : 'This year'}
+                            subtitle={`${analytics?.stats.totalDays || 0} total days`}
                             color="blue"
                         />
                         <StatsCard
                             icon={MdCheckCircle}
                             title="Approved"
                             value={analytics?.stats.approved || 0}
-                            subtitle={`${analytics?.stats.approvedDays || 0} days`}
+                            subtitle={`${analytics?.stats.approvedDays || 0} approved days`}
                             color="green"
                         />
                         <StatsCard
                             icon={MdCancel}
                             title="Declined"
                             value={analytics?.stats.declined || 0}
-                            subtitle={period === 'monthly' ? 'This month' : 'This year'}
+                            subtitle={`${analytics?.stats.declinedDays || 0} declined days`}
                             color="red"
                         />
                         <StatsCard
                             icon={MdPending}
                             title="Pending"
                             value={analytics?.stats.pending || 0}
-                            subtitle="Awaiting approval"
+                            subtitle={`${analytics?.stats.pendingDays || 0} pending days`}
                             color="purple"
                         />
                     </div>
+
+                    {/* Status Distribution Bar (Gantt-style) based on Days */}
+                    <StatusGanttBar stats={analytics?.stats} />
                 </CollapsibleSection>
 
                 {/* Collapsible Charts */}
@@ -218,41 +194,10 @@ const HoDAnalytics = () => {
                         {period === 'yearly' && analytics?.monthlyBreakdown && (
                             <BarChart
                                 data={prepareMonthlyChartData()}
-                                maxValue={getMaxChartValue()}
                                 title="Month-wise Breakdown"
                             />
                         )}
 
-                        {/* Leave Type Distribution */}
-                        <div className="chart-card">
-                            <h3 className="chart-title">Leave Type Distribution</h3>
-                            <div className="type-stats">
-                                <div className="type-stat-item">
-                                    <div className="type-stat-header">
-                                        <span className="type-stat-label">Annual Leave</span>
-                                        <span className="type-stat-value">{analytics?.stats.annual || 0}</span>
-                                    </div>
-                                    <div className="type-stat-bar">
-                                        <div
-                                            className="type-stat-fill annual"
-                                            style={{ width: `${(analytics?.stats.annual / (analytics?.stats.totalRequests || 1)) * 100}%` }}
-                                        ></div>
-                                    </div>
-                                </div>
-                                <div className="type-stat-item">
-                                    <div className="type-stat-header">
-                                        <span className="type-stat-label">Casual Leave</span>
-                                        <span className="type-stat-value">{analytics?.stats.casual || 0}</span>
-                                    </div>
-                                    <div className="type-stat-bar">
-                                        <div
-                                            className="type-stat-fill casual"
-                                            style={{ width: `${(analytics?.stats.casual / (analytics?.stats.totalRequests || 1)) * 100}%` }}
-                                        ></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </CollapsibleSection>
 

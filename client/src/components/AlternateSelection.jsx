@@ -12,6 +12,7 @@ const AlternateSelection = ({
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     if (leaveStartDate && leaveEndDate) {
@@ -34,6 +35,11 @@ const AlternateSelection = ({
       setLoading(false);
     }
   };
+
+  const filteredMembers = members.filter(member =>
+    member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    member.designation.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleToggle = (memberId) => {
     const existingIndex = selectedAlternates.findIndex(alt => alt.employeeId === memberId);
@@ -88,26 +94,45 @@ const AlternateSelection = ({
         <div className="alternate-loading">Loading available department members...</div>
       ) : (
         <>
-          {members.length === 0 ? (
-            <div className="alternate-empty">No eligible members available for these dates.</div>
+          <div className="alternate-search-container">
+            <div className="search-input-field-wrapper">
+              <span className="search-icon-small">🔍</span>
+              <input
+                type="text"
+                placeholder="Search available colleagues..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="alternate-search-input"
+              />
+            </div>
+          </div>
+
+          {filteredMembers.length === 0 ? (
+            <div className="alternate-empty">
+              {searchTerm ? 'No matching members found.' : 'No eligible members available for these dates.'}
+            </div>
           ) : (
             <div className="alternate-checkbox-list">
-              {members.map((member) => {
+              {filteredMembers.map((member) => {
                 const selection = selectedAlternates.find(alt => alt.employeeId === member._id);
                 const isSelected = !!selection;
 
                 return (
                   <div key={member._id} className="alternate-item-wrapper">
-                    <label className={`alternate-checkbox-item ${isSelected ? 'selected' : ''}`}>
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => handleToggle(member._id)}
-                      />
-                      <span className="alternate-member-name">
-                        {member.name} - {member.designation}
-                      </span>
-                    </label>
+                    <div className={`alternate-row ${isSelected ? 'selected' : ''}`}>
+                      <label className="alternate-label-beside">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleToggle(member._id)}
+                          className="alternate-checkbox"
+                        />
+                        <div className="alternate-member-info-row">
+                          <span className="alternate-name">{member.name}</span>
+                          <span className="alternate-designation-small">{member.designation}</span>
+                        </div>
+                      </label>
+                    </div>
 
                     {isSelected && (
                       <div className="alternate-date-inputs">

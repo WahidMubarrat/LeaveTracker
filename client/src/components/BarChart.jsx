@@ -1,57 +1,112 @@
+import {
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend
+} from 'chart.js';
+import { Bar } from 'react-chartjs-2';
 import PropTypes from 'prop-types';
 import '../styles/AnalyticsCharts.css';
 
+// Register ChartJS modules
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend
+);
+
 /**
- * Bar Chart Component for displaying leave statistics
+ * Bar Chart Component for displaying leave statistics using Chart.js
  */
-const BarChart = ({ data, maxValue, title, showLegend = true }) => {
+const BarChart = ({ data, title, showLegend = true }) => {
+    const labels = data.map(item => item.label);
+
+    // Extract unique types from data for datasets
+    const types = ['approved', 'declined', 'pending'];
     const colors = {
         approved: '#10b981',
         declined: '#ef4444',
-        pending: '#8b5cf6',
-        total: '#3b82f6',
-        days: '#f59e0b'
+        pending: '#8b5cf6'
+    };
+
+    const datasets = types.map(type => ({
+        label: type.charAt(0).toUpperCase() + type.slice(1),
+        data: data.map(item => {
+            const val = item.values.find(v => v.type === type);
+            return val ? val.count : 0;
+        }),
+        backgroundColor: colors[type],
+        borderRadius: 6,
+        maxBarThickness: 30,
+    }));
+
+    const chartData = {
+        labels,
+        datasets
+    };
+
+    const options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: showLegend,
+                position: 'bottom',
+                labels: {
+                    usePointStyle: true,
+                    padding: 20,
+                    font: {
+                        size: 12,
+                        weight: '500'
+                    }
+                }
+            },
+            title: {
+                display: false
+            },
+            tooltip: {
+                backgroundColor: '#1f2937',
+                padding: 12,
+                titleFont: { size: 14, weight: '600' },
+                bodyFont: { size: 13 },
+                cornerRadius: 8,
+                displayColors: true
+            }
+        },
+        scales: {
+            x: {
+                grid: {
+                    display: false
+                },
+                ticks: {
+                    font: { size: 12 }
+                }
+            },
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1,
+                    font: { size: 12 }
+                },
+                grid: {
+                    color: '#f3f4f6'
+                }
+            }
+        }
     };
 
     return (
-        <div className="bar-chart-container">
+        <div className="bar-chart-container" style={{ height: '400px' }}>
             {title && <h3 className="chart-title">{title}</h3>}
-            <div className="bar-chart">
-                {data.map((item, index) => (
-                    <div key={index} className="bar-chart-item">
-                        <div className="bar-chart-label">{item.label}</div>
-                        <div className="bar-chart-bars">
-                            {item.values.map((value, idx) => (
-                                <div key={idx} className="bar-wrapper">
-                                    <div
-                                        className="bar"
-                                        style={{
-                                            width: `${(value.count / maxValue) * 100}%`,
-                                            backgroundColor: colors[value.type] || '#6b7280',
-                                            minWidth: value.count > 0 ? '20px' : '0'
-                                        }}
-                                        title={`${value.type}: ${value.count}`}
-                                    >
-                                        {value.count > 0 && (
-                                            <span className="bar-value">{value.count}</span>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                ))}
+            <div style={{ flex: 1, position: 'relative', height: '100%' }}>
+                <Bar data={chartData} options={options} />
             </div>
-            {showLegend && (
-                <div className="chart-legend">
-                    {Object.entries(colors).map(([key, color]) => (
-                        <div key={key} className="legend-item">
-                            <span className="legend-color" style={{ backgroundColor: color }}></span>
-                            <span className="legend-label">{key.charAt(0).toUpperCase() + key.slice(1)}</span>
-                        </div>
-                    ))}
-                </div>
-            )}
         </div>
     );
 };
@@ -68,7 +123,6 @@ BarChart.propTypes = {
             ).isRequired
         })
     ).isRequired,
-    maxValue: PropTypes.number.isRequired,
     title: PropTypes.string,
     showLegend: PropTypes.bool
 };
