@@ -107,8 +107,7 @@ const HolidayReviewModal = ({
                 <div className="modal-body">
                     {editableHolidays.length === 0 ? (
                         <div className="empty-state">
-                            <MdWarning className="warning-icon" />
-                            <p>All holidays have been removed. Nothing to save.</p>
+                            <p>All holidays have been removed.</p>
                         </div>
                     ) : (
                         <div className="holidays-review-list">

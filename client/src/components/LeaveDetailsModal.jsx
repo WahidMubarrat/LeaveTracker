@@ -1,33 +1,108 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
-import { MdClose, MdCalendarToday, MdPerson, MdDescription, MdAttachFile, MdAccessTime } from 'react-icons/md';
-import { userAPI } from '../services/api';
+import { MdClose } from 'react-icons/md';
+import { userAPI, leaveAPI } from '../services/api';
+import LeaveApplicationForm from './LeaveApplicationForm';
 import '../styles/LeaveDetailsModal.css';
 
-const LeaveDetailsModal = ({ userId, memberName, onClose }) => {
+// --- Sub-component: Leave History List (Expandable) ---
+const LeaveHistoryContent = ({ history, formatDate, memberName }) => {
+    const [expandedId, setExpandedId] = useState(null);
+
+    if (!history || history.length === 0) {
+        return (
+            <div className="empty-modal-state">
+                <p>No leave history records found for this member.</p>
+            </div>
+        );
+    }
+
+    const toggleExpand = (id) => {
+        setExpandedId(expandedId === id ? null : id);
+    };
+
+    return (
+        <div className="modal-history-list">
+            <h4 className="section-title history-title">Past Leave Records</h4>
+            {history.map((record) => (
+                <div
+                    key={record._id}
+                    className={`modal-history-card-expandable ${expandedId === record._id ? 'expanded' : ''}`}
+                >
+                    <div className="modal-history-header" onClick={() => toggleExpand(record._id)}>
+                        <div className="modal-history-main">
+                            <div className="modal-history-info">
+                                <span className={`modal-type-badge type-${record.type.toLowerCase()}`}>
+                                    {record.type}
+                                </span>
+                                <span className={`modal-status-badge status-${record.status.toLowerCase()}`}>
+                                    {record.status}
+                                </span>
+                            </div>
+                            <div className="modal-history-dates">
+                                {formatDate(record.startDate)} — {formatDate(record.endDate)}
+                                <span className="modal-days">({record.numberOfDays} days)</span>
+                            </div>
+                        </div>
+                        <span className={`modal-expand-icon ${expandedId === record._id ? 'rotated' : ''}`}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </span>
+                    </div>
+
+                    <div className={`modal-history-body ${expandedId === record._id ? 'visible' : ''}`}>
+                        <div className="modal-embedded-form-wrapper">
+                            <LeaveApplicationForm
+                                leaveDetails={record}
+                                memberName={memberName}
+                                formatDate={formatDate}
+                                isHistory={true}
+                            />
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+};
+
+const LeaveDetailsModal = ({ userId, memberName, onClose, initialOnLeave }) => {
     const [leaveDetails, setLeaveDetails] = useState(null);
+    const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [activeTab, setActiveTab] = useState(initialOnLeave ? 'current' : 'history');
 
     useEffect(() => {
-        fetchLeaveDetails();
-        // Prevent body scroll when modal is open
+        fetchAllData();
         document.body.style.overflow = 'hidden';
         return () => {
             document.body.style.overflow = 'unset';
         };
     }, [userId]);
 
-    const fetchLeaveDetails = async () => {
+    const fetchAllData = async () => {
         try {
             setLoading(true);
-            const response = await userAPI.getActiveLeaveDetails(userId);
-            setLeaveDetails(response.data.leaveDetails);
+            const [leaveRes, historyRes] = await Promise.allSettled([
+                userAPI.getActiveLeaveDetails(userId),
+                leaveAPI.getMemberHistory(userId)
+            ]);
+
+            if (leaveRes.status === 'fulfilled') {
+                setLeaveDetails(leaveRes.value.data.leaveDetails);
+            }
+
+            if (historyRes.status === 'fulfilled') {
+                setHistory(historyRes.value.data.applications || []);
+            }
+
             setError(null);
         } catch (err) {
-            console.error('Error fetching leave details:', err);
-            setError('Failed to load leave details.');
+            console.error('Error fetching modal data:', err);
+            setError('Failed to load member data.');
         } finally {
             setLoading(false);
         }
@@ -36,7 +111,6 @@ const LeaveDetailsModal = ({ userId, memberName, onClose }) => {
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
         return new Date(dateString).toLocaleDateString('en-US', {
-            weekday: 'short',
             year: 'numeric',
             month: 'short',
             day: 'numeric'
@@ -53,7 +127,20 @@ const LeaveDetailsModal = ({ userId, memberName, onClose }) => {
         <div className="leave-modal-overlay" onClick={handleOverlayClick}>
             <div className="leave-modal-container">
                 <div className="leave-modal-header">
-                    <h2>Leave Details</h2>
+                    <div className="modal-header-tabs">
+                        <button
+                            className={`tab-btn ${activeTab === 'current' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('current')}
+                        >
+                            Active Leave
+                        </button>
+                        <button
+                            className={`tab-btn ${activeTab === 'history' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('history')}
+                        >
+                            History
+                        </button>
+                    </div>
                     <button className="leave-modal-close" onClick={onClose}>
                         <MdClose />
                     </button>
@@ -63,141 +150,27 @@ const LeaveDetailsModal = ({ userId, memberName, onClose }) => {
                     {loading ? (
                         <div className="leave-modal-loading">
                             <div className="loading-spinner"></div>
-                            <p>Loading leave details...</p>
+                            <p>Fetching member data...</p>
                         </div>
                     ) : error ? (
                         <div className="leave-modal-error">
                             <p>{error}</p>
                         </div>
-                    ) : leaveDetails ? (
-                        <div className="leave-details-content">
-                            {/* Employee Info */}
-                            <div className="leave-detail-section employee-section">
-                                <div className="employee-avatar-large">
-                                    {leaveDetails.employee?.profilePic ? (
-                                        <img src={leaveDetails.employee.profilePic} alt={memberName} />
-                                    ) : (
-                                        <span>{memberName?.charAt(0).toUpperCase()}</span>
-                                    )}
-                                </div>
-                                <div className="employee-info-text">
-                                    <h3>{memberName || leaveDetails.applicantName}</h3>
-                                    <p>{leaveDetails.applicantDesignation}</p>
-                                    <span className="department-tag">{leaveDetails.department?.name || leaveDetails.departmentName}</span>
-                                </div>
-                            </div>
-
-                            {/* Leave Type Badge */}
-                            <div className="leave-type-section">
-                                <span className={`leave-type-badge ${leaveDetails.type?.toLowerCase()}`}>
-                                    {leaveDetails.type} Leave
-                                </span>
-                                <span className="leave-days-badge">
-                                    {leaveDetails.numberOfDays} {leaveDetails.numberOfDays === 1 ? 'Day' : 'Days'}
-                                </span>
-                            </div>
-
-                            {/* Date Section */}
-                            <div className="leave-detail-section">
-                                <div className="section-header">
-                                    <MdCalendarToday className="section-icon" />
-                                    <h4>Leave Period</h4>
-                                </div>
-                                <div className="date-range">
-                                    <div className="date-item">
-                                        <span className="date-label">From</span>
-                                        <span className="date-value">{formatDate(leaveDetails.startDate)}</span>
-                                    </div>
-                                    <div className="date-separator">→</div>
-                                    <div className="date-item">
-                                        <span className="date-label">To</span>
-                                        <span className="date-value">{formatDate(leaveDetails.endDate)}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Application Date */}
-                            <div className="leave-detail-section">
-                                <div className="section-header">
-                                    <MdAccessTime className="section-icon" />
-                                    <h4>Application Date</h4>
-                                </div>
-                                <p className="detail-text">{formatDate(leaveDetails.applicationDate)}</p>
-                            </div>
-
-                            {/* Purpose Section */}
-                            {leaveDetails.reason && (
-                                <div className="leave-detail-section">
-                                    <div className="section-header">
-                                        <MdDescription className="section-icon" />
-                                        <h4>Purpose of Leave</h4>
-                                    </div>
-                                    <p className="detail-text purpose-text">{leaveDetails.reason}</p>
-                                </div>
-                            )}
-
-                            {/* Alternate Employees */}
-                            {leaveDetails.alternateEmployees && leaveDetails.alternateEmployees.length > 0 && (
-                                <div className="leave-detail-section">
-                                    <div className="section-header">
-                                        <MdPerson className="section-icon" />
-                                        <h4>Alternate Employee(s)</h4>
-                                    </div>
-                                    <div className="alternate-list">
-                                        {leaveDetails.alternateEmployees.map((alt, idx) => (
-                                            <div key={idx} className="alternate-item">
-                                                <span className="alternate-name">{alt.employee?.name || 'Unknown'}</span>
-                                                <span className={`alternate-response ${alt.response}`}>
-                                                    {alt.response === 'ok' ? 'Accepted' : alt.response === 'sorry' ? 'Declined' : 'Pending'}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Document Section */}
-                            {leaveDetails.leaveDocument && (
-                                <div className="leave-detail-section">
-                                    <div className="section-header">
-                                        <MdAttachFile className="section-icon" />
-                                        <h4>Supporting Document</h4>
-                                    </div>
-                                    <div className="document-preview">
-                                        <a href={leaveDetails.leaveDocument} target="_blank" rel="noopener noreferrer">
-                                            <img src={leaveDetails.leaveDocument} alt="Leave Document" className="document-image" />
-                                        </a>
-                                        <a
-                                            href={leaveDetails.leaveDocument}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="view-document-btn"
-                                        >
-                                            View Full Document
-                                        </a>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Approval Status */}
-                            <div className="leave-detail-section approval-section">
-                                <h4>Approval Status</h4>
-                                <div className="approval-steps">
-                                    <div className={`approval-step ${leaveDetails.approvedByHoD ? 'approved' : ''}`}>
-                                        <span className="step-indicator">{leaveDetails.approvedByHoD ? '✓' : '○'}</span>
-                                        <span className="step-label">HoD</span>
-                                    </div>
-                                    <div className="approval-line"></div>
-                                    <div className={`approval-step ${leaveDetails.approvedByHR ? 'approved' : ''}`}>
-                                        <span className="step-indicator">{leaveDetails.approvedByHR ? '✓' : '○'}</span>
-                                        <span className="step-label">HR</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     ) : (
-                        <div className="leave-modal-error">
-                            <p>No leave details available.</p>
+                        <div className="modal-tab-content">
+                            {activeTab === 'current' ? (
+                                <LeaveApplicationForm
+                                    leaveDetails={leaveDetails}
+                                    memberName={memberName}
+                                    formatDate={formatDate}
+                                />
+                            ) : (
+                                <LeaveHistoryContent
+                                    history={history}
+                                    formatDate={formatDate}
+                                    memberName={memberName}
+                                />
+                            )}
                         </div>
                     )}
                 </div>
@@ -212,6 +185,7 @@ LeaveDetailsModal.propTypes = {
     userId: PropTypes.string.isRequired,
     memberName: PropTypes.string,
     onClose: PropTypes.func.isRequired,
+    initialOnLeave: PropTypes.bool
 };
 
 export default LeaveDetailsModal;

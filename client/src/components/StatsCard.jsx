@@ -4,7 +4,7 @@ import '../styles/AnalyticsCharts.css';
 /**
  * Stats Card Component for displaying key metrics
  */
-const StatsCard = ({ icon: Icon, title, value, subtitle, color = 'blue', trend }) => {
+const StatsCard = ({ icon: Icon, title, value, subtitle, color = 'blue', trend, onClick }) => {
     const colorClasses = {
         blue: 'stats-card-blue',
         green: 'stats-card-green',
@@ -15,7 +15,11 @@ const StatsCard = ({ icon: Icon, title, value, subtitle, color = 'blue', trend }
     };
 
     return (
-        <div className={`stats-card ${colorClasses[color]}`}>
+        <div 
+            className={`stats-card ${colorClasses[color]} ${onClick ? 'stats-card-clickable' : ''}`}
+            onClick={onClick}
+            style={onClick ? { cursor: 'pointer' } : {}}
+        >
             <div className="stats-card-header">
                 {Icon && <Icon className="stats-card-icon" />}
                 <h3 className="stats-card-title">{title}</h3>
@@ -40,7 +44,8 @@ StatsCard.propTypes = {
     trend: PropTypes.shape({
         direction: PropTypes.oneOf(['up', 'down']).isRequired,
         value: PropTypes.string.isRequired
-    })
+    }),
+    onClick: PropTypes.func
 };
 
 export default StatsCard;

@@ -326,6 +326,45 @@ exports.getMyApplications = async (req, res) => {
   }
 };
 
+// Get finalized leave history for current user (Approved or Declined only)
+exports.getMyHistory = async (req, res) => {
+  try {
+    const applications = await LeaveRequest.find({
+      employee: req.user.id,
+      status: { $in: ["Approved", "Declined"] }
+    })
+      .populate("backupEmployee", "name email")
+      .populate("alternateEmployees.employee", "name email")
+      .populate("department", "name")
+      .sort({ createdAt: -1 });
+
+    res.json({ applications });
+  } catch (error) {
+    console.error("Get my history error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get finalized leave history for a specific member (HoD/HR access)
+exports.getMemberHistory = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const applications = await LeaveRequest.find({
+      employee: userId,
+      status: { $in: ["Approved", "Declined"] }
+    })
+      .populate("backupEmployee", "name email")
+      .populate("alternateEmployees.employee", "name email")
+      .populate("department", "name")
+      .sort({ createdAt: -1 });
+
+    res.json({ applications });
+  } catch (error) {
+    console.error("Get member history error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 // Get leave history (all applications in user's department)
 exports.getLeaveHistory = async (req, res) => {
   try {
@@ -681,6 +720,16 @@ exports.respondToAlternateRequest = async (req, res) => {
           // At least one alternate has agreed, release application to HoD
           leaveRequest.waitingForAlternate = false;
 
+          // Create history log for the acceptance
+          const historyLog = new LeaveHistoryLog({
+            employee: leaveRequest.employee,
+            leaveRequest: leaveRequest._id,
+            action: "Accepted by Alternate",
+            performedBy: req.user.id,
+            notes: "Alternate employee accepted to cover duties",
+          });
+          await historyLog.save();
+
           // Send email notification to HoD
           try {
             const applicant = await User.findById(leaveRequest.employee).populate('department');
@@ -720,5 +769,85 @@ exports.respondToAlternateRequest = async (req, res) => {
   } catch (error) {
     console.error("Respond to alternate request error:", error);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get filtered leave applications for analytics
+exports.getFilteredApplications = async (req, res) => {
+  try {
+    const { status, period, year, month, departmentId } = req.query;
+    const userRoles = req.user.roles || [];
+
+    // Check if user is HoD or HR
+    if (!userRoles.includes('HoD') && !userRoles.includes('HR')) {
+      return res.status(403).json({ message: 'Access denied. HoD or HR role required.' });
+    }
+
+    // Build filter query
+    const filter = {};
+
+    // Status filter
+    if (status && status !== 'all') {
+      filter.status = status;
+    }
+
+    // Department filter (HR can filter by department, HoD only sees their department)
+    if (userRoles.includes('HoD') && !userRoles.includes('HR')) {
+      // HoD can only see their department
+      const hodUser = await User.findById(req.user.id).populate('department');
+      if (hodUser && hodUser.department) {
+        const departmentUsers = await User.find({ department: hodUser.department._id }).select('_id');
+        filter.employee = { $in: departmentUsers.map(u => u._id) };
+      }
+    } else if (userRoles.includes('HR')) {
+      // HR can filter by department
+      if (departmentId && departmentId !== 'all') {
+        const departmentUsers = await User.find({ department: departmentId }).select('_id');
+        filter.employee = { $in: departmentUsers.map(u => u._id) };
+      }
+    }
+
+    // Date filter based on period
+    if (period && year) {
+      const startYear = parseInt(year);
+      
+      if (period === 'monthly' && month) {
+        const startMonth = parseInt(month);
+        const startDate = new Date(startYear, startMonth - 1, 1);
+        const endDate = new Date(startYear, startMonth, 0, 23, 59, 59);
+        filter.createdAt = { $gte: startDate, $lte: endDate };
+      } else if (period === 'yearly') {
+        const startDate = new Date(startYear, 0, 1);
+        const endDate = new Date(startYear, 11, 31, 23, 59, 59);
+        filter.createdAt = { $gte: startDate, $lte: endDate };
+      }
+    }
+
+    // Fetch applications
+    const applications = await LeaveRequest.find(filter)
+      .populate('employee', 'name email designation department')
+      .populate({
+        path: 'employee',
+        populate: {
+          path: 'department',
+          select: 'name code'
+        }
+      })
+      .sort({ createdAt: -1 })
+      .limit(200); // Limit to prevent too large response
+
+    // Map applications to include userId for frontend compatibility
+    const mappedApplications = applications.map(app => ({
+      ...app.toObject(),
+      userId: app.employee
+    }));
+
+    res.json({
+      applications: mappedApplications,
+      count: applications.length
+    });
+  } catch (error) {
+    console.error('Get filtered applications error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };

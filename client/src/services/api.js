@@ -79,12 +79,15 @@ export const leaveAPI = {
     return api.post('/leaves/apply', data);
   },
   getMyApplications: () => api.get('/leaves/my-applications'),
+  getMyHistory: () => api.get('/leaves/my-history'),
+  getMemberHistory: (userId) => api.get(`/leaves/member-history/${userId}`),
   getLeaveHistory: () => api.get('/leaves/history'),
   getPendingApprovals: () => api.get('/leaves/pending-approvals'),
   updateLeaveStatus: (leaveId, action, remarks) => api.put(`/leaves/${leaveId}/status`, { action, remarks }),
   getLeaveRequestLogs: (leaveId) => api.get(`/leaves/${leaveId}/logs`),
   getAlternateRequests: () => api.get('/leaves/alternate-requests'),
   respondToAlternateRequest: (alternateRequestId, response) => api.put(`/leaves/alternate-requests/${alternateRequestId}/respond`, { response }),
+  getFilteredApplications: (params) => api.get('/leaves/filtered-applications', { params }),
 };
 
 // Leave Quota API

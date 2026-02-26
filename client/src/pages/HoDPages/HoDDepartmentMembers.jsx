@@ -74,10 +74,7 @@ const HoDDepartmentMembers = () => {
   });
 
   const handleMemberClick = (member) => {
-    // Only open modal if member is on leave
-    if (member.currentStatus === 'OnLeave') {
-      setSelectedMember(member);
-    }
+    setSelectedMember(member);
   };
 
   const handleCloseModal = () => {
@@ -172,9 +169,7 @@ const HoDDepartmentMembers = () => {
           <div className="error-state">{error}</div>
         ) : filteredMembers.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">👥</div>
-            <h3>No members found</h3>
-            <p>No department members match your search criteria.</p>
+            <p>No members found</p>
           </div>
         ) : (
           <div className="members-list-wrapper">
@@ -199,7 +194,7 @@ const HoDDepartmentMembers = () => {
                     .map(member => (
                       <tr
                         key={member._id}
-                        className={`${member.currentStatus === 'OnLeave' ? 'on-leave-row clickable-row' : ''}`}
+                        className={`clickable-row ${member.currentStatus === 'OnLeave' ? 'on-leave-row' : ''}`}
                         onClick={() => handleMemberClick(member)}
                       >
                         <td className="member-name-cell">
@@ -246,6 +241,7 @@ const HoDDepartmentMembers = () => {
         <LeaveDetailsModal
           userId={selectedMember._id}
           memberName={selectedMember.name}
+          initialOnLeave={selectedMember.currentStatus === 'OnLeave'}
           onClose={handleCloseModal}
         />
       )}

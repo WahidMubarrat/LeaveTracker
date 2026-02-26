@@ -96,6 +96,21 @@
 
 .department-section {
   margin-top: 32px;
+  animation: expandSection 0.3s ease-out;
+  overflow: hidden;
+}
+
+@keyframes expandSection {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 5000px;
+  }
 }
 
 .department-title {
@@ -112,6 +127,204 @@
   padding: 48px 20px;
   color: #666;
   font-size: 16px;
+}
+
+/* Filter Section */
+.filter-section {
+  margin-bottom: 24px;
+}
+
+.search-box {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  color: #999;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 12px 12px 44px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 15px;
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.designation-filters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 8px 16px;
+  border: 2px solid #e0e0e0;
+  background: white;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #666;
+}
+
+.filter-btn:hover {
+  border-color: #28a745;
+  color: #28a745;
+  transform: translateY(-2px);
+}
+
+.filter-btn.active {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  border-color: #28a745;
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+/* Members List Layout */
+.members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.member-list-item {
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: all 0.3s ease;
+}
+
+.member-list-item:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #667eea;
+}
+
+.member-avatar-small {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid #e0e0e0;
+  flex-shrink: 0;
+}
+
+.member-avatar-small img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-placeholder-small {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.member-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.member-main-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.member-name-list {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.member-designation-list {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+
+.member-email-list {
+  margin: 0;
+  font-size: 13px;
+  color: #888;
+}
+
+.hod-badge-small {
+  display: inline-block;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.assign-btn-list {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  min-width: 140px;
+}
+
+.assign-btn-list.assign {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.assign-btn-list.assign:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.assign-btn-list.remove {
+  background: #f44336;
+  color: white;
+}
+
+.assign-btn-list.remove:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+}
+
+.assign-btn-list:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .members-grid {
@@ -270,10 +483,45 @@
     padding: 16px 18px;
     font-size: 16px;
   }
+
+  .member-list-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .member-details {
+    width: 100%;
+  }
+
+  .assign-btn-list {
+    width: 100%;
+  }
+
+  .designation-filters {
+    gap: 8px;
+  }
+
+  .filter-btn {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
 }
 
 @media (max-width: 480px) {
   .department-buttons {
     grid-template-columns: 1fr;
+  }
+
+  .member-name-list {
+    font-size: 16px;
+  }
+
+  .member-designation-list {
+    font-size: 13px;
+  }
+
+  .member-email-list {
+    font-size: 12px;
   }
 }

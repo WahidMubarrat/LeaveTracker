@@ -14,10 +14,20 @@ router.post("/apply", authMiddleware, upload.single('leaveDocument'), leaveContr
 // @access  Private
 router.get("/my-applications", authMiddleware, leaveController.getMyApplications);
 
+// @route   GET /api/leaves/my-history
+// @desc    Get finalized leave history for current user (Approved/Declined)
+// @access  Private
+router.get("/my-history", authMiddleware, leaveController.getMyHistory);
+
 // @route   GET /api/leaves/history
 // @desc    Get leave history (all applications in department)
 // @access  Private
 router.get("/history", authMiddleware, leaveController.getLeaveHistory);
+
+// @route   GET /api/leaves/member-history/:userId
+// @desc    Get finalized leave history for a specific member
+// @access  Private (HoD, HR only)
+router.get("/member-history/:userId", authMiddleware, leaveController.getMemberHistory);
 
 // @route   GET /api/leaves/pending-approvals
 // @desc    Get pending approvals (for HoD and HR)
@@ -43,5 +53,10 @@ router.get("/alternate-requests", authMiddleware, leaveController.getAlternateRe
 // @desc    Respond to alternate request (ok or sorry)
 // @access  Private
 router.put("/alternate-requests/:alternateRequestId/respond", authMiddleware, leaveController.respondToAlternateRequest);
+
+// @route   GET /api/leaves/filtered-applications
+// @desc    Get filtered leave applications for analytics
+// @access  Private (HoD, HR only)
+router.get("/filtered-applications", authMiddleware, leaveController.getFilteredApplications);
 
 module.exports = router;

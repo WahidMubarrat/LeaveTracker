@@ -92,7 +92,7 @@ const HRDashboard = () => {
                     <div className="dashboard-main-sections">
                         <div className="pie-charts-container">
                             <div className="pie-chart-section">
-                                <h2 className="chart-title">Total Employee</h2>
+                                <h2 className="chart-title">Total Members</h2>
                                 <div className="pie-chart-wrapper">
                                     <div
                                         className="pie-chart"
@@ -109,6 +109,9 @@ const HRDashboard = () => {
                                         </div>
                                     </div>
                                     <div className="pie-legend">
+                                        <div className="legend-item legend-item-total">
+                                            <span className="legend-label legend-label-total">Total Members: {stats.memberStats.totalMembers}</span>
+                                        </div>
                                         <div className="legend-item">
                                             <span className="legend-color" style={{ backgroundColor: '#10b981' }}></span>
                                             <span className="legend-label">Active: {stats.memberStats.activeMembers}</span>

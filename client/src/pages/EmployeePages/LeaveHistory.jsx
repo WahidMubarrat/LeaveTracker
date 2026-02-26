@@ -1,121 +1,93 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '../../components/Layout';
-import { MdFilterList, MdCheckCircle, MdCancel, MdPending, MdCalendarToday, MdEvent } from 'react-icons/md';
+import { leaveAPI } from '../../services/api';
 import '../../styles/LeaveHistory.css';
 
 const LeaveHistory = () => {
+  const [applications, setApplications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
   const [filterType, setFilterType] = useState('All');
+  const [expandedId, setExpandedId] = useState(null);
 
-  // Dummy data
-  const dummyHistory = [
-    {
-      id: 1,
-      leaveType: 'Annual',
-      applicationDate: '2026-01-10',
-      startDate: '2026-01-15',
-      endDate: '2026-01-19',
-      numberOfDays: 5,
-      reason: 'Family vacation',
-      status: 'Approved',
-      approvedBy: 'Dr. Md. Hasanul Kabir',
-      approvedDate: '2026-01-11'
-    },
-    {
-      id: 2,
-      leaveType: 'Casual',
-      applicationDate: '2026-01-05',
-      startDate: '2026-01-08',
-      endDate: '2026-01-09',
-      numberOfDays: 2,
-      reason: 'Personal work',
-      status: 'Approved',
-      approvedBy: 'Dr. Md. Hasanul Kabir',
-      approvedDate: '2026-01-06'
-    },
-    {
-      id: 3,
-      leaveType: 'Annual',
-      applicationDate: '2025-12-20',
-      startDate: '2025-12-25',
-      endDate: '2025-12-29',
-      numberOfDays: 5,
-      reason: 'Holiday trip',
-      status: 'Approved',
-      approvedBy: 'Dr. Md. Hasanul Kabir',
-      approvedDate: '2025-12-21'
-    },
-    {
-      id: 4,
-      leaveType: 'Casual',
-      applicationDate: '2025-12-15',
-      startDate: '2025-12-18',
-      endDate: '2025-12-18',
-      numberOfDays: 1,
-      reason: 'Doctor appointment',
-      status: 'Declined',
-      approvedBy: 'Dr. Md. Hasanul Kabir',
-      approvedDate: '2025-12-16',
-      remarks: 'Please reschedule to a less busy period'
-    },
-    {
-      id: 5,
-      leaveType: 'Annual',
-      applicationDate: '2025-11-28',
-      startDate: '2025-12-02',
-      endDate: '2025-12-06',
-      numberOfDays: 5,
-      reason: 'Attending conference',
-      status: 'Approved',
-      approvedBy: 'Dr. Md. Hasanul Kabir',
-      approvedDate: '2025-11-29'
-    },
-    {
-      id: 6,
-      leaveType: 'Casual',
-      applicationDate: '2025-11-10',
-      startDate: '2025-11-15',
-      endDate: '2025-11-16',
-      numberOfDays: 2,
-      reason: 'Family emergency',
-      status: 'Approved',
-      approvedBy: 'Dr. Md. Hasanul Kabir',
-      approvedDate: '2025-11-11'
-    },
-    {
-      id: 7,
-      leaveType: 'Annual',
-      applicationDate: '2025-10-20',
-      startDate: '2025-10-25',
-      endDate: '2025-10-27',
-      numberOfDays: 3,
-      reason: 'Personal travel',
-      status: 'Approved',
-      approvedBy: 'Dr. Md. Hasanul Kabir',
-      approvedDate: '2025-10-21'
+  useEffect(() => {
+    fetchHistory();
+  }, []);
+
+  const fetchHistory = async () => {
+    try {
+      setLoading(true);
+      const response = await leaveAPI.getMyHistory();
+      const apps = response.data.applications || [];
+
+      // Sort by application date - latest first
+      const sortedApps = apps.sort((a, b) => {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
+
+      setApplications(sortedApps);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to fetch leave history');
+      console.error('Error fetching leave history:', err);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
-  const filteredHistory = dummyHistory.filter(leave => {
-    const matchesStatus = filterStatus === 'All' || leave.status === filterStatus;
-    const matchesType = filterType === 'All' || leave.leaveType === filterType;
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const handleToggleExpand = (id) => {
+    setExpandedId(expandedId === id ? null : id);
+  };
+
+  const filteredHistory = applications.filter(app => {
+    const matchesStatus = filterStatus === 'All' || app.status === filterStatus;
+    const matchesType = filterType === 'All' || app.type === filterType;
     return matchesStatus && matchesType;
   });
 
   const stats = {
-    total: dummyHistory.length,
-    approved: dummyHistory.filter(l => l.status === 'Approved').length,
-    declined: dummyHistory.filter(l => l.status === 'Declined').length,
-    totalDays: dummyHistory.filter(l => l.status === 'Approved').reduce((sum, l) => sum + l.numberOfDays, 0)
+    total: applications.length,
+    approved: applications.filter(a => a.status === 'Approved').length,
+    declined: applications.filter(a => a.status === 'Declined').length,
+    totalDays: applications
+      .filter(a => a.status === 'Approved')
+      .reduce((sum, a) => sum + (a.numberOfDays || 0), 0)
   };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="history-container">
+          <div className="history-header">
+            <h1>Leave History</h1>
+            <p className="history-subtitle">Loading your leave history...</p>
+          </div>
+          <div className="history-loading-spinner">
+            <div className="spinner"></div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
       <div className="history-container">
         <div className="history-header">
           <h1>Leave History</h1>
-          <p className="history-subtitle">View all your past leave applications</p>
+          <p className="history-subtitle">View all your approved and declined leave applications</p>
         </div>
+
+        {error && <div className="history-error">{error}</div>}
 
         <div className="history-stats">
           <div className="stat-box">
@@ -149,7 +121,7 @@ const LeaveHistory = () => {
         </div>
 
         <div className="history-filters">
-          <select 
+          <select
             className="filter-select"
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
@@ -158,7 +130,7 @@ const LeaveHistory = () => {
             <option value="Approved">Approved</option>
             <option value="Declined">Declined</option>
           </select>
-          <select 
+          <select
             className="filter-select"
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
@@ -172,68 +144,164 @@ const LeaveHistory = () => {
         <div className="history-list">
           {filteredHistory.length === 0 ? (
             <div className="history-empty">
-              <div className="empty-icon">📭</div>
               <p>No leave history found</p>
-              <p className="empty-subtitle">Try adjusting your filters</p>
             </div>
           ) : (
-            filteredHistory.map(leave => (
-              <div key={leave.id} className="history-card">
-                <div className="history-card-header">
-                  <div className="leave-info">
-                    <span className={`leave-type-badge type-${leave.leaveType.toLowerCase()}`}>
-                      {leave.leaveType}
-                    </span>
-                    <span className={`status-badge-history status-${leave.status.toLowerCase()}`}>
-                      {leave.status}
-                    </span>
-                  </div>
-                  <div className="history-actions">
-                    <div className="leave-dates">
-                      {new Date(leave.startDate).toLocaleDateString()} - {new Date(leave.endDate).toLocaleDateString()}
+            filteredHistory.map(app => (
+              <div
+                key={app._id}
+                className={`history-card ${expandedId === app._id ? 'expanded' : ''}`}
+              >
+                {/* Clickable Summary Row */}
+                <div
+                  className="history-card-header"
+                  onClick={() => handleToggleExpand(app._id)}
+                >
+                  <div className="header-left">
+                    <div className="leave-info">
+                      <span className={`leave-type-badge type-${app.type.toLowerCase()}`}>
+                        {app.type}
+                      </span>
+                      <span className={`status-badge-history status-${app.status.toLowerCase()}`}>
+                        {app.status}
+                      </span>
                     </div>
-                    <button
-                      type="button"
-                      className="history-delete-btn"
-                      onClick={(e) => e.preventDefault()}
-                      aria-label="Delete (dummy button)"
-                    >
-                      Delete
-                    </button>
+                    <div className="leave-dates-summary">
+                      <span className="calendar-icon">📅</span>
+                      {formatDate(app.startDate)} — {formatDate(app.endDate)}
+                      <span className="days-tag">{app.numberOfDays} days</span>
+                    </div>
+                  </div>
+
+                  <div className="header-right">
+                    <div className="application-date-minimal">
+                      Applied {formatDate(app.applicationDate)}
+                    </div>
+                    <span className={`expand-icon ${expandedId === app._id ? 'rotated' : ''}`}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
+                    </span>
                   </div>
                 </div>
 
-                <div className="history-card-body">
-                  <div className="history-detail">
-                    <span className="detail-label">Duration:</span>
-                    <span className="detail-value">{leave.numberOfDays} day{leave.numberOfDays > 1 ? 's' : ''}</span>
-                  </div>
-                  <div className="history-detail">
-                    <span className="detail-label">Application Date:</span>
-                    <span className="detail-value">{new Date(leave.applicationDate).toLocaleDateString()}</span>
-                  </div>
-                  <div className="history-detail">
-                    <span className="detail-label">Reason:</span>
-                    <span className="detail-value">{leave.reason}</span>
-                  </div>
-                  {leave.status === 'Approved' && (
-                    <>
-                      <div className="history-detail">
-                        <span className="detail-label">Approved By:</span>
-                        <span className="detail-value">{leave.approvedBy}</span>
-                      </div>
-                      <div className="history-detail">
-                        <span className="detail-label">Approved Date:</span>
-                        <span className="detail-value">{new Date(leave.approvedDate).toLocaleDateString()}</span>
-                      </div>
-                    </>
-                  )}
-                  {leave.status === 'Declined' && leave.remarks && (
-                    <div className="history-detail remarks">
-                      <span className="detail-label">Remarks:</span>
-                      <span className="detail-value">{leave.remarks}</span>
+                {/* Expandable Detail Section - Form Style */}
+                <div className={`history-card-body ${expandedId === app._id ? 'visible' : ''}`}>
+                  <div className="form-container">
+                    <div className="form-header-banner">
+                      <span className="form-title">LEAVE APPLICATION FORM</span>
                     </div>
-                  )}
+
+                    <div className="form-section">
+                      <h4 className="section-title">Employee Information</h4>
+                      <div className="form-grid">
+                        <div className="form-field">
+                          <label>Applicant Name</label>
+                          <div className="value">{app.applicantName || 'N/A'}</div>
+                        </div>
+                        <div className="form-field">
+                          <label>Designation</label>
+                          <div className="value">{app.applicantDesignation || 'N/A'}</div>
+                        </div>
+                        <div className="form-field">
+                          <label>Department</label>
+                          <div className="value">{app.departmentName || app.department?.name || 'N/A'}</div>
+                        </div>
+                        <div className="form-field">
+                          <label>Submission Date</label>
+                          <div className="value">{formatDate(app.createdAt)}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="form-section">
+                      <h4 className="section-title">Leave Details</h4>
+                      <div className="form-grid">
+                        <div className="form-field">
+                          <label>Type of Leave</label>
+                          <div className="value highlight-text">{app.type} Leave</div>
+                        </div>
+                        <div className="form-field">
+                          <label>Total Duration</label>
+                          <div className="value">{app.numberOfDays} Day(s)</div>
+                        </div>
+                        <div className="form-field">
+                          <label>Start Date</label>
+                          <div className="value">{formatDate(app.startDate)}</div>
+                        </div>
+                        <div className="form-field">
+                          <label>End Date</label>
+                          <div className="value">{formatDate(app.endDate)}</div>
+                        </div>
+                      </div>
+                      <div className="form-field full-width">
+                        <label>Purpose / Reason for Leave</label>
+                        <div className="value reason-box">{app.reason || 'No reason provided'}</div>
+                      </div>
+                    </div>
+
+                    {app.alternateEmployees && app.alternateEmployees.length > 0 && (
+                      <div className="form-section">
+                        <h4 className="section-title">Work Coverage Plan (Alternate Employees)</h4>
+                        <div className="alternate-form-list">
+                          {app.alternateEmployees.map((alt, index) => (
+                            <div key={index} className="alternate-form-row">
+                              <span className="alt-label">Alternate {index + 1}:</span>
+                              <span className="alt-value">{alt.employee?.name || 'Unknown'}</span>
+                              <span className="alt-period">({formatDate(alt.startDate)} - {formatDate(alt.endDate)})</span>
+                              <span className={`alt-status-tag ${alt.response}`}>
+                                {alt.response === 'ok' ? 'CONSENTED' : alt.response === 'sorry' ? 'DECLINED' : 'PENDING'}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {app.leaveDocument && (
+                      <div className="form-section">
+                        <h4 className="section-title">Supporting Documents</h4>
+                        <div className="form-document-box">
+                          <img src={app.leaveDocument} alt="Leave Document" />
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="form-section approval-section">
+                      <h4 className="section-title">Official Review & Status</h4>
+                      <div className="approval-grid">
+                        <div className="approval-column">
+                          <div className="form-field">
+                            <label>HOD Status</label>
+                            <div className={`value ${app.status === 'Approved' || app.approvedByHoD ? 'status-text-approved' : 'status-text-declined'}`}>
+                              {app.status === 'Approved' || app.approvedByHoD ? 'Approved' : 'Declined'}
+                            </div>
+                          </div>
+                          {app.hodRemarks && (
+                            <div className="form-field remarks-field">
+                              <label>HOD Remarks</label>
+                              <div className="value-remarks">{app.hodRemarks}</div>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="approval-column">
+                          <div className="form-field">
+                            <label>HR Status</label>
+                            <div className={`value ${app.status === 'Approved' ? 'status-text-approved' : 'status-text-declined'}`}>
+                              {app.status === 'Approved' ? 'Approved' : 'Declined'}
+                            </div>
+                          </div>
+                          {app.hrRemarks && (
+                            <div className="form-field remarks-field">
+                              <label>HR Remarks</label>
+                              <div className="value-remarks">{app.hrRemarks}</div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))
