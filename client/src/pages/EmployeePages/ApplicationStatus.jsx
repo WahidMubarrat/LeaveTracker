@@ -19,8 +19,11 @@ const ApplicationStatus = () => {
       const response = await leaveAPI.getMyApplications();
       const apps = response.data.applications || [];
 
+      // Only show pending applications (not yet finalized)
+      const pendingApps = apps.filter(app => app.status === 'Pending');
+
       // Sort by application date - latest first
-      const sortedApps = apps.sort((a, b) => {
+      const sortedApps = pendingApps.sort((a, b) => {
         return new Date(b.applicationDate) - new Date(a.applicationDate);
       });
 
@@ -116,7 +119,7 @@ const ApplicationStatus = () => {
       <div className="status-container">
         <div className="status-header">
           <h1>Application Status</h1>
-          <p className="status-subtitle">Track the status of your leave applications</p>
+          <p className="status-subtitle">Track the status of your pending leave applications</p>
         </div>
 
         {error && <div className="status-error">{error}</div>}
@@ -124,8 +127,8 @@ const ApplicationStatus = () => {
         {applications.length === 0 ? (
           <div className="status-placeholder">
             <div className="placeholder-icon">📋</div>
-            <h2>No Applications Found</h2>
-            <p>You haven't submitted any leave applications yet.</p>
+            <h2>No Pending Applications</h2>
+            <p>You don't have any pending leave applications right now.</p>
           </div>
         ) : (
           <div className="applications-list">

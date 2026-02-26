@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import HRLayout from '../../components/HRLayout';
 import { leaveAPI } from '../../services/api';
+import LeaveApplicationForm from '../../components/LeaveApplicationForm';
+import { MdCheckCircle, MdCancel, MdCalendarToday, MdExpandMore } from 'react-icons/md';
 import '../../styles/ReviewApplication.css';
 
 const ReviewApplication = () => {
@@ -12,6 +14,7 @@ const ReviewApplication = () => {
   const [showModal, setShowModal] = useState(false);
   const [actionType, setActionType] = useState(''); // 'approve' or 'decline'
   const [error, setError] = useState('');
+  const [expandedId, setExpandedId] = useState(null);
 
   useEffect(() => {
     fetchApplications();
@@ -31,7 +34,8 @@ const ReviewApplication = () => {
     }
   };
 
-  const handleActionClick = (request, action) => {
+  const handleActionClick = (e, request, action) => {
+    e.stopPropagation(); // Avoid card expansion
     setSelectedRequest(request);
     setActionType(action);
     setRemarks('');
@@ -61,18 +65,8 @@ const ReviewApplication = () => {
     }
   };
 
-  const getStatusClass = (application) => {
-    if (application.status === 'Declined') return 'status-declined';
-    if (application.approvedByHR && application.status === 'Approved') return 'status-approved';
-    if (application.approvedByHoD) return 'status-pending-hr';
-    return 'status-pending';
-  };
-
-  const getStatusText = (application) => {
-    if (application.status === 'Declined') return 'Declined';
-    if (application.approvedByHR && application.status === 'Approved') return 'Approved';
-    if (application.approvedByHoD) return 'Pending HR Review';
-    return 'Pending';
+  const toggleExpand = (id) => {
+    setExpandedId(expandedId === id ? null : id);
   };
 
   const formatDate = (dateString) => {
@@ -94,140 +88,99 @@ const ReviewApplication = () => {
 
         {error && <div className="error-message">{error}</div>}
 
-        <div className="review-content">
+        <div className="review-content-wrapper">
           {loading ? (
-            <div className="loading-state">Loading applications...</div>
+            <div className="loading-state">
+              <div className="loading-spinner"></div>
+              <p>Loading applications...</p>
+            </div>
           ) : applications.filter(app => app.approvedByHoD && !app.approvedByHR && app.status === 'Pending').length === 0 ? (
-            <div className="applications-list">
-              <div className="empty-state">
-                <div className="empty-icon">📋</div>
-                <h3>No Applications</h3>
-                <p>There are no leave applications awaiting your review at the moment</p>
-              </div>
+            <div className="empty-state">
+              <p>No Applications</p>
             </div>
           ) : (
             <div className="applications-list">
               {applications
                 .filter(app => app.approvedByHoD && !app.approvedByHR && app.status === 'Pending')
                 .map(application => (
-                  <div key={application._id} className="application-card">
-                    <div className="application-header">
-                      <div className="applicant-info">
-                        <h3>{application.employee?.name || application.applicantName || 'N/A'}</h3>
-                        <p className="applicant-email">{application.employee?.email || 'N/A'}</p>
+                  <div
+                    key={application._id}
+                    className={`application-list-card ${expandedId === application._id ? 'expanded' : ''}`}
+                  >
+                    <div className="card-header" onClick={() => toggleExpand(application._id)}>
+                      <div className="card-main-info">
+                        <div className="applicant-primary">
+                          <div className="applicant-avatar">
+                            {application.employee?.profilePic ? (
+                              <img src={application.employee.profilePic} alt={application.employee.name} />
+                            ) : (
+                              <span>{(application.employee?.name || application.applicantName || '?')[0].toUpperCase()}</span>
+                            )}
+                          </div>
+                          <div className="applicant-text">
+                            <span className="applicant-name">{application.employee?.name || application.applicantName || 'N/A'}</span>
+                            <span className="applicant-dept">{application.applicantDesignation || 'N/A'}</span>
+                          </div>
+                        </div>
+
+                        <div className="leave-summary">
+                          <span className="leave-type-tag">{application.type} Leave</span>
+                          <span className="leave-duration">{application.numberOfDays} Day(s)</span>
+                        </div>
+
+                        <div className="leave-dates">
+                          <MdCalendarToday />
+                          <span>{formatDate(application.startDate)} — {formatDate(application.endDate)}</span>
+                        </div>
                       </div>
-                      <span className={`application-status ${getStatusClass(application)}`}>
-                        {getStatusText(application)}
-                      </span>
+
+                      <div className="card-status-actions">
+                        <div className="quick-actions">
+                          <button
+                            className="quick-btn approve"
+                            onClick={(e) => handleActionClick(e, application, 'approve')}
+                            title="Quick Approve"
+                          >
+                            <MdCheckCircle />
+                          </button>
+                          <button
+                            className="quick-btn reject"
+                            onClick={(e) => handleActionClick(e, application, 'decline')}
+                            title="Quick Decline"
+                          >
+                            <MdCancel />
+                          </button>
+                        </div>
+                        <MdExpandMore className={`expand-icon ${expandedId === application._id ? 'rotated' : ''}`} />
+                      </div>
                     </div>
 
-                    <div className="application-details">
-                      <div className="detail-row">
-                        <span className="detail-label">Designation:</span>
-                        <span className="detail-value">{application.applicantDesignation || 'N/A'}</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="detail-label">Department:</span>
-                        <span className="detail-value">
-                          {application.departmentName || application.department?.name || 'N/A'}
-                        </span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="detail-label">Leave Type:</span>
-                        <span className="detail-value">{application.type || 'N/A'}</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="detail-label">Number of Days:</span>
-                        <span className="detail-value">{application.numberOfDays || 'N/A'} day(s)</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="detail-label">Start Date:</span>
-                        <span className="detail-value">{formatDate(application.startDate)}</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="detail-label">End Date:</span>
-                        <span className="detail-value">{formatDate(application.endDate)}</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="detail-label">Purpose:</span>
-                        <span className="detail-value">{application.reason || 'N/A'}</span>
-                      </div>
-                      {application.leaveDocument && (
-                        <div className="detail-row">
-                          <span className="detail-label">Leave Document:</span>
-                          <span className="detail-value">
-                            <img
-                              src={application.leaveDocument}
-                              alt="Leave document"
-                              style={{ maxWidth: '300px', maxHeight: '300px', borderRadius: '8px', marginTop: '0.5rem' }}
-                            />
-                          </span>
+                    {expandedId === application._id && (
+                      <div className="card-expanded-content">
+                        <div className="form-wrapper">
+                          <LeaveApplicationForm
+                            leaveDetails={application}
+                            formatDate={formatDate}
+                            showHeader={false}
+                          />
                         </div>
-                      )}
-                      {application.alternateEmployees && application.alternateEmployees.length > 0 ? (
-                        <div className="detail-row">
-                          <span className="detail-label">Alternate Employees:</span>
-                          <span className="detail-value">
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
-                              {application.alternateEmployees.map((alt, index) => (
-                                <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                  <span>{alt.employee?.name || 'Unknown'}</span>
-                                  <span style={{
-                                    padding: '0.25rem 0.5rem',
-                                    borderRadius: '4px',
-                                    fontSize: '0.85rem',
-                                    backgroundColor: alt.response === 'ok' ? '#d4edda' : alt.response === 'sorry' ? '#f8d7da' : '#fff3cd',
-                                    color: alt.response === 'ok' ? '#155724' : alt.response === 'sorry' ? '#721c24' : '#856404'
-                                  }}>
-                                    {alt.response === 'ok' ? '✓ OK' : alt.response === 'sorry' ? '✗ Sorry' : '⏳ Pending'}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          </span>
-                        </div>
-                      ) : application.backupEmployee && (
-                        <div className="detail-row">
-                          <span className="detail-label">Alternate Employee:</span>
-                          <span className="detail-value">
-                            {application.backupEmployee.name || 'N/A'}
-                          </span>
-                        </div>
-                      )}
-                      <div className="detail-row">
-                        <span className="detail-label">Application Date:</span>
-                        <span className="detail-value">{formatDate(application.applicationDate)}</span>
-                      </div>
-                      {application.hodRemarks && (
-                        <div className="detail-row remarks">
-                          <span className="detail-label">HoD Remarks:</span>
-                          <span className="detail-value">{application.hodRemarks}</span>
-                        </div>
-                      )}
-                      {application.hrRemarks && (
-                        <div className="detail-row remarks">
-                          <span className="detail-label">Your Remarks:</span>
-                          <span className="detail-value">{application.hrRemarks}</span>
-                        </div>
-                      )}
-                    </div>
 
-                    {application.approvedByHoD && !application.approvedByHR && application.status === 'Pending' && (
-                      <div className="application-actions">
-                        <button
-                          className="approve-btn"
-                          onClick={() => handleActionClick(application, 'approve')}
-                          disabled={processingRequestId === application._id}
-                        >
-                          {processingRequestId === application._id ? 'Processing...' : '✓ Approve'}
-                        </button>
-                        <button
-                          className="reject-btn"
-                          onClick={() => handleActionClick(application, 'decline')}
-                          disabled={processingRequestId === application._id}
-                        >
-                          {processingRequestId === application._id ? 'Processing...' : '✗ Decline'}
-                        </button>
+                        <div className="expanded-actions">
+                          <button
+                            className="action-btn decline"
+                            onClick={(e) => handleActionClick(e, application, 'decline')}
+                            disabled={processingRequestId === application._id}
+                          >
+                            Decline Application
+                          </button>
+                          <button
+                            className="action-btn approve"
+                            onClick={(e) => handleActionClick(e, application, 'approve')}
+                            disabled={processingRequestId === application._id}
+                          >
+                            {processingRequestId === application._id ? 'Processing...' : 'Approve Application'}
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>

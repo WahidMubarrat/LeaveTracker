@@ -1,0 +1,258 @@
+/* Analytics History Modal */
+.analytics-history-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+}
+
+.analytics-history-modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 900px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.analytics-history-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.analytics-history-modal-header h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #333;
+}
+
+.analytics-history-modal-close {
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: #666;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  border-radius: 4px;
+}
+
+.analytics-history-modal-close:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.analytics-history-modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.analytics-history-loading,
+.analytics-history-error,
+.analytics-history-empty {
+  text-align: center;
+  padding: 40px 20px;
+  font-size: 16px;
+  color: #666;
+}
+
+.analytics-history-error {
+  color: #e74c3c;
+}
+
+.analytics-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* History Card */
+.analytics-history-card {
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.analytics-history-card.expanded {
+  border-color: #28a745;
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.15);
+}
+
+.analytics-history-header {
+  padding: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  transition: background 0.2s;
+}
+
+.analytics-history-header:hover {
+  background: #f9f9f9;
+}
+
+.analytics-history-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.analytics-history-employee {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.analytics-employee-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.analytics-employee-dept {
+  font-size: 14px;
+  color: #666;
+  padding: 4px 10px;
+  background: #f0f0f0;
+  border-radius: 12px;
+}
+
+.analytics-history-info {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.analytics-type-badge,
+.analytics-status-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.analytics-type-badge {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.analytics-type-badge.type-casual {
+  background: #e8f5e9;
+  color: #388e3c;
+}
+
+.analytics-type-badge.type-annual {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.analytics-status-badge.status-approved {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.analytics-status-badge.status-declined {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.analytics-status-badge.status-pending {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.analytics-history-dates {
+  font-size: 15px;
+  color: #555;
+  font-weight: 500;
+}
+
+.analytics-days {
+  margin-left: 8px;
+  color: #999;
+  font-weight: normal;
+}
+
+.analytics-expand-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  transition: transform 0.3s ease;
+}
+
+.analytics-expand-icon.rotated {
+  transform: rotate(180deg);
+}
+
+.analytics-history-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.analytics-history-body.visible {
+  max-height: 2000px;
+  border-top: 2px solid #f0f0f0;
+}
+
+.analytics-embedded-form-wrapper {
+  padding: 16px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .analytics-history-modal-content {
+    max-width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .analytics-history-modal-header {
+    padding: 16px;
+  }
+
+  .analytics-history-modal-header h2 {
+    font-size: 20px;
+  }
+
+  .analytics-history-modal-body {
+    padding: 16px;
+  }
+
+  .analytics-employee-name {
+    font-size: 16px;
+  }
+
+  .analytics-history-dates {
+    font-size: 14px;
+  }
+}
+
+/* No-print class */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}

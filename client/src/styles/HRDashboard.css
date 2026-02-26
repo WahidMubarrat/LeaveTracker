@@ -190,7 +190,7 @@
 /* Dashboard Sections Layout */
 .pie-charts-container {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 2rem;
     margin-bottom: 2rem;
 }
@@ -202,7 +202,6 @@
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
     display: flex;
     flex-direction: column;
-    align-items: center;
 }
 
 /* Notification Component Styling */
@@ -313,9 +312,10 @@
 
 .pie-chart-wrapper {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 2rem;
+    justify-content: center;
+    gap: 4rem;
     width: 100%;
 }
 
@@ -328,6 +328,7 @@
     align-items: center;
     justify-content: center;
     box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.05);
+    flex-shrink: 0;
 }
 
 .pie-chart-center {
@@ -360,7 +361,9 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    width: 100%;
+    flex: 0 1 auto;
+    min-width: 250px;
+    justify-content: center;
 }
 
 .legend-item {
@@ -389,10 +392,35 @@
     font-size: 0.95rem;
 }
 
+.legend-item-total {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border: none;
+}
+
+.legend-item-total:hover {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+}
+
+.legend-label-total {
+    color: white;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
 /* Responsive Overrides */
 @media (max-width: 1024px) {
     .pie-charts-container {
         grid-template-columns: 1fr;
+    }
+
+    .pie-chart-wrapper {
+        flex-direction: column;
+        align-items: center;
+        gap: 2rem;
+    }
+
+    .pie-legend {
+        width: 100%;
     }
 }
 

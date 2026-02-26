@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import HoDLayout from '../../components/HoDLayout';
 import RoleToggle from '../../components/RoleToggle';
 import { leaveAPI } from '../../services/api';
-import { MdCheckCircle, MdCancel, MdFilterList, MdCalendarToday, MdPerson, MdEvent } from 'react-icons/md';
+import LeaveApplicationForm from '../../components/LeaveApplicationForm';
+import { MdCheckCircle, MdCancel, MdFilterList, MdCalendarToday, MdPerson, MdEvent, MdExpandMore } from 'react-icons/md';
 import '../../styles/HoDPendingRequests.css';
 
 const HoDPendingRequests = () => {
@@ -14,6 +15,7 @@ const HoDPendingRequests = () => {
   const [showModal, setShowModal] = useState(false);
   const [actionType, setActionType] = useState(''); // 'approve' or 'decline'
   const [error, setError] = useState('');
+  const [expandedId, setExpandedId] = useState(null);
 
   useEffect(() => {
     fetchPendingRequests();
@@ -33,7 +35,8 @@ const HoDPendingRequests = () => {
     }
   };
 
-  const handleActionClick = (request, action) => {
+  const handleActionClick = (e, request, action) => {
+    e.stopPropagation(); // Prevent card expansion when clicking buttons
     setSelectedRequest(request);
     setActionType(action);
     setRemarks('');
@@ -63,16 +66,8 @@ const HoDPendingRequests = () => {
     }
   };
 
-  const getStatusClass = (request) => {
-    if (request.status === 'Declined') return 'status-declined';
-    if (request.approvedByHoD) return 'status-approved';
-    return 'status-pending';
-  };
-
-  const getStatusText = (request) => {
-    if (request.status === 'Declined') return 'Declined';
-    if (request.approvedByHoD) return 'Approved by HoD';
-    return 'Pending';
+  const toggleExpand = (id) => {
+    setExpandedId(expandedId === id ? null : id);
   };
 
   const formatDate = (dateString) => {
@@ -97,130 +92,97 @@ const HoDPendingRequests = () => {
         {error && <div className="error-message">{error}</div>}
 
         {loading ? (
-          <div className="loading-state">Loading requests...</div>
+          <div className="loading-state">
+            <div className="loading-spinner"></div>
+            <p>Loading requests...</p>
+          </div>
         ) : requests.filter(req => !req.approvedByHoD && req.status === 'Pending').length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">📋</div>
-            <h3>No pending requests</h3>
-            <p>You have no leave requests awaiting your approval at the moment.</p>
+            <p>No pending requests</p>
           </div>
         ) : (
-          <div className="requests-grid">
+          <div className="requests-list">
             {requests
               .filter(req => !req.approvedByHoD && req.status === 'Pending')
               .map(request => (
-                <div key={request._id} className="request-card">
-                  <div className="request-header">
-                    <div className="employee-info">
-                      <h3>{request.employee?.name || request.applicantName || 'N/A'}</h3>
-                      <p className="employee-email">{request.employee?.email || 'N/A'}</p>
+                <div
+                  key={request._id}
+                  className={`request-list-card ${expandedId === request._id ? 'expanded' : ''}`}
+                >
+                  <div className="card-header" onClick={() => toggleExpand(request._id)}>
+                    <div className="card-main-info">
+                      <div className="applicant-primary">
+                        <div className="applicant-avatar">
+                          {request.employee?.profilePic ? (
+                            <img src={request.employee.profilePic} alt={request.employee.name} />
+                          ) : (
+                            <span>{(request.employee?.name || request.applicantName || '?')[0].toUpperCase()}</span>
+                          )}
+                        </div>
+                        <div className="applicant-text">
+                          <span className="applicant-name">{request.employee?.name || request.applicantName || 'N/A'}</span>
+                          <span className="applicant-dept">{request.applicantDesignation || 'N/A'}</span>
+                        </div>
+                      </div>
+
+                      <div className="leave-summary">
+                        <span className="leave-type-tag">{request.type} Leave</span>
+                        <span className="leave-duration">{request.numberOfDays} Day(s)</span>
+                      </div>
+
+                      <div className="leave-dates">
+                        <MdCalendarToday />
+                        <span>{formatDate(request.startDate)} — {formatDate(request.endDate)}</span>
+                      </div>
                     </div>
-                    <span className={`request-status ${getStatusClass(request)}`}>
-                      {getStatusText(request)}
-                    </span>
+
+                    <div className="card-status-actions">
+                      <div className="quick-actions">
+                        <button
+                          className="quick-btn approve"
+                          onClick={(e) => handleActionClick(e, request, 'approve')}
+                          title="Quick Approve"
+                        >
+                          <MdCheckCircle />
+                        </button>
+                        <button
+                          className="quick-btn reject"
+                          onClick={(e) => handleActionClick(e, request, 'decline')}
+                          title="Quick Decline"
+                        >
+                          <MdCancel />
+                        </button>
+                      </div>
+                      <MdExpandMore className={`expand-icon ${expandedId === request._id ? 'rotated' : ''}`} />
+                    </div>
                   </div>
 
-                  <div className="request-details">
-                    <div className="detail-row">
-                      <span className="detail-label">Designation:</span>
-                      <span className="detail-value">{request.applicantDesignation || 'N/A'}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Department:</span>
-                      <span className="detail-value">
-                        {request.departmentName || request.department?.name || 'N/A'}
-                      </span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Leave Type:</span>
-                      <span className="detail-value">{request.type || 'N/A'}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Number of Days:</span>
-                      <span className="detail-value">{request.numberOfDays || 'N/A'} day(s)</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Start Date:</span>
-                      <span className="detail-value">{formatDate(request.startDate)}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">End Date:</span>
-                      <span className="detail-value">{formatDate(request.endDate)}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Purpose:</span>
-                      <span className="detail-value">{request.reason || 'N/A'}</span>
-                    </div>
-                    {request.leaveDocument && (
-                      <div className="detail-row">
-                        <span className="detail-label">Leave Document:</span>
-                        <span className="detail-value">
-                          <img
-                            src={request.leaveDocument}
-                            alt="Leave document"
-                            style={{ maxWidth: '300px', maxHeight: '300px', borderRadius: '8px', marginTop: '0.5rem' }}
-                          />
-                        </span>
+                  {expandedId === request._id && (
+                    <div className="card-expanded-content">
+                      <div className="form-wrapper">
+                        <LeaveApplicationForm
+                          leaveDetails={request}
+                          formatDate={formatDate}
+                          showHeader={false}
+                        />
                       </div>
-                    )}
-                    {request.alternateEmployees && request.alternateEmployees.length > 0 ? (
-                      <div className="detail-row">
-                        <span className="detail-label">Alternate Employees:</span>
-                        <span className="detail-value">
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
-                            {request.alternateEmployees.map((alt, index) => (
-                              <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <span>{alt.employee?.name || 'Unknown'}</span>
-                                <span style={{
-                                  padding: '0.25rem 0.5rem',
-                                  borderRadius: '4px',
-                                  fontSize: '0.85rem',
-                                  backgroundColor: alt.response === 'ok' ? '#d4edda' : alt.response === 'sorry' ? '#f8d7da' : '#fff3cd',
-                                  color: alt.response === 'ok' ? '#155724' : alt.response === 'sorry' ? '#721c24' : '#856404'
-                                }}>
-                                  {alt.response === 'ok' ? '✓ OK' : alt.response === 'sorry' ? '✗ Sorry' : '⏳ Pending'}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </span>
-                      </div>
-                    ) : request.backupEmployee && (
-                      <div className="detail-row">
-                        <span className="detail-label">Alternate Employee:</span>
-                        <span className="detail-value">
-                          {request.backupEmployee.name || 'N/A'}
-                        </span>
-                      </div>
-                    )}
-                    <div className="detail-row">
-                      <span className="detail-label">Application Date:</span>
-                      <span className="detail-value">{formatDate(request.applicationDate)}</span>
-                    </div>
-                    {request.hodRemarks && (
-                      <div className="detail-row remarks">
-                        <span className="detail-label">Your Remarks:</span>
-                        <span className="detail-value">{request.hodRemarks}</span>
-                      </div>
-                    )}
-                  </div>
 
-                  {!request.approvedByHoD && request.status === 'Pending' && (
-                    <div className="request-actions">
-                      <button
-                        className="approve-btn"
-                        onClick={() => handleActionClick(request, 'approve')}
-                        disabled={processingRequestId === request._id}
-                      >
-                        {processingRequestId === request._id ? 'Processing...' : '✓ Approve'}
-                      </button>
-                      <button
-                        className="reject-btn"
-                        onClick={() => handleActionClick(request, 'decline')}
-                        disabled={processingRequestId === request._id}
-                      >
-                        {processingRequestId === request._id ? 'Processing...' : '✗ Decline'}
-                      </button>
+                      <div className="expanded-actions">
+                        <button
+                          className="action-btn decline"
+                          onClick={(e) => handleActionClick(e, request, 'decline')}
+                          disabled={processingRequestId === request._id}
+                        >
+                          Decline Request
+                        </button>
+                        <button
+                          className="action-btn approve"
+                          onClick={(e) => handleActionClick(e, request, 'approve')}
+                          disabled={processingRequestId === request._id}
+                        >
+                          {processingRequestId === request._id ? 'Processing...' : 'Approve Request'}
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -271,4 +233,3 @@ const HoDPendingRequests = () => {
 };
 
 export default HoDPendingRequests;
-

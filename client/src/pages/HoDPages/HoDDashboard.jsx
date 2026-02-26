@@ -74,7 +74,7 @@ const HoDDashboard = () => {
             <div className="pie-charts-container">
               {/* Members Pie Chart */}
               <div className="pie-chart-section">
-                <h2 className="chart-title">Department Members</h2>
+                <h2 className="chart-title">Total Members</h2>
                 <div className="pie-chart-wrapper">
                   <div
                     className="pie-chart"
@@ -91,6 +91,9 @@ const HoDDashboard = () => {
                     </div>
                   </div>
                   <div className="pie-legend">
+                    <div className="legend-item legend-item-total">
+                      <span className="legend-label legend-label-total">Total Members: {stats.memberStats.totalMembers}</span>
+                    </div>
                     <div className="legend-item">
                       <span className="legend-color" style={{ backgroundColor: '#10b981' }}></span>
                       <span className="legend-label">Active: {stats.memberStats.activeMembers}</span>

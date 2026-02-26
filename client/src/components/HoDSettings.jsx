@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { userAPI } from '../services/api';
+import { MdSearch } from 'react-icons/md';
 import '../styles/HoDSettings.css';
 
 const HoDSettings = () => {
@@ -10,6 +11,8 @@ const HoDSettings = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [processingUserId, setProcessingUserId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedDesignation, setSelectedDesignation] = useState('All');
 
   const departmentConfig = [
     { code: 'CSE', name: 'Computer Science & Engineering', color: '#2196F3', textColor: '#fff' },
@@ -19,6 +22,8 @@ const HoDSettings = () => {
     { code: 'BTM', name: 'Business & Technology Management', color: '#9C27B0', textColor: '#fff' },
     { code: 'TVE', name: 'Technical & Vocational Education', color: '#FF9800', textColor: '#fff' }
   ];
+
+  const designations = ['All', 'Lecturer', 'Assistant Professor', 'Associate Professor', 'Professor'];
 
   useEffect(() => {
     fetchDepartments();
@@ -37,6 +42,17 @@ const HoDSettings = () => {
   };
 
   const handleDepartmentClick = async (deptConfig) => {
+    // Toggle: if same department is clicked again, close the panel
+    if (selectedDepartment?.code === deptConfig.code) {
+      setSelectedDepartment(null);
+      setMembers([]);
+      setError('');
+      setSuccess('');
+      setSearchQuery('');
+      setSelectedDesignation('All');
+      return;
+    }
+
     try {
       setLoading(true);
       setError('');
@@ -109,6 +125,27 @@ const HoDSettings = () => {
 
   const isHoD = (roles) => roles && roles.includes('HoD');
 
+  // Filter members based on search and designation
+  const filteredMembers = useMemo(() => {
+    let filtered = members;
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      filtered = filtered.filter(member =>
+        member.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Filter by designation
+    if (selectedDesignation !== 'All') {
+      filtered = filtered.filter(member =>
+        member.designation === selectedDesignation
+      );
+    }
+
+    return filtered;
+  }, [members, searchQuery, selectedDesignation]);
+
   return (
     <div className="hod-settings">
       <div className="hod-settings-header">
@@ -158,40 +195,74 @@ const HoDSettings = () => {
           ) : members.length === 0 ? (
             <div className="empty-state">No members found in this department</div>
           ) : (
-            <div className="members-grid">
-              {members.map(member => (
-                <div key={member._id} className="member-card">
-                  <div className="member-avatar">
-                    {member.profilePic ? (
-                      <img src={member.profilePic} alt={member.name} />
-                    ) : (
-                      <div className="avatar-placeholder">
-                        {member.name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                  </div>
-                  <div className="member-info">
-                    <h4 className="member-name">{member.name}</h4>
-                    <p className="member-designation">{member.designation}</p>
-                    <p className="member-email">{member.email}</p>
-                    {isHoD(member.roles) && (
-                      <span className="hod-badge">Head of Department</span>
-                    )}
-                  </div>
-                  <button
-                    className={`assign-btn ${isHoD(member.roles) ? 'remove' : 'assign'}`}
-                    onClick={() => handleAssignHoD(member._id, member.roles)}
-                    disabled={processingUserId === member._id}
-                  >
-                    {processingUserId === member._id
-                      ? 'Processing...'
-                      : isHoD(member.roles)
-                      ? 'Remove HoD'
-                      : 'Assign as HoD'}
-                  </button>
+            <>
+              {/* Search and Filter Section */}
+              <div className="filter-section">
+                <div className="search-box">
+                  <MdSearch className="search-icon" />
+                  <input
+                    type="text"
+                    placeholder="Search by employee name..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="search-input"
+                  />
                 </div>
-              ))}
-            </div>
+                <div className="designation-filters">
+                  {designations.map(designation => (
+                    <button
+                      key={designation}
+                      className={`filter-btn ${selectedDesignation === designation ? 'active' : ''}`}
+                      onClick={() => setSelectedDesignation(designation)}
+                    >
+                      {designation}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Members List */}
+              {filteredMembers.length === 0 ? (
+                <div className="empty-state">No members match your search criteria</div>
+              ) : (
+                <div className="members-list">
+                  {filteredMembers.map(member => (
+                    <div key={member._id} className="member-list-item">
+                    <div className="member-avatar-small">
+                      {member.profilePic ? (
+                        <img src={member.profilePic} alt={member.name} />
+                      ) : (
+                        <div className="avatar-placeholder-small">
+                          {member.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <div className="member-details">
+                      <div className="member-main-info">
+                        <h4 className="member-name-list">{member.name}</h4>
+                        {isHoD(member.roles) && (
+                          <span className="hod-badge-small">HoD</span>
+                        )}
+                      </div>
+                      <p className="member-designation-list">{member.designation}</p>
+                      <p className="member-email-list">{member.email}</p>
+                    </div>
+                    <button
+                      className={`assign-btn-list ${isHoD(member.roles) ? 'remove' : 'assign'}`}
+                      onClick={() => handleAssignHoD(member._id, member.roles)}
+                      disabled={processingUserId === member._id}
+                    >
+                      {processingUserId === member._id
+                        ? 'Processing...'
+                        : isHoD(member.roles)
+                        ? 'Remove HoD'
+                        : 'Assign as HoD'}
+                    </button>
+                  </div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

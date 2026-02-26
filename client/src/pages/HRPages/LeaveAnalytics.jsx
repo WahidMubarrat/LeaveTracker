@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import HRLayout from '../../components/HRLayout';
 import StatsCard from '../../components/StatsCard';
 import BarChart from '../../components/BarChart';
+import AnalyticsHistoryModal from '../../components/AnalyticsHistoryModal';
 import { analyticsAPI, departmentAPI } from '../../services/api';
 import { MdAssessment, MdCheckCircle, MdCancel, MdPending, MdBusiness, MdBarChart, MdTrendingUp, MdGroup, MdHistory, MdExpandMore } from 'react-icons/md';
 import '../../styles/Analytics.css';
 
 import CollapsibleSection from '../../components/CollapsibleSection';
 import StatusGanttBar from '../../components/StatusGanttBar';
+import { exportSectionToPDF, generateFileName } from '../../utils/pdfExport';
 
 const HRAnalytics = () => {
   const [period, setPeriod] = useState('monthly');
@@ -18,6 +20,8 @@ const HRAnalytics = () => {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState(null);
 
   useEffect(() => {
     fetchDepartments();
@@ -109,6 +113,83 @@ const HRAnalytics = () => {
     }));
   };
 
+  // PDF Download Handlers
+  const handleDownloadKeyStats = () => {
+    const metadata = {
+      title: 'Key Statistics',
+      period: period === 'monthly' ? 'Monthly' : 'Yearly',
+      date: period === 'monthly' ? `${getMonthName(month)} ${year}` : `${year}`,
+      department: departmentId === 'all' ? 'All Departments' : departments.find(d => d._id === departmentId)?.name || 'N/A'
+    };
+    const fileName = generateFileName('Key_Statistics', metadata);
+    exportSectionToPDF('hr-key-stats-section', fileName, metadata);
+  };
+
+  const handleDownloadVisualizations = () => {
+    const metadata = {
+      title: 'Data Visualizations',
+      period: period === 'monthly' ? 'Monthly' : 'Yearly',
+      date: period === 'monthly' ? `${getMonthName(month)} ${year}` : `${year}`,
+      department: departmentId === 'all' ? 'All Departments' : departments.find(d => d._id === departmentId)?.name || 'N/A'
+    };
+    const fileName = generateFileName('Data_Visualizations', metadata);
+    exportSectionToPDF('hr-visualizations-section', fileName, metadata);
+  };
+
+  const handleDownloadDepartmentStats = () => {
+    const metadata = {
+      title: 'Department-wise Statistics',
+      period: period === 'monthly' ? 'Monthly' : 'Yearly',
+      date: period === 'monthly' ? `${getMonthName(month)} ${year}` : `${year}`,
+      department: 'All Departments'
+    };
+    const fileName = generateFileName('Department_Statistics', metadata);
+    exportSectionToPDF('hr-dept-stats-section', fileName, metadata);
+  };
+
+  const handleDownloadTopEmployees = () => {
+    const metadata = {
+      title: 'Top Employees by Leave Days',
+      period: period === 'monthly' ? 'Monthly' : 'Yearly',
+      date: period === 'monthly' ? `${getMonthName(month)} ${year}` : `${year}`,
+      department: departmentId === 'all' ? 'All Departments' : departments.find(d => d._id === departmentId)?.name || 'N/A'
+    };
+    const fileName = generateFileName('Top_Employees', metadata);
+    exportSectionToPDF('hr-top-employees-section', fileName, metadata);
+  };
+
+  const handleDownloadRecentRequests = () => {
+    const metadata = {
+      title: 'Recent Leave Requests',
+      period: period === 'monthly' ? 'Monthly' : 'Yearly',
+      date: period === 'monthly' ? `${getMonthName(month)} ${year}` : `${year}`,
+      department: departmentId === 'all' ? 'All Departments' : departments.find(d => d._id === departmentId)?.name || 'N/A'
+    };
+    const fileName = generateFileName('Recent_Requests', metadata);
+    exportSectionToPDF('hr-recent-requests-section', fileName, metadata);
+  };
+
+  // Handle stats card click
+  const handleStatsCardClick = (filterType) => {
+    const filterParams = {
+      period,
+      year,
+      departmentId: departmentId !== 'all' ? departmentId : undefined
+    };
+
+    if (period === 'monthly') {
+      filterParams.month = month;
+    }
+
+    setSelectedFilter(filterType);
+    setShowHistoryModal(true);
+  };
+
+  const handleCloseHistoryModal = () => {
+    setShowHistoryModal(false);
+    setSelectedFilter(null);
+  };
+
   if (loading) {
     return (
       <HRLayout>
@@ -193,7 +274,13 @@ const HRAnalytics = () => {
         </div>
 
         {/* Collapsible Key Statistics */}
-        <CollapsibleSection title="Key Statistics" icon={MdBarChart} defaultOpen={true}>
+        <CollapsibleSection 
+          title="Key Statistics" 
+          icon={MdBarChart} 
+          defaultOpen={true}
+          sectionId="hr-key-stats-section"
+          onDownload={handleDownloadKeyStats}
+        >
           <div className="stats-grid">
             <StatsCard
               icon={MdAssessment}
@@ -201,6 +288,7 @@ const HRAnalytics = () => {
               value={analytics?.stats.totalRequests || 0}
               subtitle={`${analytics?.stats.totalDays || 0} total days`}
               color="blue"
+              onClick={() => handleStatsCardClick('all')}
             />
             <StatsCard
               icon={MdCheckCircle}
@@ -208,6 +296,7 @@ const HRAnalytics = () => {
               value={analytics?.stats.approved || 0}
               subtitle={`${analytics?.stats.approvedDays || 0} approved days`}
               color="green"
+              onClick={() => handleStatsCardClick('approved')}
             />
             <StatsCard
               icon={MdCancel}
@@ -215,6 +304,7 @@ const HRAnalytics = () => {
               value={analytics?.stats.declined || 0}
               subtitle={`${analytics?.stats.declinedDays || 0} declined days`}
               color="red"
+              onClick={() => handleStatsCardClick('declined')}
             />
             <StatsCard
               icon={MdPending}
@@ -222,15 +312,19 @@ const HRAnalytics = () => {
               value={analytics?.stats.pending || 0}
               subtitle={`${analytics?.stats.pendingWithHoD || 0} with HoD`}
               color="purple"
+              onClick={() => handleStatsCardClick('pending')}
             />
           </div>
-
-          {/* Status Distribution Bar (Gantt-style) based on Days */}
-          <StatusGanttBar stats={analytics?.stats} />
         </CollapsibleSection>
 
         {/* Collapsible Data Visualizations */}
-        <CollapsibleSection title="Data Visualizations" icon={MdTrendingUp} defaultOpen={true}>
+        <CollapsibleSection 
+          title="Data Visualizations" 
+          icon={MdTrendingUp} 
+          defaultOpen={true}
+          sectionId="hr-visualizations-section"
+          onDownload={handleDownloadVisualizations}
+        >
           <div className="charts-section">
             {/* Monthly Breakdown or Department Comparison */}
             {period === 'yearly' && analytics?.monthlyBreakdown && (
@@ -253,7 +347,12 @@ const HRAnalytics = () => {
 
         {/* Collapsible Department Statistics Table */}
         {departmentId === 'all' && analytics?.departmentStats && analytics.departmentStats.length > 0 && (
-          <CollapsibleSection title="Department-wise Statistics" icon={MdBusiness}>
+          <CollapsibleSection 
+            title="Department-wise Statistics" 
+            icon={MdBusiness}
+            sectionId="hr-dept-stats-section"
+            onDownload={handleDownloadDepartmentStats}
+          >
             <div className="table-container">
               <table className="analytics-table">
                 <thead>
@@ -290,7 +389,12 @@ const HRAnalytics = () => {
         )}
 
         {/* Collapsible Top Employees */}
-        <CollapsibleSection title="Top Employees by Leave Days" icon={MdGroup}>
+        <CollapsibleSection 
+          title="Top Employees by Leave Days" 
+          icon={MdGroup}
+          sectionId="hr-top-employees-section"
+          onDownload={handleDownloadTopEmployees}
+        >
           {analytics?.topEmployees && analytics.topEmployees.length > 0 ? (
             <div className="table-container">
               <table className="analytics-table">
@@ -326,7 +430,12 @@ const HRAnalytics = () => {
         </CollapsibleSection>
 
         {/* Collapsible Recent Requests */}
-        <CollapsibleSection title="Recent Leave Requests" icon={MdHistory}>
+        <CollapsibleSection 
+          title="Recent Leave Requests" 
+          icon={MdHistory}
+          sectionId="hr-recent-requests-section"
+          onDownload={handleDownloadRecentRequests}
+        >
           {analytics?.recentRequests && analytics.recentRequests.length > 0 ? (
             <div className="table-container">
               <table className="analytics-table">
@@ -367,6 +476,20 @@ const HRAnalytics = () => {
           )}
         </CollapsibleSection>
       </div>
+
+      {/* Analytics History Modal */}
+      {showHistoryModal && selectedFilter && (
+        <AnalyticsHistoryModal
+          filterType={selectedFilter}
+          filterParams={{
+            period,
+            year,
+            month: period === 'monthly' ? month : undefined,
+            departmentId: departmentId !== 'all' ? departmentId : undefined
+          }}
+          onClose={handleCloseHistoryModal}
+        />
+      )}
     </HRLayout>
   );
 };
