@@ -15,7 +15,7 @@ const hrDashboardRoutes = require("./routes/hrDashboardRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // Connect to MongoDB (skip during tests)
 if (process.env.NODE_ENV !== 'test') {

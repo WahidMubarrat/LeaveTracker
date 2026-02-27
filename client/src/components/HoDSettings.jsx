@@ -31,7 +31,7 @@ const HoDSettings = () => {
 
   const fetchDepartments = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/departments`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/departments`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
       });
       const data = await response.json();
