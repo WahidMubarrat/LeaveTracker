@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import HRLayout from '../../components/HRLayout';
 import Status from '../../components/Status';
 import LeaveDetailsModal from '../../components/LeaveDetailsModal';
@@ -30,6 +31,14 @@ const SystemMembers = () => {
   useEffect(() => {
     fetchMembers();
   }, []);
+
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.statusFilter) {
+      setSelectedLeaveStatus(location.state.statusFilter);
+    }
+  }, [location.state]);
 
   const fetchMembers = async () => {
     try {

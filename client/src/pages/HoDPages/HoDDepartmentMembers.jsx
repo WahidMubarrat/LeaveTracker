@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import HoDLayout from '../../components/HoDLayout';
 import RoleToggle from '../../components/RoleToggle';
 import Status from '../../components/Status';
@@ -14,10 +15,17 @@ const HoDDepartmentMembers = () => {
   const [statusFilter, setStatusFilter] = useState('all'); // all, onDuty, onLeave
   const [designationFilter, setDesignationFilter] = useState('all'); // all, Professor, etc.
   const [selectedMember, setSelectedMember] = useState(null);
+  const location = useLocation();
 
   useEffect(() => {
     fetchMembers();
   }, []);
+
+  useEffect(() => {
+    if (location.state?.statusFilter) {
+      setStatusFilter(location.state.statusFilter);
+    }
+  }, [location.state]);
 
   const fetchMembers = async () => {
     try {
