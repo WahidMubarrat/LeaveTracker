@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import HoDLayout from '../../components/HoDLayout';
 import RoleToggle from '../../components/RoleToggle';
-import { hodDashboardAPI } from '../../services/api';
+import { hodDashboardAPI, userAPI } from '../../services/api';
 import { MdPending, MdGroup, MdCheckCircle, MdBeachAccess } from 'react-icons/md';
 import '../../styles/HoDDashboard.css';
 
@@ -24,10 +25,34 @@ const HoDDashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [designationCounts, setDesignationCounts] = useState({});
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchDashboardStats();
+    fetchDesignationCounts();
   }, []);
+
+  const fetchDesignationCounts = async () => {
+    try {
+      const response = await userAPI.getDepartmentMembers();
+      const departmentMembers = (response.data.members || []).filter(member => {
+        if (member.roles && member.roles.includes('HR')) return false;
+        if (member.role === 'HR') return false;
+        return true;
+      });
+
+      const counts = departmentMembers.reduce((acc, member) => {
+        const key = member.designation || 'Other';
+        acc[key] = (acc[key] || 0) + 1;
+        return acc;
+      }, {});
+
+      setDesignationCounts(counts);
+    } catch (err) {
+      console.error('Error fetching designation counts:', err);
+    }
+  };
 
   const fetchDashboardStats = async () => {
     try {
@@ -53,6 +78,10 @@ const HoDDashboard = () => {
       activePercent: (active / total) * 100,
       leavePercent: (onLeave / total) * 100
     };
+  };
+
+  const goToMembers = (statusFilter = 'all') => {
+    navigate('/hod/department-members', { state: { statusFilter } });
   };
 
   return (
@@ -90,18 +119,37 @@ const HoDDashboard = () => {
                       <div className="pie-chart-label">Total</div>
                     </div>
                   </div>
-                  <div className="pie-legend">
-                    <div className="legend-item legend-item-total">
-                      <span className="legend-label legend-label-total">Total Members: {stats.memberStats.totalMembers}</span>
+                  <div className="member-stat-column">
+                    <div className="member-stat-buttons">
+                      <button className="member-stat-card member-stat-total" onClick={() => goToMembers('all')}>
+                        <span className="stat-card-label">Total Members</span>
+                        <span className="stat-card-count">{stats.memberStats.totalMembers}</span>
+                      </button>
+                      <button className="member-stat-card member-stat-active" onClick={() => goToMembers('onDuty')}>
+                        <span className="stat-card-label">Active</span>
+                        <span className="stat-card-count">{stats.memberStats.activeMembers}</span>
+                      </button>
+                      <button className="member-stat-card member-stat-leave" onClick={() => goToMembers('onLeave')}>
+                        <span className="stat-card-label">On Leave</span>
+                        <span className="stat-card-count">{stats.memberStats.membersOnLeave}</span>
+                      </button>
                     </div>
-                    <div className="legend-item">
-                      <span className="legend-color" style={{ backgroundColor: '#10b981' }}></span>
-                      <span className="legend-label">Active: {stats.memberStats.activeMembers}</span>
-                    </div>
-                    <div className="legend-item">
-                      <span className="legend-color" style={{ backgroundColor: '#f59e0b' }}></span>
-                      <span className="legend-label">On Leave: {stats.memberStats.membersOnLeave}</span>
-                    </div>
+
+                    {Object.keys(designationCounts).length > 0 && (
+                      <div className="designation-section">
+                       
+                        <div className="designation-stat-buttons">
+                          {Object.entries(designationCounts)
+                            .sort((a, b) => b[1] - a[1])
+                            .map(([designation, count]) => (
+                              <div key={designation} className="designation-stat-card">
+                                <div className="designation-card-label">{designation}</div>
+                                <div className="designation-card-count">{count}</div>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
