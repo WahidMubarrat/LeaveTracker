@@ -1,4 +1,5 @@
-import { useContext, useState, useCallback, useMemo } from 'react';
+import { useContext, useState, useCallback, useMemo, useRef } from 'react';
+import { MdCameraAlt } from 'react-icons/md';
 import { AuthContext } from '../context/AuthContext';
 import ChangePasswordModal from './ChangePasswordModal';
 import { userAPI } from '../services/api';
@@ -13,8 +14,10 @@ const PersonalInfo = () => {
     designation: '',
   });
   const [saving, setSaving] = useState(false);
+  const [uploadingPic, setUploadingPic] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const fileInputRef = useRef(null);
 
   if (!user) {
     return <div className="loading">Loading...</div>;
@@ -86,6 +89,38 @@ const PersonalInfo = () => {
     });
   }, [user.createdAt]);
 
+  const triggerFileSelect = useCallback(() => {
+    setError('');
+    setSuccess('');
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  }, []);
+
+  const handleProfilePicChange = useCallback(async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setError('');
+    setSuccess('');
+    setUploadingPic(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('profilePic', file);
+      const response = await userAPI.updateProfile(formData);
+      setUser(response.data.user);
+      setSuccess('Profile photo updated');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update profile photo');
+    } finally {
+      setUploadingPic(false);
+      // reset input so same file can be re-selected if needed
+      if (e.target) e.target.value = '';
+    }
+  }, [setUser]);
+
   return (
     <div className="personal-info-container">
       <div className="profile-header-section">
@@ -97,6 +132,22 @@ const PersonalInfo = () => {
               {user.name?.charAt(0).toUpperCase()}
             </div>
           )}
+          <button
+            className="profile-avatar-upload"
+            type="button"
+            onClick={triggerFileSelect}
+            disabled={uploadingPic}
+            title={uploadingPic ? 'Uploading...' : 'Change profile photo'}
+          >
+            {uploadingPic ? '...' : <MdCameraAlt size={18} />}
+          </button>
+          <input
+            type="file"
+            accept="image/*"
+            ref={fileInputRef}
+            className="hidden-file-input"
+            onChange={handleProfilePicChange}
+          />
         </div>
         <div className="profile-header-details">
           <h2 className="profile-name">{user.name}</h2>

@@ -192,3 +192,17 @@
 .auth-link a:hover {
   text-decoration: underline;
 }
+
+@media (max-width: 480px) {
+  .register-card {
+    padding: 24px 20px;
+  }
+
+  .register-card h1 {
+    font-size: 1.5rem;
+  }
+
+  .register-card h2 {
+    font-size: 1.1rem;
+  }
+}
