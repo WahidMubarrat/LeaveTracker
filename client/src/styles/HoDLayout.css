@@ -28,9 +28,6 @@
     margin-left: 0;
     width: 100%;
     padding: 1rem;
-  }
-  
-  .hod-navbar {
-    display: none;
+    padding-top: 4rem;
   }
 }

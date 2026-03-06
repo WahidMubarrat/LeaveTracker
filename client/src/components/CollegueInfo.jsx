@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
+import { MdSearch } from 'react-icons/md';
 import { userAPI } from '../services/api';
 import Status from './Status';
 
@@ -7,6 +8,9 @@ const CollegueInfo = ({ onMembersLoaded }) => {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [designationFilter, setDesignationFilter] = useState('All');
 
   useEffect(() => {
     let isActive = true;
@@ -45,6 +49,39 @@ const CollegueInfo = ({ onMembersLoaded }) => {
     };
   }, [onMembersLoaded]);
 
+  // top-4 unique designations from loaded members
+  const designationOptions = useMemo(() => {
+    const seen = new Set();
+    const result = [];
+    for (const m of members) {
+      if (m.designation && !seen.has(m.designation)) {
+        seen.add(m.designation);
+        result.push(m.designation);
+        if (result.length === 4) break;
+      }
+    }
+    return result;
+  }, [members]);
+
+  const filteredMembers = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return members
+      .filter((m) => {
+        if (term && !m.name?.toLowerCase().includes(term) && !m.email?.toLowerCase().includes(term)) return false;
+        if (statusFilter === 'OnLeave' && m.currentStatus !== 'OnLeave') return false;
+        if (statusFilter === 'OnDuty' && m.currentStatus === 'OnLeave') return false;
+        if (designationFilter !== 'All' && m.designation !== designationFilter) return false;
+        return true;
+      })
+      .sort((a, b) => {
+        const aIsHoD = a.roles?.includes('HoD');
+        const bIsHoD = b.roles?.includes('HoD');
+        if (aIsHoD && !bIsHoD) return -1;
+        if (!aIsHoD && bIsHoD) return 1;
+        return 0;
+      });
+  }, [members, search, statusFilter, designationFilter]);
+
   if (loading) {
     return <div className="members-loading">Loading members...</div>;
   }
@@ -55,6 +92,64 @@ const CollegueInfo = ({ onMembersLoaded }) => {
 
       {members.length > 0 ? (
         <div className="members-list-wrapper">
+
+          {/* ── Search + Filters ── */}
+          <div className="members-actions">
+            <div className="search-box">
+              <MdSearch className="search-icon" />
+              <input
+                className="search-input"
+                type="text"
+                placeholder="Search members..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+
+            <div className="filter-container">
+              <div className="filter-group">
+                <label className="filter-label">Leave Status:</label>
+                <div className="filter-buttons">
+                  {['All', 'On Duty', 'On Leave'].map((s) => (
+                    <button
+                      key={s}
+                      className={`filter-btn ${
+                        (s === 'All' && statusFilter === 'All') ||
+                        (s === 'On Duty' && statusFilter === 'OnDuty') ||
+                        (s === 'On Leave' && statusFilter === 'OnLeave')
+                          ? 'active' : ''
+                      }`}
+                      onClick={() => {
+                        if (s === 'All') setStatusFilter('All');
+                        else if (s === 'On Duty') setStatusFilter((v) => v === 'OnDuty' ? 'All' : 'OnDuty');
+                        else setStatusFilter((v) => v === 'OnLeave' ? 'All' : 'OnLeave');
+                      }}
+                    >{s}</button>
+                  ))}
+                </div>
+              </div>
+
+              {designationOptions.length > 0 && (
+                <div className="filter-group">
+                  <label className="filter-label">Designation:</label>
+                  <div className="filter-buttons">
+                    <button
+                      className={`filter-btn ${designationFilter === 'All' ? 'active' : ''}`}
+                      onClick={() => setDesignationFilter('All')}
+                    >All</button>
+                    {designationOptions.map((d) => (
+                      <button
+                        key={d}
+                        className={`filter-btn ${designationFilter === d ? 'active' : ''}`}
+                        onClick={() => setDesignationFilter((v) => (v === d ? 'All' : d))}
+                      >{d}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="members-table-wrapper">
             <table className="members-table">
               <thead>
@@ -65,15 +160,7 @@ const CollegueInfo = ({ onMembersLoaded }) => {
                 </tr>
               </thead>
               <tbody>
-                {members
-                  .sort((a, b) => {
-                    const aIsHoD = a.roles?.includes('HoD');
-                    const bIsHoD = b.roles?.includes('HoD');
-                    if (aIsHoD && !bIsHoD) return -1;
-                    if (!aIsHoD && bIsHoD) return 1;
-                    return 0;
-                  })
-                  .map((member) => (
+                {filteredMembers.map((member) => (
                     <tr key={member._id} className={member.currentStatus === 'OnLeave' ? 'on-leave-row' : ''}>
                       <td className="member-name-cell">
                         <div className="member-avatar-small">

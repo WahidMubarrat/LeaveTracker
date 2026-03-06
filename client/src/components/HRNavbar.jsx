@@ -1,11 +1,12 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import '../styles/HRNavbar.css';
 
 const HRNavbar = () => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -13,7 +14,10 @@ const HRNavbar = () => {
   };
 
   return (
-    <div className="hr-navbar">
+    <>
+      <button className="hr-hamburger-btn" onClick={() => setIsOpen(true)}>☰</button>
+      {isOpen && <div className="hr-nav-overlay" onClick={() => setIsOpen(false)} />}
+      <div className={`hr-navbar${isOpen ? ' open' : ''}`}>
       <div className="hr-navbar-header">
         <h2>HR Dashboard</h2>
         <div className="hr-user-info">
@@ -26,6 +30,7 @@ const HRNavbar = () => {
         <NavLink
           to="/hr/dashboard"
           className={({ isActive }) => isActive ? 'hr-nav-link active' : 'hr-nav-link'}
+          onClick={() => setIsOpen(false)}
         >
           <span className="hr-nav-icon">📊</span>
           <span className="hr-nav-text">Dashboard</span>
@@ -34,6 +39,7 @@ const HRNavbar = () => {
         <NavLink
           to="/hr/system-settings"
           className={({ isActive }) => isActive ? 'hr-nav-link active' : 'hr-nav-link'}
+          onClick={() => setIsOpen(false)}
         >
           <span className="hr-nav-icon">⚙️</span>
           <span className="hr-nav-text">System Settings</span>
@@ -42,6 +48,7 @@ const HRNavbar = () => {
         <NavLink
           to="/hr/review-application"
           className={({ isActive }) => isActive ? 'hr-nav-link active' : 'hr-nav-link'}
+          onClick={() => setIsOpen(false)}
         >
           <span className="hr-nav-icon">📋</span>
           <span className="hr-nav-text">Review Application</span>
@@ -50,6 +57,7 @@ const HRNavbar = () => {
         <NavLink
           to="/hr/system-members"
           className={({ isActive }) => isActive ? 'hr-nav-link active' : 'hr-nav-link'}
+          onClick={() => setIsOpen(false)}
         >
           <span className="hr-nav-icon">👥</span>
           <span className="hr-nav-text">System Members</span>
@@ -58,6 +66,7 @@ const HRNavbar = () => {
         <NavLink
           to="/hr/leave-analytics"
           className={({ isActive }) => isActive ? 'hr-nav-link active' : 'hr-nav-link'}
+          onClick={() => setIsOpen(false)}
         >
           <span className="hr-nav-icon">📊</span>
           <span className="hr-nav-text">Leave Analytics</span>
@@ -70,6 +79,7 @@ const HRNavbar = () => {
         </button>
       </div>
     </div>
+    </>
   );
 };
 

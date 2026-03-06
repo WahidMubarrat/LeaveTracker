@@ -23,9 +23,6 @@
     margin-left: 0;
     width: 100%;
     padding: 1rem;
-  }
-  
-  .hr-navbar {
-    display: none;
+    padding-top: 4rem;
   }
 }

@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import '../styles/Navbar.css';
@@ -6,6 +6,7 @@ import '../styles/Navbar.css';
 const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -22,7 +23,10 @@ const Navbar = () => {
   ];
 
   return (
-    <div className="navbar-container">
+    <>
+      <button className="navbar-hamburger-btn" onClick={() => setIsOpen(true)}>☰</button>
+      {isOpen && <div className="navbar-overlay" onClick={() => setIsOpen(false)} />}
+      <div className={`navbar-container${isOpen ? ' open' : ''}`}>
       <div className="navbar-header">
         <h2 className="navbar-logo">LeaveTracker</h2>
         <div className="navbar-user">
@@ -48,6 +52,7 @@ const Navbar = () => {
             className={({ isActive }) =>
               isActive ? 'navbar-link navbar-link-active' : 'navbar-link'
             }
+            onClick={() => setIsOpen(false)}
           >
             <span className="navbar-icon">{item.icon}</span>
             <span className="navbar-label">{item.label}</span>
@@ -56,12 +61,13 @@ const Navbar = () => {
       </nav>
 
       <div className="navbar-footer">
-        <button onClick={handleLogout} className="navbar-logout-btn">
+        <button onClick={() => { handleLogout(); setIsOpen(false); }} className="navbar-logout-btn">
           <span className="navbar-icon">🚪</span>
           <span className="navbar-label">Logout</span>
         </button>
       </div>
     </div>
+    </>
   );
 };
 

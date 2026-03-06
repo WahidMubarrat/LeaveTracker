@@ -224,3 +224,23 @@
 .status-badge-small.status-approved { background: #d1fae5; color: #065f46; }
 .status-badge-small.status-pending { background: #fef3c7; color: #92400e; }
 .status-badge-small.status-declined { background: #fee2e2; color: #991b1b; }
+
+@media (max-width: 768px) {
+  .charts-section {
+    grid-template-columns: 1fr;
+  }
+
+  .dept-stat-row {
+    grid-template-columns: 70px 1fr 50px;
+    gap: 0.5rem;
+  }
+
+  .recent-leaves-section {
+    padding: 1rem;
+    overflow-x: auto;
+  }
+
+  .recent-leaves-table {
+    min-width: 480px;
+  }
+}

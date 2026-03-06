@@ -18,10 +18,10 @@
   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
 }
 
-/* Responsive design */
 @media (max-width: 768px) {
   .layout-content {
-    margin-left: 80px;
+    margin-left: 0;
     padding: 1rem;
+    padding-top: 4rem;
   }
 }
