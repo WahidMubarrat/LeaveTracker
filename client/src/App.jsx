@@ -11,7 +11,7 @@ import ApplicationStatus from './pages/EmployeePages/ApplicationStatus';
 import AlternateRequests from './pages/EmployeePages/AlternateRequests';
 import SystemSettings from './pages/HRPages/SystemSettings';
 import HRReviewApplication from './pages/HRPages/ReviewApplication';
-import SystemMembers from './pages/HRPages/SystemMembers';
+import Employees from './pages/HRPages/Employees';
 import HRLeaveAnalytics from './pages/HRPages/LeaveAnalytics';
 import HRDashboard from './pages/HRPages/HRDashboard';
 import HoDDashboard from './pages/HoDPages/HoDDashboard';
@@ -105,10 +105,10 @@ function App() {
             }
           />
           <Route
-            path="/hr/system-members"
+            path="/hr/employees"
             element={
               <RoleBasedRoute allowedRoles={['HR']}>
-                <SystemMembers />
+                <Employees />
               </RoleBasedRoute>
             }
           />
