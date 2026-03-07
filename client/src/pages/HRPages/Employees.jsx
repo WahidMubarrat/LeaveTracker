@@ -4,9 +4,9 @@ import HRLayout from '../../components/HRLayout';
 import Status from '../../components/Status';
 import LeaveDetailsModal from '../../components/LeaveDetailsModal';
 import { userAPI } from '../../services/api';
-import '../../styles/SystemMembers.css';
+import '../../styles/Employees.css';
 
-const SystemMembers = () => {
+const Employees = () => {
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -40,6 +40,30 @@ const SystemMembers = () => {
     }
   }, [location.state]);
 
+  // Auto-select department when navigating from navbar dropdown
+  useEffect(() => {
+    if (location.state?.departmentCode && departments.length > 0) {
+      const deptCode = location.state.departmentCode;
+      const deptConfig = departmentConfig.find(d => d.code === deptCode);
+      if (deptConfig) {
+        const matchedDept = departments.find(d =>
+          d.departmentName.toUpperCase().includes(deptCode.toUpperCase())
+        );
+        if (matchedDept) {
+          setSelectedDepartment({ ...matchedDept, config: deptConfig });
+          setSearchTerm('');
+          setSelectedDesignation('All');
+          // Preserve statusFilter if set, otherwise reset
+          if (!location.state?.statusFilter) {
+            setSelectedLeaveStatus('All');
+          }
+        }
+      }
+      // Clear the state so re-clicking the same dept works
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, departments]);
+
   const fetchMembers = async () => {
     try {
       setLoading(true);
@@ -47,8 +71,10 @@ const SystemMembers = () => {
       const depts = response.data.departments || [];
       setDepartments(depts);
 
-      // Initially no department is selected
-      setSelectedDepartment(null);
+      // Initially no department is selected (unless navigated with state)
+      if (!location.state?.departmentCode) {
+        setSelectedDepartment(null);
+      }
 
       setError(null);
     } catch (err) {
@@ -147,9 +173,9 @@ const SystemMembers = () => {
 
   return (
     <HRLayout>
-      <div className="system-members-container">
+      <div className="employees-container">
         <div className="page-header">
-          <h1>System Members</h1>
+          <h1>Employees</h1>
           <p className="page-subtitle">Manage all employees grouped by department</p>
         </div>
 
@@ -323,4 +349,4 @@ const SystemMembers = () => {
   );
 };
 
-export default SystemMembers;
+export default Employees;

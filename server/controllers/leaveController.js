@@ -211,6 +211,9 @@ exports.applyLeave = async (req, res) => {
     const hasAlternates = alternateEmployees.length > 0;
     const waitingForAlternate = hasAlternates;
 
+    // If the applicant is a HoD, their application skips HoD review entirely
+    const applicantIsHoD = currentUser.hasRole('HoD');
+
     // Create leave request
     const leaveRequest = new LeaveRequest({
       employee: req.user.id,
@@ -228,6 +231,8 @@ exports.applyLeave = async (req, res) => {
       alternateEmployees: alternateEmployees,
       waitingForAlternate: waitingForAlternate,
       leaveDocument: leaveDocumentUrl,
+      // HoD applicants automatically bypass HoD approval level
+      approvedByHoD: applicantIsHoD ? true : false,
     });
 
     await leaveRequest.save();
@@ -265,28 +270,46 @@ exports.applyLeave = async (req, res) => {
         }
       }
     } else {
-      // No alternates selected, notify HoD immediately
+      // No alternates selected — notify HoD or HR depending on applicant role
       try {
-        // Find HoD of the department
-        const hodUser = await User.findOne({
-          department: currentUser.department,
-          roles: 'HoD'
-        });
+        if (applicantIsHoD) {
+          // HoD applicant goes straight to HR
+          const hrUser = await User.findOne({ roles: 'HR' });
+          if (hrUser && hrUser.email) {
+            await sendHRReviewEmail(
+              hrUser.email,
+              hrUser.name,
+              currentUser.name,
+              currentUser.designation,
+              currentUser.department?.name || departmentName || '',
+              start,
+              end,
+              type,
+              totalDays
+            );
+          }
+        } else {
+          // Regular employee — notify HoD
+          const hodUser = await User.findOne({
+            department: currentUser.department,
+            roles: 'HoD'
+          });
 
-        if (hodUser && hodUser.email) {
-          await sendHoDReviewEmail(
-            hodUser.email,
-            hodUser.name,
-            currentUser.name,
-            currentUser.designation,
-            start,
-            end,
-            type,
-            totalDays
-          );
+          if (hodUser && hodUser.email) {
+            await sendHoDReviewEmail(
+              hodUser.email,
+              hodUser.name,
+              currentUser.name,
+              currentUser.designation,
+              start,
+              end,
+              type,
+              totalDays
+            );
+          }
         }
       } catch (emailError) {
-        console.error('Failed to send HoD notification email:', emailError);
+        console.error('Failed to send review notification email:', emailError);
         // Don't fail the request if email fails
       }
     }
@@ -404,7 +427,15 @@ exports.getPendingApprovals = async (req, res) => {
     if (currentUser.hasRole("HoD")) {
       // HoD sees pending requests in their department
       // Only show requests that are NOT waiting for alternate response
+      // Exclude requests where the applicant themselves is HoD (those skip straight to HR)
+      const hodDeptMembers = await User.find({
+        department: currentUser.department,
+        roles: { $ne: 'HoD' }
+      }).select('_id');
+      const regularMemberIds = hodDeptMembers.map(u => u._id);
+
       query = {
+        employee: { $in: regularMemberIds },
         department: currentUser.department,
         approvedByHoD: false,
         status: "Pending",
@@ -717,7 +748,7 @@ exports.respondToAlternateRequest = async (req, res) => {
         );
 
         if (hasOkResponse) {
-          // At least one alternate has agreed, release application to HoD
+          // At least one alternate has agreed, release application
           leaveRequest.waitingForAlternate = false;
 
           // Create history log for the acceptance
@@ -730,30 +761,51 @@ exports.respondToAlternateRequest = async (req, res) => {
           });
           await historyLog.save();
 
-          // Send email notification to HoD
+          // Send email notification to HoD or HR depending on applicant role
           try {
             const applicant = await User.findById(leaveRequest.employee).populate('department');
             if (applicant) {
-              const hodUser = await User.findOne({
-                department: applicant.department,
-                roles: 'HoD'
-              });
+              const applicantIsHoD = applicant.hasRole('HoD');
 
-              if (hodUser && hodUser.email) {
-                await sendHoDReviewEmail(
-                  hodUser.email,
-                  hodUser.name,
-                  applicant.name,
-                  applicant.designation,
-                  leaveRequest.startDate,
-                  leaveRequest.endDate,
-                  leaveRequest.type,
-                  leaveRequest.numberOfDays
-                );
+              if (applicantIsHoD) {
+                // HoD applicant — notify HR directly
+                const hrUser = await User.findOne({ roles: 'HR' });
+                if (hrUser && hrUser.email) {
+                  await sendHRReviewEmail(
+                    hrUser.email,
+                    hrUser.name,
+                    applicant.name,
+                    applicant.designation,
+                    applicant.department?.name || leaveRequest.departmentName || '',
+                    leaveRequest.startDate,
+                    leaveRequest.endDate,
+                    leaveRequest.type,
+                    leaveRequest.numberOfDays
+                  );
+                }
+              } else {
+                // Regular employee — notify HoD
+                const hodUser = await User.findOne({
+                  department: applicant.department,
+                  roles: 'HoD'
+                });
+
+                if (hodUser && hodUser.email) {
+                  await sendHoDReviewEmail(
+                    hodUser.email,
+                    hodUser.name,
+                    applicant.name,
+                    applicant.designation,
+                    leaveRequest.startDate,
+                    leaveRequest.endDate,
+                    leaveRequest.type,
+                    leaveRequest.numberOfDays
+                  );
+                }
               }
             }
           } catch (emailError) {
-            console.error('Failed to send HoD notification email:', emailError);
+            console.error('Failed to send review notification email:', emailError);
             // Don't fail the response if email fails
           }
         }

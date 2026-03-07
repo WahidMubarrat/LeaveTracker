@@ -48,7 +48,7 @@
   border: 1px solid #e2e8f0;
 }
 
-/* ── Search + filter bar (mirrors HR SystemMembers panel) ── */
+/* ── Search + filter bar (mirrors HR Employees panel) ── */
 .members-actions {
   display: flex;
   flex-direction: column;

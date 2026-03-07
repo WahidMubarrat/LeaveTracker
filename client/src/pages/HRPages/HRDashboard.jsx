@@ -93,7 +93,7 @@ const HRDashboard = () => {
     };
 
     const goToMembers = (statusFilter = 'All') => {
-        navigate('/hr/system-members', { state: { statusFilter } });
+        navigate('/hr/employees', { state: { statusFilter } });
     };
 
     return (
