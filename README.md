@@ -633,30 +633,8 @@ Key ideas:
 
 ---
 
-## Current Gaps and Improvement Ideas
 
-1. **Env naming consistency**
-- Align `MONGODB_URI` and `MONGO_URI` usage across files.
 
-2. **Legacy script cleanup**
-- `createTestLeaves.js` references fields that do not match current `User` schema.
-
-3. **Department schema/controller alignment**
-- `departmentController` populates `hod`, but `Department` schema does not currently define it.
-
-4. **Testing**
-- Jest is configured, but no `server/tests` directory was found.
-
-5. **Authorization consistency**
-- Some endpoints enforce roles in middleware, others inside controllers. Standardize for maintainability.
-
-6. **Data integrity protections**
-- Consider transactions for multi-step operations (leave request + alternate requests + logs + notifications).
-
-7. **Security hardening**
-- Add request validation library (e.g., zod/joi), rate limits, and centralized error normalization.
-
----
 
 If you are onboarding to this codebase, a good first path is:
 1. Run backend and frontend locally.
