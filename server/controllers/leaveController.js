@@ -722,12 +722,11 @@ exports.respondToAlternateRequest = async (req, res) => {
       leaveRequest.alternateEmployees[alternateIndex].response = response;
       leaveRequest.alternateEmployees[alternateIndex].respondedAt = new Date();
 
-      // If response is "sorry", decline the entire leave request
+      // If response is "sorry", keep the record and check if all alternates have responded
       if (response === "sorry") {
-        leaveRequest.alternateEmployees.splice(alternateIndex, 1);
-        leaveRequest.status = "Declined";
-        leaveRequest.waitingForAlternate = false;
-        leaveRequest.hodRemarks = "Declined due to alternate employee refusal";
+        // Get the alternate's name for the log note
+        const alternateUser = await User.findById(req.user.id).select('name').lean();
+        const alternateName = alternateUser?.name || 'An alternate employee';
 
         // Create history log for the decline
         const historyLog = new LeaveHistoryLog({
@@ -735,9 +734,66 @@ exports.respondToAlternateRequest = async (req, res) => {
           leaveRequest: leaveRequest._id,
           action: "Declined by Alternate",
           performedBy: req.user.id,
-          notes: "Alternate employee declined to cover duties",
+          notes: `${alternateName} declined to cover duties`,
         });
         await historyLog.save();
+
+        // Check if all alternates have now responded (no one still pending)
+        const allResponded = leaveRequest.alternateEmployees.every(
+          alt => alt.response !== 'pending'
+        );
+        const hasOkResponse = leaveRequest.alternateEmployees.some(
+          alt => alt.response === 'ok'
+        );
+
+        // Only release to HoD when all have responded and none agreed
+        if (allResponded && !hasOkResponse && leaveRequest.waitingForAlternate) {
+          leaveRequest.waitingForAlternate = false;
+          leaveRequest.hodRemarks = `All selected alternate employees declined to cover duties. Please review and decide.`;
+
+          // Notify HoD (or HR if applicant is HoD)
+          try {
+            const applicant = await User.findById(leaveRequest.employee).populate('department');
+            if (applicant) {
+              const applicantIsHoD = applicant.hasRole('HoD');
+              if (applicantIsHoD) {
+                const hrUser = await User.findOne({ roles: 'HR' });
+                if (hrUser && hrUser.email) {
+                  await sendHRReviewEmail(
+                    hrUser.email,
+                    hrUser.name,
+                    applicant.name,
+                    applicant.designation,
+                    applicant.department?.name || leaveRequest.departmentName || '',
+                    leaveRequest.startDate,
+                    leaveRequest.endDate,
+                    leaveRequest.type,
+                    leaveRequest.numberOfDays
+                  );
+                }
+              } else {
+                const hodUser = await User.findOne({
+                  department: applicant.department,
+                  roles: 'HoD'
+                });
+                if (hodUser && hodUser.email) {
+                  await sendHoDReviewEmail(
+                    hodUser.email,
+                    hodUser.name,
+                    applicant.name,
+                    applicant.designation,
+                    leaveRequest.startDate,
+                    leaveRequest.endDate,
+                    leaveRequest.type,
+                    leaveRequest.numberOfDays
+                  );
+                }
+              }
+            }
+          } catch (emailError) {
+            console.error('Failed to send HoD notification after alternate refusal:', emailError);
+          }
+        }
       }
 
       // Check if all remaining alternates have responded with "ok"
@@ -885,6 +941,8 @@ exports.getFilteredApplications = async (req, res) => {
           select: 'name code'
         }
       })
+      .populate('alternateEmployees.employee', 'name email')
+      .populate('backupEmployee', 'name email')
       .sort({ createdAt: -1 })
       .limit(200); // Limit to prevent too large response
 

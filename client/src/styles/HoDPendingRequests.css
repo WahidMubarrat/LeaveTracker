@@ -110,6 +110,26 @@
   font-weight: 500;
 }
 
+.alternate-declined-note {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+  padding: 0.3rem 0.6rem;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 5px;
+  font-size: 0.72rem;
+  color: #9a3412;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.alternate-declined-icon {
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
 .leave-summary {
   display: flex;
   gap: 0.5rem;
