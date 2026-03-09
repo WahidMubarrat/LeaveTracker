@@ -390,7 +390,7 @@ const HRAnalytics = () => {
 
         {/* Collapsible Top Employees */}
         <CollapsibleSection 
-          title="Top Employees by Leave Days" 
+          title="Employees with Most Leaves" 
           icon={MdGroup}
           sectionId="hr-top-employees-section"
           onDownload={handleDownloadTopEmployees}

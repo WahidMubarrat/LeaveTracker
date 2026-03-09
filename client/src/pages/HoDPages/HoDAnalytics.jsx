@@ -280,7 +280,7 @@ const HoDAnalytics = () => {
 
                 {/* Collapsible Top Employees */}
                 <CollapsibleSection 
-                    title="Top Employees by Leave Days" 
+                    title="Employees with Most Leaves" 
                     icon={MdGroup}
                     sectionId="hod-top-employees-section"
                     onDownload={handleDownloadTopEmployees}
