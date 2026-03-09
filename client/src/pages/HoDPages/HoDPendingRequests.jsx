@@ -124,6 +124,12 @@ const HoDPendingRequests = () => {
                           <span className="applicant-dept">{request.applicantDesignation || 'N/A'}</span>
                         </div>
                       </div>
+                      {request.hodRemarks && request.hodRemarks.includes('alternate') && (
+                        <div className="alternate-declined-note">
+                          <span className="alternate-declined-icon">⚠</span>
+                          {request.hodRemarks}
+                        </div>
+                      )}
 
                       <div className="leave-summary">
                         <span className="leave-type-tag">{request.type} Leave</span>
