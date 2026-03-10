@@ -63,22 +63,12 @@ exports.getHolidaysInRange = async (req, res) => {
 // Create a new holiday
 exports.createHoliday = async (req, res) => {
   try {
-    console.log('=== CREATE HOLIDAY REQUEST ===');
-    console.log('Request body:', req.body);
-    console.log('User from token:', req.user);
-    console.log('User roles:', req.user?.roles);
-    console.log('===========================');
-
     // Verify requester is HR (backup check)
     const isHR = req.user && Array.isArray(req.user.roles) && req.user.roles.includes("HR");
 
     if (!isHR) {
-      console.error('Authorization failed - user is not HR');
       return res.status(403).json({ 
-        message: "Only HR can create holidays",
-        debug: {
-          roles: req.user?.roles
-        }
+        message: "Only HR can create holidays"
       });
     }
 
@@ -130,21 +120,13 @@ exports.createHoliday = async (req, res) => {
       });
     }
 
-    console.log('Creating holiday with data:', {
-      name: name.trim(),
-      date: holidayDate,
-      numberOfDays: days
-    });
-
     const holiday = new Vacation({
       name: name.trim(),
       date: holidayDate,
       numberOfDays: days
     });
 
-    console.log('Holiday object created, attempting to save...');
     await holiday.save();
-    console.log('Holiday saved successfully:', holiday._id);
 
     res.status(201).json({ 
       message: "Holiday created successfully",
@@ -152,14 +134,6 @@ exports.createHoliday = async (req, res) => {
     });
   } catch (error) {
     console.error("Create holiday error:", error);
-    console.error("Error stack:", error.stack);
-    console.error("Error details:", {
-      name: error.name,
-      message: error.message,
-      code: error.code,
-      keyPattern: error.keyPattern,
-      keyValue: error.keyValue
-    });
     
     // Handle Mongoose validation errors
     if (error.name === 'ValidationError') {
@@ -178,8 +152,7 @@ exports.createHoliday = async (req, res) => {
     }
     
     res.status(500).json({ 
-      message: error.message || "Server error",
-      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      message: "Server error"
     });
   }
 };

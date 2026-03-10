@@ -37,6 +37,10 @@ const ApplicationStatus = () => {
   };
 
   const getStatusMessage = (application) => {
+    if (application.waitingForAlternate) {
+      return 'Waiting for Alternate';
+    }
+
     if (application.status === 'Declined') {
       return 'Application Declined';
     }
@@ -53,6 +57,10 @@ const ApplicationStatus = () => {
   };
 
   const getStatusClass = (application) => {
+    if (application.waitingForAlternate) {
+      return 'status-waiting-alternate';
+    }
+
     if (application.status === 'Declined') {
       return 'status-declined';
     }
@@ -69,6 +77,10 @@ const ApplicationStatus = () => {
   };
 
   const getStatusProgress = (application) => {
+    if (application.waitingForAlternate) {
+      return { width: '10%', color: '#fd7e14' }; // Orange — waiting for alternate
+    }
+
     if (application.status === 'Declined') {
       return { width: '100%', color: '#dc3545' }; // Red - fully declined
     }
