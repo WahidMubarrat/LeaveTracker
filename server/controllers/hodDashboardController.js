@@ -45,10 +45,9 @@ const getHoDDashboardStats = async (req, res) => {
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
 
     // Get all leave requests for this department this month
-    // FIXED: Changed 'applicant' to 'employee' to match Schema
     const monthlyRequests = await LeaveRequest.find({
       employee: { $in: allMembers.map(m => m._id) },
-      applicationDate: { $gte: startOfMonth, $lte: endOfMonth }
+      createdAt: { $gte: startOfMonth, $lte: endOfMonth }
     });
 
     const totalRequests = monthlyRequests.length;

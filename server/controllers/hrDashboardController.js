@@ -37,7 +37,7 @@ const getHRDashboardStats = async (req, res) => {
 
     // Get all leave requests for all departments this month
     const monthlyRequests = await LeaveRequest.find({
-      applicationDate: { $gte: startOfMonth, $lte: endOfMonth }
+      createdAt: { $gte: startOfMonth, $lte: endOfMonth }
     });
 
     const totalRequests = monthlyRequests.length;

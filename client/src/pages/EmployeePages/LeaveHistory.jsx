@@ -288,8 +288,8 @@ const LeaveHistory = () => {
                         <div className="approval-column">
                           <div className="form-field">
                             <label>HR Status</label>
-                            <div className={`value ${app.status === 'Approved' ? 'status-text-approved' : 'status-text-declined'}`}>
-                              {app.status === 'Approved' ? 'Approved' : 'Declined'}
+                            <div className={`value ${!app.approvedByHoD ? 'status-text-neutral' : (app.status === 'Approved' ? 'status-text-approved' : 'status-text-declined')}`}>
+                              {!app.approvedByHoD ? 'Not Reviewed' : (app.status === 'Approved' ? 'Approved' : 'Declined')}
                             </div>
                           </div>
                           {app.hrRemarks && (

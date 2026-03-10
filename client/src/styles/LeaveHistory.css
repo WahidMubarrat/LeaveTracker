@@ -459,6 +459,12 @@
   background-color: #fef2f2 !important;
 }
 
+.status-text-neutral {
+  color: #6b7280 !important;
+  border-color: #e5e7eb !important;
+  background-color: #f9fafb !important;
+}
+
 /* Footer / Meta info */
 .form-footer {
   margin-top: 3rem;

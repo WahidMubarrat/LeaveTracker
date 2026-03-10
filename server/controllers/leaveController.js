@@ -897,6 +897,18 @@ exports.getFilteredApplications = async (req, res) => {
     // Status filter
     if (status && status !== 'all') {
       filter.status = status;
+
+      // For 'Pending', apply role-specific sub-filters so the list matches the stat card
+      if (status === 'Pending') {
+        if (userRoles.includes('HR')) {
+          // HR's "pending" stat counts requests approved by HoD but not yet by HR
+          filter.approvedByHoD = true;
+        } else if (userRoles.includes('HoD') && !userRoles.includes('HR')) {
+          // HoD's "pending" stat counts requests not yet approved by HoD and not waiting for alternate
+          filter.approvedByHoD = false;
+          filter.waitingForAlternate = false;
+        }
+      }
     }
 
     // Department filter (HR can filter by department, HoD only sees their department)
@@ -915,19 +927,19 @@ exports.getFilteredApplications = async (req, res) => {
       }
     }
 
-    // Date filter based on period
+    // Date filter based on period — filter by when the application was submitted (createdAt)
     if (period && year) {
       const startYear = parseInt(year);
-      
+
       if (period === 'monthly' && month) {
         const startMonth = parseInt(month);
-        const startDate = new Date(startYear, startMonth - 1, 1);
-        const endDate = new Date(startYear, startMonth, 0, 23, 59, 59);
-        filter.createdAt = { $gte: startDate, $lte: endDate };
+        const periodStart = new Date(startYear, startMonth - 1, 1);
+        const periodEnd = new Date(startYear, startMonth, 0, 23, 59, 59, 999);
+        filter.createdAt = { $gte: periodStart, $lte: periodEnd };
       } else if (period === 'yearly') {
-        const startDate = new Date(startYear, 0, 1);
-        const endDate = new Date(startYear, 11, 31, 23, 59, 59);
-        filter.createdAt = { $gte: startDate, $lte: endDate };
+        const periodStart = new Date(startYear, 0, 1);
+        const periodEnd = new Date(startYear, 11, 31, 23, 59, 59, 999);
+        filter.createdAt = { $gte: periodStart, $lte: periodEnd };
       }
     }
 

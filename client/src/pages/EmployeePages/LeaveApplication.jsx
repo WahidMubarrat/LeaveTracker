@@ -299,6 +299,7 @@ const LeaveApplication = () => {
 
       const response = await leaveAPI.applyLeave(submitData);
       setSuccess('Leave application submitted successfully!');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
 
       // Reset form
       setFormData({

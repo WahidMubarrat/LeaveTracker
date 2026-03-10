@@ -124,6 +124,11 @@
   color: #856404;
 }
 
+.status-waiting-alternate {
+  background: #fff3e0;
+  color: #e65100;
+}
+
 .status-pending-hod {
   background: #d1ecf1;
   color: #0c5460;
