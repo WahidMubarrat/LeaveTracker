@@ -17,7 +17,7 @@ const RoleToggle = () => {
 
   const [currentPanel, setCurrentPanel] = useState(getCurrentPanel());
 
-  // Only show toggle if user has multiple roles
+  // role:Only show toggle if user has multiple roles
   if (!user || user.roles.length <= 1) {
     return null;
   }
