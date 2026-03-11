@@ -1,3 +1,10 @@
+
+// FILE: src/components/PublicHoliday.jsx
+// PURPOSE: Component for managing public holidays in the system.
+// Allows HR to add/edit/delete holidays manually or upload a PDF file to automatically extract and save holidays.
+
+
+
 import { useState, useEffect, useRef } from 'react';
 import { vacationAPI } from '../services/api';
 import HolidayReviewModal from './HolidayReviewModal';
