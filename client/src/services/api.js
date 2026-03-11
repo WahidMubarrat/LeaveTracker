@@ -1,4 +1,10 @@
 
+// FILE: src/services/api.js
+// PURPOSE: Centralized API service using Axios to handle all HTTP requests between
+// the frontend and backend (authentication, users, leaves, departments, analytics, etc.).
+// Also automatically attaches JWT tokens to requests using Axios interceptors.
+
+
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
