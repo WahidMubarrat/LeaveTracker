@@ -1,3 +1,11 @@
+
+
+// FILE: src/pages/members/Members.jsx
+// PURPOSE: Displays all members of the logged-in user's department.
+// This page loads colleague information using the CollegueInfo component
+// and shows the total number of department members in the header.
+
+
 import { useState, useContext, useCallback } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import Layout from '../../components/Layout';
