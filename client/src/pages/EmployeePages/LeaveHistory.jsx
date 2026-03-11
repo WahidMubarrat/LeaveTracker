@@ -1,3 +1,9 @@
+
+// FILE: src/pages/leave/LeaveHistory.jsx
+// PURPOSE: Displays the logged-in employee's leave application history with statistics, filters, and expandable detailed forms.
+
+
+
 import { useState, useEffect } from 'react';
 import Layout from '../../components/Layout';
 import { leaveAPI } from '../../services/api';
