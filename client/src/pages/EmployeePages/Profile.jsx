@@ -1,3 +1,8 @@
+// FILE: src/pages/profile/Profile.jsx
+// PURPOSE: Displays the logged-in user's profile page.
+// Shows personal information, leave balance data, and role switching if the user has multiple roles.
+
+
 import { useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import Layout from '../../components/Layout';
