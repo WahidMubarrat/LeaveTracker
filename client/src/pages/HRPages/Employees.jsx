@@ -1,3 +1,11 @@
+
+// FILE: src/pages/hr/Employees.jsx
+// PURPOSE: HR page to view and manage all employees grouped by department.
+// Provides search, designation filter, leave-status filter, and member details modal for employees.
+
+
+
+
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import HRLayout from '../../components/HRLayout';
