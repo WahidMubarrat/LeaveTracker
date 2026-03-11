@@ -1,3 +1,12 @@
+
+
+// FILE: src/pages/hr/HRDashboard.jsx
+// PURPOSE: Main dashboard for HR users to view employee statistics,
+// request summaries, designation breakdown, and quick navigation to employee records.
+
+
+
+
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import HRLayout from '../../components/HRLayout';
