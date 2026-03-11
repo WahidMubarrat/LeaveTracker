@@ -1,3 +1,9 @@
+//FILE: src/pages/Login.jsx
+// PURPOSE: Handles user authentication by allowing users to log in using email and password.
+// After successful login, users are redirected based on their role (HR, HoD, or Employee).
+
+
+
 import { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
