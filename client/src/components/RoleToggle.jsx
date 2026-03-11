@@ -8,7 +8,7 @@ const RoleToggle = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Determine current panel based on URL
+  //add : Determine current panel based on URL
   const getCurrentPanel = () => {
     if (location.pathname.startsWith('/hr/')) return 'HR';
     if (location.pathname.startsWith('/hod/')) return 'HoD';
