@@ -1,3 +1,8 @@
+
+// FILE: src/pages/leave/LeaveHistory.jsx
+// PURPOSE: Displays user's leave application history with filters, stats, and expandable detailed view.
+
+
 import { useState, useEffect, useContext } from 'react';
 import Layout from '../../components/Layout';
 import AlternateSelection from '../../components/AlternateSelection';
